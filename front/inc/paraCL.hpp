@@ -96,6 +96,14 @@ ProgramAST createAST(const std::vector<ParaCL::Lexer::tokenData_t>& tokens);
 void dump(ProgramAST& progAST, const std::string& filename = "imgs/ast.dot");
 
 }; // namespace Parser
+
+// ================================ compiler ================================
+namespace Compiler {
+
+void compileByCpp(const ParaCL::Parser::ProgramAST& progAST);
+
+}; // namespace Compiler
+
 }; // namespace ParaCL
 
 

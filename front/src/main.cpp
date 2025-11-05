@@ -1,19 +1,39 @@
 #include "paraCL.hpp"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <vector>
+#include <limits>
 
-int main() try
+int main(int argc, const char* argv[]) try
 {
-    std::string buffer;
-    std::getline(std::cin, buffer, '\0');
+    if (argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <source_file>\n";
+        return 1;
+    }
 
-    std::vector<ParaCL::Lexer::tokenData_t> tokens = ParaCL::Lexer::tokenize(buffer);
-    ParaCL::Lexer::dump(tokens);
+    std::ifstream programFile(argv[1]);
+    if (!programFile)
+    {
+        std::cerr << "Cannot open file: " << argv[1] << "\n";
+        return 1;
+    }
+
+    std::ostringstream buffer;
+    buffer << programFile.rdbuf();
+    std::string source = buffer.str();
+
+    std::vector<ParaCL::Lexer::tokenData_t> tokens = ParaCL::Lexer::tokenize(source);
+
+    // ParaCL::Lexer::dump(tokens);
 
     ParaCL::Parser::ProgramAST progAST = ParaCL::Parser::createAST(tokens);
 
-    ParaCL::Parser::dump(progAST);
+    // ParaCL::Parser::dump(progAST);
+
+    ParaCL::Compiler::compileByCpp(progAST);
 
 }
 catch(const std::exception& e)

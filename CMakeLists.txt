@@ -29,18 +29,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CXX_STANDARD "cxx_std_20")
 
 set(EXEC_FILE_NAME "out")
-set(LOCAL_SOURCE_FILES
-    ${CMAKE_SOURCE_DIR}/src/main.cpp
-    ${CMAKE_SOURCE_DIR}/src/line.cpp
-    ${CMAKE_SOURCE_DIR}/src/triangle.cpp
-    ${CMAKE_SOURCE_DIR}/src/double.cpp
-    ${CMAKE_SOURCE_DIR}/src/2d.cpp
-    ${CMAKE_SOURCE_DIR}/src/3d.cpp
-    ${CMAKE_SOURCE_DIR}/src/bvh.cpp
+set(SOURCE_FILES
+    ${CMAKE_SOURCE_DIR}/front/src/main.cpp
+    ${CMAKE_SOURCE_DIR}/front/src/lexer.cpp
+    ${CMAKE_SOURCE_DIR}/front/src/parcer.cpp
+    ${CMAKE_SOURCE_DIR}/front/src/compiler.cpp
 )
 
-set(LOCAL_INCLUDE_DIRECTORIES
-    ${CMAKE_SOURCE_DIR}/inc
+set(INCLUDE_DIRECTORIES
+    ${CMAKE_SOURCE_DIR}/front/inc
 )
 
 set(SANITIZER "-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr")
@@ -64,22 +61,19 @@ if(SANITIZE)
 
 endif()
 
-
 # ----------------------------------------------------------------------------------------
-
 
 if(BUILD_TESTING)
     enable_testing()
-    add_subdirectory(tests)
+    add_subdirectory(front/tests)
 endif()
 
 if(BUILD_EXECUTABLE)
-    add_executable(${EXEC_FILE_NAME} ${LOCAL_SOURCE_FILES})
-    target_include_directories(${EXEC_FILE_NAME} PRIVATE ${LOCAL_INCLUDE_DIRECTORIES})
+    add_executable(${EXEC_FILE_NAME} ${SOURCE_FILES})
+    target_include_directories(${EXEC_FILE_NAME} PRIVATE ${INCLUDE_DIRECTORIES})
     target_compile_features(${EXEC_FILE_NAME} PRIVATE ${CXX_STANDARD})
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_compile_options(${EXEC_FILE_NAME} PRIVATE ${DEBUG_FLAGS})
     endif()
 endif()
-
 

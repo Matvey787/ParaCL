@@ -33,6 +33,7 @@ set(LOCAL_SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/lexer.cpp
     ${CMAKE_SOURCE_DIR}/src/parcer.cpp
+    ${CMAKE_SOURCE_DIR}/src/compiler.cpp
 )
 
 set(INCLUDE_DIRECTORIES

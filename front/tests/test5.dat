@@ -1,0 +1,8 @@
+a = 4;
+b = 3;
+result = 0;
+while (b > 0) {
+    result = result + a;
+    b = b - 1;
+}
+print result;

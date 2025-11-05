@@ -1,6 +1,6 @@
 fst = 0;
 snd = 1;
-iters = ?;
+iters = 6;
 while (iters > 0) {
     tmp = fst;
     fst = snd;
