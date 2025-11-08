@@ -1,42 +1,28 @@
-#include "paraCL.hpp"
-
+#include <FlexLexer.h>
+#include "parser.tab.hh"
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <limits>
 
-int main(int argc, const char* argv[]) try
-{
-    if (argc < 2)
-    {
-        std::cerr << "Usage: " << argv[0] << " <source_file>\n";
-        return 1;
+using namespace Calc;
+
+// Обёртка для лексера
+class MyLexer : public yyFlexLexer {
+public:
+    using yyFlexLexer::yyFlexLexer;
+    int yylex(Parser::semantic_type *yylval, Parser::location_type *yyloc = nullptr) {
+        this->yylval_ptr = yylval; // передаем semantic_type
+        return yyFlexLexer::yylex();
     }
+};
 
-    std::ifstream programFile(argv[1]);
-    if (!programFile)
-    {
-        std::cerr << "Cannot open file: " << argv[1] << "\n";
-        return 1;
-    }
+MyLexer lexer;
 
-    std::ostringstream buffer;
-    buffer << programFile.rdbuf();
-    std::string source = buffer.str();
-
-    std::vector<ParaCL::Lexer::tokenData_t> tokens = ParaCL::Lexer::tokenize(source);
-
-    // ParaCL::Lexer::dump(tokens);
-
-    ParaCL::Parser::ProgramAST progAST = ParaCL::Parser::createAST(tokens);
-
-    // ParaCL::Parser::dump(progAST);
-
-    ParaCL::Compiler::compileByCpp(progAST);
-
+// Глобальная функция yylex для Bison
+int yylex(Parser::semantic_type *yylval, Parser::location_type *yyloc) {
+    return lexer.yylex(yylval, yyloc);
 }
-catch(const std::exception& e)
-{
-    std::cerr << e.what() << '\n';
+
+int main() {
+    Parser parser;
+    parser.parse();
+    return 0;
 }

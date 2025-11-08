@@ -6,3 +6,6 @@
 
 Тот самый младший брат языка C78, который только только начинает свой путь.  
 
+bison -d src/parser.y -o src/parser.tab.cpp
+flex -o src/lexer.yy.cpp src/lexer.l
+g++ -Iinc src/parser.tab.cpp src/lexer.yy.cpp src/main.cpp -o paracl -lfl

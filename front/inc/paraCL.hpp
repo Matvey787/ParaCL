@@ -17,12 +17,6 @@ namespace Lexer {
 
 using tokenData_t = std::pair<token_t, std::variant<int, std::string>>;
 
-std::vector<tokenData_t>
-tokenize(const std::string& buffer);
-
-void
-dump(const std::vector<tokenData_t>& tokens);
-
 }; // namespace Lexer
 
 // ================================ parser ================================
@@ -92,17 +86,7 @@ struct ProgramAST final : ASTNode {
     std::vector<std::unique_ptr<Stmt>> statements;
 };
 
-ProgramAST createAST(const std::vector<ParaCL::Lexer::tokenData_t>& tokens);
-void dump(ProgramAST& progAST, const std::string& filename = "imgs/ast.dot");
-
 }; // namespace Parser
-
-// ================================ compiler ================================
-namespace Compiler {
-
-void compileByCpp(const ParaCL::Parser::ProgramAST& progAST);
-
-}; // namespace Compiler
 
 }; // namespace ParaCL
 
