@@ -1,28 +1,36 @@
-#include <FlexLexer.h>
-#include "parser.tab.hh"
+#include "lexer.hpp"
+#include "parser.tab.hpp"
 #include <iostream>
+#include <cstdio>
 
-using namespace Calc;
+// Объявляем внешние переменные Bison/Flex
+extern FILE* yyin;
+extern int yyparse();
 
-// Обёртка для лексера
-class MyLexer : public yyFlexLexer {
-public:
-    using yyFlexLexer::yyFlexLexer;
-    int yylex(Parser::semantic_type *yylval, Parser::location_type *yyloc = nullptr) {
-        this->yylval_ptr = yylval; // передаем semantic_type
-        return yyFlexLexer::yylex();
+// Объявляем внешние переменные из лексера
+extern int current_num_value;
+extern std::string current_var_value;
+extern int current_line;
+
+int main(int argc, char* argv[]) {
+    if (argc > 1) {
+        FILE* input_file = fopen(argv[1], "r");
+        if (input_file) {
+            yyin = input_file;
+        } else {
+            std::cerr << "Cannot open file: " << argv[1] << std::endl;
+            return 1;
+        }
+    } else {
+        std::cout << "Enter your program (Ctrl+D to end):" << std::endl;
+        yyin = stdin;
     }
-};
 
-MyLexer lexer;
-
-// Глобальная функция yylex для Bison
-int yylex(Parser::semantic_type *yylval, Parser::location_type *yyloc) {
-    return lexer.yylex(yylval, yyloc);
-}
-
-int main() {
-    Parser parser;
-    parser.parse();
-    return 0;
+    int result = yyparse();
+    
+    if (argc > 1) {
+        fclose(yyin);
+    }
+    
+    return result;
 }
