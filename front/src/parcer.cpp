@@ -163,8 +163,15 @@ VAR_NUM(tokenIt& it)
     if (it->first == token_t::VAR)
     {
         std::string name = std::get<std::string>(it->second);
-
         next(it, token_t::VAR);
+
+        if (it->first == token_t::AS)  // присваивание внутри выражения
+        {
+            next(it, token_t::AS);
+            auto value = handleExpr(it);
+            
+            return std::make_unique<AssignStmt>(name, std::move(value));
+        }
 
         return std::make_unique<VarExpr>(std::move(name));
     }
