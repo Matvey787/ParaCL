@@ -32,6 +32,9 @@ set(EXEC_FILE_NAME "paracl")
 
 include( FetchContent )
 
+set(CMAKE_SETTINGS_DIR ${PROJECT_SOURCE_DIR}/cmake)
+include(${CMAKE_SETTINGS_DIR}/debug.cmake)
+
 find_program(FLEX_EXECUTABLE flex)
 find_program(BISON_EXECUTABLE bison)
 
@@ -143,6 +146,7 @@ endif()
 
 if(BUILD_EXECUTABLE)
     add_executable( ${EXEC_FILE_NAME} ${SOURCE_FILES} )
+    target_hard_debug_options(${EXEC_FILE_NAME})
 
     target_sources(${EXEC_FILE_NAME} PRIVATE 
         ${CMAKE_BINARY_DIR}/parser.tab.cpp
