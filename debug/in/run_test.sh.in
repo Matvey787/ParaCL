@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# DO NOT TRY TO EDIT THIS FILE.
+# ALL YOUR CORRECTIONS WILL BE LOST WITH RERUNNING CMAKE.
+
+# Automatic generated with:
+# '@CMAKE_CURRENT_LIST_FILE@'
+# at:
+# '@CURRENT_TIME@'
+
+set -euo pipefail
+
+# Console output settings
+CONSOLE_COLOR_WHITE='\e[0;37m'
+CONSOLE_COLOR_RED='\x1b[31m'
+RESET_CONSOLE_OUTPUT_SETTINGS='\e[0m'
+
+function custom_echo
+{
+    local color=$1 msg=$2
+
+    echo -e "${color}${msg}${RESET_CONSOLE_OUTPUT_SETTINGS}"
+}
+
+function custom_echo_err
+{
+    local color=$1 msg=$2
+
+    echo -e "${color}${msg}${RESET_CONSOLE_OUTPUT_SETTINGS}" >&2
+}
+
+function skip_line_in_console
+{
+    echo
+}
+
+function check_that_exists
+{
+    local program=$1
+
+    if ! command -v "${program}" >/dev/null 2>&1; then
+        custom_echo_err "${CONSOLE_COLOR_RED}" "'${program}' not found."
+        custom_echo "${CONSOLE_COLOR_WHITE}" "This script requires '${program}' to be installed."
+        return 1
+    fi
+
+    return 0
+}
+
+if [ $# -ne 1 ]; then
+    echo "Usage:"
+    echo "$0 <test number>"
+    exit 1
+fi
+
+check_that_exists python3 || exit 1
+
+ntest="$1"
+
+if ! [[ "$ntest" =~ ^[0-9]+$ ]] || [ "$ntest" -le 0 ]; then
+    custom_echo_err "${CONSOLE_COLOR_RED}" "bad test name. it's must be number from 1 to 9999"
+    exit 1
+fi
+
+if [ $ntest -lt 10 ]; then
+    test_name="000$ntest"
+elif [ $ntest -lt 100 ]; then
+    test_name="00$ntest"
+elif [ $ntest -lt 1000 ]; then
+    test_name="0$ntest"
+elif [ $ntest -lt 10000 ]; then
+    test_name="$ntest"
+else
+    custom_echo_err "${CONSOLE_COLOR_RED}" "too big test number. I can parse only if it\`s less then 10000 (10^4)"
+    exit 1
+fi
+
+"@PYTHON_RUN_TEST_SCRIPT@" \
+        "@CMAKE_BINARY_DIR@/@TRIANGLES_EXE@" \
+        "@TRIANGLES_TEST_DAT_DIR@/$test_name.dat" \
+        "@TRIANGLES_TEST_ANS_DIR@/$test_name.ans"
