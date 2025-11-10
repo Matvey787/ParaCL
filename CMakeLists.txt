@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(paraCL
     LANGUAGES CXX
+    VERSION 1.1
 )
 
 # =================================================================================================
@@ -22,12 +23,14 @@ if (NOT CMAKE_EXPORT_COMPILE_COMMANDS)
 endif()
 
 option(BUILD_TESTING "Build tests" OFF)
+option(LOGGER "logger" OFF)
 
 # =================================================================================================
 
 set(CMAKE_SETTINGS_DIR ${PROJECT_SOURCE_DIR}/cmake)
 
 include(${CMAKE_SETTINGS_DIR}/debug.cmake)
+include(${CMAKE_SETTINGS_DIR}/logger.cmake)
 
 # =================================================================================================
 # check depecndencies and install it if not found
@@ -149,6 +152,7 @@ target_sources(${PARACL_EXTENSION_LIB}
 )
 
 add_target_debug_options(${PARACL_EXTENSION_LIB} hard)
+target_add_logger(${PARACL_EXTENSION_LIB})
 
 # =================================================================================================
 # add options parser library
@@ -176,13 +180,18 @@ target_include_directories(${OPTIONS_PARSER_LIB}
         ${INC_DIR}
 )
 
-
 target_link_libraries(${OPTIONS_PARSER_LIB}
     PRIVATE
         ${PARACL_EXTENSION_LIB}
 )
 
+target_compile_definitions(${OPTIONS_PARSER_LIB}
+    PRIVATE
+        PARACL_VERSION="${PROJECT_VERSION}"
+)
+
 add_target_debug_options(${OPTIONS_PARSER_LIB} hard)
+target_add_logger(${OPTIONS_PARSER_LIB})
 
 # =================================================================================================
 # run paracl library
@@ -222,6 +231,8 @@ target_link_libraries(${RUN_PARACL_LIB}
 )
 
 add_target_debug_options(${RUN_PARACL_LIB} hard)
+target_add_logger(${RUN_PARACL_LIB})
+
 # =================================================================================================
 
 set(PARACL_EXE paracl)
@@ -240,6 +251,7 @@ target_link_libraries(${PARACL_EXE}
 )
 
 add_target_debug_options(${PARACL_EXE} hard)
+target_add_logger(${PARACL_EXE})
 
 # =================================================================================================
 

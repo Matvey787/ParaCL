@@ -3,7 +3,7 @@
 //---------------------------------------------------------------------------------------------------------------
 
 #if defined(NDEBUG) and (defined(_DEBUG) or defined(DEBUG))
-static_assert(false, "bad release-debug macro combo");
+#error "bad release-debug macro combo"
 #endif /* defined(NDEBUG) and (defined(_DEBUG) or defined(DEBUG)) */
 
 //---------------------------------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ if (not (bool_expression)) {                                  \
 
 //---------------------------------------------------------------------------------------------------------------
 
-#if defined(USE_LOGGER)
+#if defined(LOGGER)
 #define ON_LOGGER(...) __VA_ARGS__
 #include <sstream>
 #include <string> 

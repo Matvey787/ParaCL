@@ -16,8 +16,8 @@ module;
 
 import paracl_extension;
 
-#if defined(USE_LOGGER)
-import pineaplog;
+#if defined(LOGGER)
+#include "pineaplog.hpp"
 #endif /* defined(USE_LOGGER) */
 
 //---------------------------------------------------------------------------------------------------------------
@@ -58,6 +58,9 @@ class options_parser
 
         [[noreturn]]        
         void parse_flag_help          () const;
+        [[noreturn]]
+        void parse_flag_version       () const;
+
         void parse_not_a_flag         (const char* argument);
 
         [[noreturn]]
@@ -83,6 +86,7 @@ program_options_t parse_program_options(int argc, char* argv[])
 constexpr option long_options[] =
 {
     {"help"   , no_argument, 0, 'h'},
+    {"version", no_argument, 0, 'v'},
     {""       , 0          , 0,  0 }, /* just for safety */
 };
 
@@ -105,11 +109,12 @@ program_options_()
 
     for (int options_iterator = 1; options_iterator < argc; options_iterator++)
     {
-        int option = getopt_long(argc, argv, "h", long_options, nullptr);
+        int option = getopt_long(argc, argv, "hv", long_options, nullptr);
     
         switch (option)
         {
-            case 'h'                 : parse_flag_help ();                       continue;
+            case 'h'                 : parse_flag_help    ();                    continue;
+            case 'v'                 : parse_flag_version ();                    continue;
             case undefined_option_key: parse_not_a_flag(argv[options_iterator]); continue;
             default                  : undefined_option(argv[options_iterator]); continue;
         }
@@ -139,19 +144,33 @@ void options_parser::parse_flag_help() const
     RESET_CONSOLE_OUT
     << R"(
     -h --help
-    -v --verbose
+    -v --version
 
-        if you want to give source file, just write *.pcl file in command.
+        *.pcl
+            to give source file, just write *.pcl file in command.
 
         -h, --help
             these flags show information about all flags and their functions.
     
-        -v, --verbose
-            use it to see, what paracl made undef the hood.
+        -v, --version
+            use it to show paracl version, that installed on your device
     
     So, that was all, what I know about flags in this program.
     Good luck, I love you )"
     << HEART;
+
+    exit(EXIT_SUCCESS); // good exit :)
+}
+
+//---------------------------------------------------------------------------------------------------------------
+
+[[noreturn]]
+void options_parser::parse_flag_version() const
+{
+#if not defined(PARACL_VERSION)
+#error "ParaCL version is unknowed."
+#endif
+    std::cout << "ParaCL " PARACL_VERSION << std::endl;
 
     exit(EXIT_SUCCESS); // good exit :)
 }

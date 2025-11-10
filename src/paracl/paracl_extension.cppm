@@ -5,6 +5,10 @@ module;
 #include <string>
 #include <filesystem>
 
+#if defined(LOGGER)
+#include "pineaplog.hpp"
+#endif /* defined(USE_LOGGER) */
+
 //---------------------------------------------------------------------------------------------------------------
 
 export module paracl_extension;

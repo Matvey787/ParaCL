@@ -8,6 +8,10 @@ module;
 #include "global/global.hpp"
 #include "global/custom_console_output.hpp"
 
+#if defined(LOGGER)
+#include "pineaplog.hpp"
+#endif /* defined(USE_LOGGER) */
+
 //---------------------------------------------------------------------------------------------------------------
 
 export module parse_paracl_exit_code;

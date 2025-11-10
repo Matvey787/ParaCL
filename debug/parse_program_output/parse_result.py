@@ -31,7 +31,7 @@ def extract_numbers(text):
 
 def main():
     if len(sys.argv) != 4:
-        print(f"Usage: {sys.argv[0]} <program_exe> <test_input> <test_answer>")
+        print(f"Usage: {sys.argv[0]} <program_exe> <test>.pcl <answer>.ans")
         sys.exit(1)
 
     executable, test_input, test_answer = sys.argv[1:4]
@@ -67,21 +67,10 @@ def main():
 
     except Exception as e:
         color_print(Colors.RED, f"Error reading files: {e}")
-        sys.exit(1)
-
-    print(f"{Colors.CYAN}Program output:{Colors.RESET}")
-    print(program_stdout)
-    
+        sys.exit(1)    
     if program_stderr:
         print(f"{Colors.YELLOW}Program stderr:{Colors.RESET}")
         print(program_stderr)
-    
-    print(f"{Colors.CYAN}Expected answer: {expected_numbers}{Colors.RESET}")
-    print(f"{Colors.CYAN}Program output:  {program_output}{Colors.RESET}")
-
-    if expected_numbers == program_output:
-        color_print(Colors.GREEN, "TEST PASSED")
-        return 0
 
     if expected_numbers == program_output:
         color_print(Colors.GREEN, "TEST PASSED")
@@ -113,6 +102,12 @@ def main():
             color_print(Colors.RED, f"position {i}: program output: {program_output[i]}\nexpected: NONE", end='\n\n')
 
     color_print(Colors.WHITE, "INFO:", end='\n\n')
+
+    print(f"{Colors.CYAN}Expected answer: {expected_numbers}{Colors.RESET}")
+    print(f"{Colors.CYAN}Program output:  {program_output}{Colors.RESET}")
+
+    print(f"{Colors.CYAN}Program output:{Colors.RESET}")
+    print(program_stdout)
 
     color_print(Colors.WHITE, f"[ total numbers expected ]: {len_ans}")
     color_print(Colors.WHITE, f"[ total numbers received ]: {len_out}") 

@@ -101,7 +101,8 @@ cmake_command="cmake \
 -DCMAKE_CXX_COMPILER=clang++ \
 -DCMAKE_BUILD_TYPE=Debug \
 -DSanitize=ON \
--DBUILD_TESTING=ON"
+-DBUILD_TESTING=ON \
+-DLOGGER=ON"
 
 custom_echo "${CONSOLE_COLOR_WHITE}" "" "${cmake_command}"
 eval ${cmake_command}

@@ -1,11 +1,21 @@
-.venv
-build/
+
+#personally vscode settings
 .vscode/
+
+# binary files, generated with this project
+build/
+
+# clangd automatic generated dir
 .cache
-settings.json
-*.png
-Doxyfile
-parser.tab.hpp
-parser.tab.cpp
-lexer.yy.cpp
+
+# tmp files
 tmp/
+
+# tree command output dir
+project_struct/
+
+# Documentation
+Doxyfile
+
+# log out dir
+log/
