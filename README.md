@@ -9,9 +9,9 @@
 
 # Зависимости:
 [flex](https://github.com/westes/flex)\
-[bison]()
- Зависимости есть для unit-тестирования и некоторых дебажных функций, об этом читайте далее.\
-Однако для удобной работы понадобятся следующие инструменты:
+[bison](https://web.mit.edu/gnu/doc/html/bison_7.html)
+ 
+Для удобной работы понадобятся следующие инструменты:
 
 ## Для комплиляции:
 [clang++](https://clang.org/)\
@@ -32,11 +32,24 @@ scanning.
 ```
 
 
-Тот самый младший брат языка C78, который только только начинает свой путь.  
-
+# Установка:
 ```bash
-cd front
-bison -d src/parser.y -o src/parser.tab.cpp
-flex -o src/lexer.yy.cpp src/lexer.l
-g++ src/main.cpp src/lexer.yy.cpp src/parser.tab.cpp -Iinc -o out
+git clone https://github.com/Matvey787/ParaCL
+cd ParaCL
 ```
+# Сборка:
+Если поддреживается bash или совместимый аналог:
+```bash
+bash start.sh
+```
+Иначе (релизная сборка по умолчанию):
+```bash
+cmake -S . -B build
+cmake --build build
+```
+Рекомендуется явно указать `Ninja` и `clang++`:
+```bash
+cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++
+```
+
+
