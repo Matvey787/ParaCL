@@ -1,7 +1,7 @@
 # flags
-# =============================================================================================================
-# =============================================================================================================
-# =============================================================================================================
+# =================================================================================================
+# =================================================================================================
+# =================================================================================================
 
 function(target_debug_flags target)
     if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
@@ -52,7 +52,7 @@ function(target_debug_flags target)
 
 endfunction(target_debug_flags)
 
-# =============================================================================================================
+# =================================================================================================
 
 function(target_hard_debug_flags target)
     if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
@@ -87,16 +87,10 @@ function(target_hard_debug_flags target)
             -Wimplicit-fallthrough
         )
 
-        target_compile_options(${target}
-            PRIVATE
-                ${DEBUG_FLAGS}
-        )
+        target_compile_options(${target} PRIVATE ${DEBUG_FLAGS})
 
         # linking sanitizers
-        target_link_options(${target}
-            PRIVATE
-                ${DEBUG_SANITIZERS}
-        )
+        target_link_options(${target} PRIVATE ${DEBUG_SANITIZERS})
 
     endif()
 
@@ -113,9 +107,9 @@ function(target_hard_debug_flags target)
 endfunction(target_hard_debug_flags)
 
 # sanitizers
-# =============================================================================================================
-# =============================================================================================================
-# =============================================================================================================
+# =================================================================================================
+# =================================================================================================
+# =================================================================================================
 
 function(target_debug_sanitizers target)
     if (NOT Sanitize)
@@ -132,16 +126,10 @@ function(target_debug_sanitizers target)
             -fsanitize=null
         )
 
-        target_compile_options(${target}
-            PRIVATE
-                ${DEBUG_SANITIZERS}
-        )
+        target_compile_options(${target} PRIVATE ${DEBUG_SANITIZERS})
 
         # linking sanitizers
-        target_link_options(${target}
-            PRIVATE
-                ${DEBUG_SANITIZERS}>
-        )
+        target_link_options(${target} PRIVATE ${DEBUG_SANITIZERS})
 
     endif()
 
@@ -157,7 +145,7 @@ function(target_debug_sanitizers target)
 
 endfunction(target_debug_sanitizers)
 
-# =============================================================================================================
+# =================================================================================================
 
 function(target_hard_debug_sanitizers target)
     if (NOT Sanitize)
@@ -191,42 +179,60 @@ function(target_hard_debug_sanitizers target)
             # -fsanitze=size
         )
     
-        target_compile_options(${target}
-            PRIVATE
-                ${DEBUG_SANITIZERS}
-        )
+        target_compile_options(${target} PRIVATE ${DEBUG_SANITIZERS})
 
         # linking sanitizers
-        target_link_options(${target}
-            PRIVATE
-                ${DEBUG_SANITIZERS}
-        )
+        target_link_options(${target} PRIVATE ${DEBUG_SANITIZERS})
 
     endif()
 
+endfunction(target_hard_debug_sanitizers)
+
+# =================================================================================================
+# =================================================================================================
+# =================================================================================================
+# functions to add all debug options, that autor know and sanitizers to target in Debug mode
+
+function(add_target_DEBUG__DEBUG_options target)
+    
     set(DEBUG_MACROSES
         _DEBUG
         DEBUG
     )
 
-    target_compile_definitions(${target}
-        PRIVATE
-            ${DEBUG_MACROSES}
-    )
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_definitions(${target} PRIVATE ${DEBUG_MACROSES})
+    endif()
 
-endfunction(target_hard_debug_sanitizers)
+endfunction(add_target_DEBUG__DEBUG_options)
 
-# =============================================================================================================
-# =============================================================================================================
-# =============================================================================================================
-# functions to add all debug options, that autor know and sanitizers to target in Debug mode
+
+function(add_target_debug_options target type)
+
+    if(NOT TARGET ${target})
+        message(FATAL_ERROR "add_target_debug_options: target '${target}' does not exist")
+    endif()
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+        if (type STREQUAL "hard")
+            target_hard_debug_options(${target})
+        else()
+            target_debug_options(${target})
+        endif()
+
+        add_target_DEBUG__DEBUG_options(${target})
+
+    endif()
+endfunction(add_target_debug_options)
+
 
 function(target_hard_debug_options target)
     target_hard_debug_flags(${target})
     target_hard_debug_sanitizers(${target})
 endfunction(target_hard_debug_options)
 
-# =============================================================================================================
+# =================================================================================================
 # functions to add all debug options, that autor know and sanitizers to target in Debug mode
 
 function(target_debug_options target)

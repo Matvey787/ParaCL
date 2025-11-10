@@ -3,12 +3,12 @@ project(paraCL
     LANGUAGES CXX
 )
 
-# =============================================================================================================
+# =================================================================================================
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# =============================================================================================================
+# =================================================================================================
 # set default settings
 
 # in default we build project in release
@@ -23,13 +23,13 @@ endif()
 
 option(BUILD_TESTING "Build tests" OFF)
 
-# =============================================================================================================
+# =================================================================================================
 
 set(CMAKE_SETTINGS_DIR ${PROJECT_SOURCE_DIR}/cmake)
 
 include(${CMAKE_SETTINGS_DIR}/debug.cmake)
 
-# =============================================================================================================
+# =================================================================================================
 # check depecndencies and install it if not found
 
 set(CMAKE_DEPS_DIR ${CMAKE_SETTINGS_DIR}/dep)
@@ -37,7 +37,7 @@ set(CMAKE_DEPS_DIR ${CMAKE_SETTINGS_DIR}/dep)
 include(${CMAKE_DEPS_DIR}/check-flex.cmake)
 include(${CMAKE_DEPS_DIR}/check-bison.cmake)
 
-# =============================================================================================================
+# =================================================================================================
 # set some global varibles
 
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
@@ -45,59 +45,57 @@ set(INC_DIR ${PROJECT_SOURCE_DIR}/include)
 
 set(PARACL_SRC_DIR ${SRC_DIR}/paracl)
 
-# =============================================================================================================
+# =================================================================================================
 # set some bison and flex variables
 
-set(BISON_OUT_DIR  ${CMAKE_BINARY_DIR}/bison-out)
-set(PARSER_SRC_DIR ${BISON_OUT_DIR})
-set(PARSER_CPP     parser.tab.cpp)
-set(PARSER_HPP     parser.tab.hpp)
-set(BISON_SRC_DIR  ${SRC_DIR}/back/src)
-set(BISON_SRC
-    ${BISON_SRC_DIR}/parser.y
-)
+set( BISON_OUT_DIR        ${CMAKE_BINARY_DIR}/bison-out )
+set( BISON_PARSER_SRC_DIR ${BISON_OUT_DIR}              )
+set( BISON_PARSER_CPP     parser.tab.cpp                )
+set( BISON_PARSER_HPP     parser.tab.hpp                )
+set( BISON_SRC_DIR        ${SRC_DIR}/back/src           )
+set( BISON_SRC            ${BISON_SRC_DIR}/parser.y     )
 
-set(FLEX_OUT_DIR  ${CMAKE_BINARY_DIR}/flex-out)
-set(LEXER_SRC_DIR ${FLEX_OUT_DIR})
-set(LEXER_CPP     lexer.yy.cpp)
-set(FLEX_SRC_DIR  ${SRC_DIR}/front/src)
-set(FLEX_INC_DIR  ${SRC_DIR}/front/inc)
-set(FLEX_SRC
-    ${FLEX_SRC_DIR}/lexer.l
-)
+set( FLEX_OUT_DIR         ${CMAKE_BINARY_DIR}/flex-out  )
+set( LEXER_SRC_DIR        ${FLEX_OUT_DIR}               )
+set( LEXER_CPP            lexer.yy.cpp                  )
+set( FLEX_SRC_DIR         ${SRC_DIR}/front/src          )
+set( FLEX_INC_DIR         ${SRC_DIR}/front/inc          )
+set( FLEX_SRC             ${FLEX_SRC_DIR}/lexer.l       )
 
-# =============================================================================================================
+# =================================================================================================
 # bison generating command
 
 add_custom_command(
     OUTPUT
-        ${PARSER_SRC_DIR}/${PARSER_CPP}
-        ${PARSER_SRC_DIR}/${PARSER_HPP}
+        ${BISON_PARSER_SRC_DIR}/${BISON_PARSER_CPP}
+        ${BISON_PARSER_SRC_DIR}/${BISON_PARSER_HPP}
     COMMAND
         ${CMAKE_COMMAND} -E make_directory ${BISON_OUT_DIR}
     COMMAND
-        ${BISON_EXECUTABLE} -o ${BISON_OUT_DIR}/${PARSER_CPP} ${BISON_SRC} -d
+        ${BISON_EXECUTABLE} -o ${BISON_OUT_DIR}/${BISON_PARSER_CPP} ${BISON_SRC} -d
     DEPENDS
         ${BISON_SRC}
     COMMENT
-        "Generate `${PARSER_CPP}' and `${PARSER_HPP}' with bison..."
+        "Generate `${BISON_PARSER_CPP}' and `${BISON_PARSER_HPP}' with bison..."
 )
 
 set(PARSER_LIB parser)
-add_library(${PARSER_LIB})
+add_library(${PARSER_LIB} STATIC)
 
 target_sources(${PARSER_LIB}
     PRIVATE
-        ${PARSER_SRC_DIR}/${PARSER_CPP}
+        ${BISON_PARSER_SRC_DIR}/${BISON_PARSER_CPP}
 )
 
 target_include_directories(${PARSER_LIB}
     PRIVATE
-        ${PARSER_SRC_DIR}/
+        ${BISON_PARSER_SRC_DIR}/
         ${FLEX_INC_DIR}/
 )
 
-# =============================================================================================================
+add_target_DEBUG__DEBUG_options(${PARSER_LIB})
+
+# =================================================================================================
 # flex generating command
 
 add_custom_command(
@@ -109,25 +107,27 @@ add_custom_command(
         ${FLEX_EXECUTABLE} -o ${FLEX_OUT_DIR}/${LEXER_CPP} ${FLEX_SRC}
     DEPENDS
         ${FLEX_SRC}
-        ${PARSER_SRC_DIR}/${PARSER_HPP}
+        ${BISON_PARSER_SRC_DIR}/${BISON_PARSER_HPP}
     COMMENT
         "Generate ${LEXER_CPP} with flex..."
 )
 
 set(LEXER_LIB lexer)
-add_library(${LEXER_LIB})
+add_library(${LEXER_LIB} STATIC)
 
 target_sources(${LEXER_LIB}
-    PUBLIC
+    PRIVATE
         ${LEXER_SRC_DIR}/${LEXER_CPP}
 )
 
 target_include_directories(${LEXER_LIB}
     PRIVATE
-        ${PARSER_SRC_DIR}
+        ${BISON_PARSER_SRC_DIR}
 )
 
-# =============================================================================================================
+add_target_DEBUG__DEBUG_options(${LEXER_LIB})
+
+# =================================================================================================
 # add paracl extension library
 
 set(PARACL_EXTENSION_LIB paracl_extension)
@@ -148,9 +148,9 @@ target_sources(${PARACL_EXTENSION_LIB}
             ${PARACL_SRC}
 )
 
-target_hard_debug_options(${PARACL_EXTENSION_LIB})
+add_target_debug_options(${PARACL_EXTENSION_LIB} hard)
 
-# =============================================================================================================
+# =================================================================================================
 # add options parser library
 
 set(OPTIONS_PARSER_LIB options_parse)
@@ -168,7 +168,7 @@ target_sources(${OPTIONS_PARSER_LIB}
         TYPE
             CXX_MODULES
         FILES
-            ${OPTIONS_PARSER_SRC}
+            ${OPTIONS_PARSER_SRC}   
 )
 
 target_include_directories(${OPTIONS_PARSER_LIB}
@@ -182,9 +182,9 @@ target_link_libraries(${OPTIONS_PARSER_LIB}
         ${PARACL_EXTENSION_LIB}
 )
 
-target_hard_debug_options(${OPTIONS_PARSER_LIB})
+add_target_debug_options(${OPTIONS_PARSER_LIB} hard)
 
-# =============================================================================================================
+# =================================================================================================
 # run paracl library
 
 set(RUN_PARACL_LIB run_paracl)
@@ -221,9 +221,8 @@ target_link_libraries(${RUN_PARACL_LIB}
         ${LEXER_LIB}
 )
 
-target_hard_debug_options(${RUN_PARACL_LIB})
-
-# =============================================================================================================
+add_target_debug_options(${RUN_PARACL_LIB} hard)
+# =================================================================================================
 
 set(PARACL_EXE paracl)
 
@@ -240,9 +239,9 @@ target_link_libraries(${PARACL_EXE}
         ${RUN_PARACL_LIB}
 )
 
-target_hard_debug_options(${PARACL_EXE})
+add_target_debug_options(${PARACL_EXE} hard)
 
-# =============================================================================================================
+# =================================================================================================
 
 if (BUILD_TESTING)
     enable_testing()
@@ -264,4 +263,4 @@ if (BUILD_TESTING)
     )
 endif()
 
-# =============================================================================================================
+# =================================================================================================
