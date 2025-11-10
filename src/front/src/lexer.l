@@ -73,7 +73,7 @@ NEWLINE     \n
             }
 
 .       { 
-            std::cerr << "Error at line " << current_line << ": unknown character '" << yytext << "'" << std::endl;
+            std::cerr << "Error at line " << current_line << ": unknown character '" << yytext << "'";
             return 0;
         }
 

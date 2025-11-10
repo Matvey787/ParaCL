@@ -16,6 +16,16 @@ void yyerror(const char* s) {
     std::cerr << "Error at line " << get_current_line() << ": " << s << std::endl;
 }
 
+#ifdef DEBUG
+    #define DEBUG_COUT_M(message)                \
+        do {                                     \
+            std::cout << (message) << std::endl; \
+        } while(0)
+#else
+    #define DEBUG_COUT_M(message)                \
+        do { } while(0)
+#endif
+
 %}
 
 %union {
@@ -36,7 +46,9 @@ void yyerror(const char* s) {
 %%
 
 program:
-    statements { std::cout << "Execution completed!" << std::endl; }
+    statements {
+        DEBUG_COUT_M("Execution completed!"); 
+    }
     ;
 
 statements:
@@ -53,27 +65,34 @@ statement:
 assignment:
     VAR AS expression {
         variables[*$1] = $3;
-        std::cout << "Assigned " << $3 << " to variable " << *$1 << std::endl;
+        #ifdef DEBUG
+            std::cout << "Assigned " << $3 << " to variable " << *$1 << std::endl;
+        #endif
         delete $1;
     }
     ;
 
 print_statement:
     PRINT expression {
-        std::cout << "Output: " << $2 << std::endl;
+        DEBUG_COUT_M("Output:");
+        std::cout << $2 << std::endl;
     }
     ;
 
 while_statement:
     WH LCIB expression RCIB LCUB statements RCUB {
-        std::cout << "While loop executed" << std::endl;
+        DEBUG_COUT_M("While loop executed");
     }
     ;
 
 input_statement:
     IN AS VAR {
         int value;
-        std::cout << "Enter value for " << *$3 << ": ";
+
+        #ifdef DEBUG
+            std::cout << "Enter value for " << *$3 << ": ";
+        #endif
+
         std::cin >> value;
         variables[*$3] = value;
         delete $3;

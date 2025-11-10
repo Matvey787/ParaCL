@@ -1,4 +1,4 @@
-# =============================================================================================================
+# =================================================================================================
 
 # check thah pyhon3 exist.
 # python need for e2e tests
@@ -11,7 +11,7 @@ if (NOT PYTHON_EXECUTABLE)
     message(FATAL_ERROR "Python3 NOT find. No test available.")
 endif()
 
-# =============================================================================================================
+# =================================================================================================
 
 # create tun_test script for e2e triangles test
 set(DEBUG_DIR              ${PROJECT_SOURCE_DIR}/debug)
@@ -26,12 +26,12 @@ set(OUTPUT_SCRIPT          ${PROJECT_BINARY_DIR}/run_test)
 
 string(TIMESTAMP CURRENT_TIME "%Y-%m-%d %H:%M:%S")
 
-# give execute permission to python scripp
+# give execute permission to python script
 file(CHMOD ${PYTHON_RUN_TEST_SCRIPT}
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
 )
 
-# =============================================================================================================
+# =================================================================================================
 
 # creating run_test from run_test.in
 configure_file(
@@ -45,4 +45,4 @@ file(CHMOD ${OUTPUT_SCRIPT}
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
 )
 
-# =============================================================================================================
+# =================================================================================================
