@@ -1,10 +1,10 @@
-import options_parser;
-import run_paracl;
-import parse_paracl_exit_code;
-
 #if defined(LOGGER)
 #include "pineaplog.hpp"
 #endif /* defined(LOGGER) */
+
+import options_parser;
+import run_paracl;
+import parse_paracl_exit_code;
 
 //---------------------------------------------------------------------------------------------------------------
 

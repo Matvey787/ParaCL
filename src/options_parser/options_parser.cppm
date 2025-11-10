@@ -2,6 +2,10 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
+#if defined(LOGGER)
+#include "pineaplog.hpp"
+#endif /* defined(LOGGER) */
+
 #include <getopt.h>
 #include <unistd.h>
 #include <cstdlib>
@@ -15,10 +19,6 @@ module;
 #include "global/custom_console_output.hpp"
 
 import paracl_extension;
-
-#if defined(LOGGER)
-#include "pineaplog.hpp"
-#endif /* defined(USE_LOGGER) */
 
 //---------------------------------------------------------------------------------------------------------------
 

@@ -2,15 +2,15 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
+#if defined(LOGGER)
+#include "pineaplog.hpp"
+#endif /* defined(LOGGER) */
+
 #include <iostream>
 #include <cstdlib>
 
 #include "global/global.hpp"
 #include "global/custom_console_output.hpp"
-
-#if defined(LOGGER)
-#include "pineaplog.hpp"
-#endif /* defined(USE_LOGGER) */
 
 //---------------------------------------------------------------------------------------------------------------
 

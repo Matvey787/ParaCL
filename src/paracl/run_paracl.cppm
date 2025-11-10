@@ -2,6 +2,10 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
+#if defined(LOGGER)
+#include "pineaplog.hpp"
+#endif /* defined(LOGGER) */
+
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -16,10 +20,6 @@ module;
 
 import paracl_extension;
 import options_parser;
-
-#if defined(LOGGER)
-#include "pineaplog.hpp"
-#endif /* defined(LOGGER) */
 
 extern FILE* yyin;
 extern int yyparse();
