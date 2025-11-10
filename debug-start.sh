@@ -99,7 +99,9 @@ cmake_command="cmake \
 -S ${source_dir} \
 -B ${build_dir} \
 -DCMAKE_CXX_COMPILER=clang++ \
--DCMAKE_BUILD_TYPE=DEbug"
+-DCMAKE_BUILD_TYPE=Debug \
+-DSanitize=ON \
+-DBUILD_TESTING=ON"
 
 custom_echo "${CONSOLE_COLOR_WHITE}" "" "${cmake_command}"
 eval ${cmake_command}

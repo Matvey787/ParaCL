@@ -16,7 +16,7 @@ function(target_debug_flags target)
 
         target_compile_options(${target}
             PRIVATE
-                $<$<CONFIG:Debug>:${DEBUG_FLAGS}>
+                ${DEBUG_FLAGS}
         )
 
     else() # exptect g++ or clang++
@@ -67,7 +67,7 @@ function(target_hard_debug_flags target)
 
         target_compile_options(${target}
             PRIVATE
-                $<$<CONFIG:Debug>:${DEBUG_FLAGS}>
+                ${DEBUG_FLAGS}
         )
 
     else() # exptect g++ or clang++
@@ -107,7 +107,7 @@ function(target_hard_debug_flags target)
 
     target_compile_definitions(${target}
         PRIVATE
-            ${DEBUG_MACROSES}>
+            ${DEBUG_MACROSES}
     )
 
 endfunction(target_hard_debug_flags)
@@ -152,7 +152,7 @@ function(target_debug_sanitizers target)
 
     target_compile_definitions(${target}
         PRIVATE
-            ${DEBUG_MACROSES}>
+            ${DEBUG_MACROSES}
     )
 
 endfunction(target_debug_sanitizers)
@@ -188,6 +188,7 @@ function(target_hard_debug_sanitizers target)
             -fsanitize=returns-nonnull-attribute
             -fsanitize=shift
             -fsanitize=signed-integer-overflow
+            # -fsanitze=size
         )
     
         target_compile_options(${target}
@@ -198,7 +199,7 @@ function(target_hard_debug_sanitizers target)
         # linking sanitizers
         target_link_options(${target}
             PRIVATE
-                ${DEBUG_SANITIZERS}>
+                ${DEBUG_SANITIZERS}
         )
 
     endif()
@@ -210,7 +211,7 @@ function(target_hard_debug_sanitizers target)
 
     target_compile_definitions(${target}
         PRIVATE
-            ${DEBUG_MACROSES}>
+            ${DEBUG_MACROSES}
     )
 
 endfunction(target_hard_debug_sanitizers)
@@ -221,14 +222,14 @@ endfunction(target_hard_debug_sanitizers)
 # functions to add all debug options, that autor know and sanitizers to target in Debug mode
 
 function(target_hard_debug_options target)
-    target_hard_debug_flags(target)
-    target_hard_debug_sanitizers(target)
+    target_hard_debug_flags(${target})
+    target_hard_debug_sanitizers(${target})
 endfunction(target_hard_debug_options)
 
 # =============================================================================================================
 # functions to add all debug options, that autor know and sanitizers to target in Debug mode
 
 function(target_debug_options target)
-    target_debug_flags(target)
-    target_debug_sanitizers(target)
+    target_debug_flags(${target})
+    target_debug_sanitizers(${target})
 endfunction(target_debug_options)
