@@ -84,7 +84,7 @@ add_custom_command(
 )
 
 set(PARSER_LIB parser)
-add_library(${PARSER_LIB} STATIC)
+add_library(${PARSER_LIB})
 
 target_sources(${PARSER_LIB}
     PRIVATE
@@ -115,10 +115,10 @@ add_custom_command(
 )
 
 set(LEXER_LIB lexer)
-add_library(${LEXER_LIB} STATIC)
+add_library(${LEXER_LIB})
 
 target_sources(${LEXER_LIB}
-    PRIVATE
+    PUBLIC
         ${LEXER_SRC_DIR}/${LEXER_CPP}
 )
 
@@ -131,7 +131,7 @@ target_include_directories(${LEXER_LIB}
 # add paracl extension library
 
 set(PARACL_EXTENSION_LIB paracl_extension)
-add_library(${PARACL_EXTENSION_LIB} STATIC)
+add_library(${PARACL_EXTENSION_LIB})
 
 set(PARACL_EXTENSION_SRC_DIR ${PARACL_SRC_DIR})
 set(PARACL_SRC
@@ -154,7 +154,7 @@ target_hard_debug_options(${PARACL_EXTENSION_LIB})
 # add options parser library
 
 set(OPTIONS_PARSER_LIB options_parse)
-add_library(${OPTIONS_PARSER_LIB} STATIC)
+add_library(${OPTIONS_PARSER_LIB})
 
 set(OPTIONS_PARSER_SRC_DIR ${SRC_DIR}/options_parser)
 set(OPTIONS_PARSER_SRC
@@ -188,7 +188,7 @@ target_hard_debug_options(${OPTIONS_PARSER_LIB})
 # run paracl library
 
 set(RUN_PARACL_LIB run_paracl)
-add_library(${RUN_PARACL_LIB} STATIC)
+add_library(${RUN_PARACL_LIB})
 
 set(RUN_PARACL_SRC_DIR ${PARACL_SRC_DIR})
 set(RUN_PARACL_SRC
@@ -246,9 +246,24 @@ target_hard_debug_options(${PARACL_EXE})
 
 if(BUILD_TESTING)
     enable_testing()
-    add_subdirectory(tests)
+    include(CTest)
+    
+    set(CMAKE_E2E_TESTS_SETTING_DIR ${CMAKE_SETTINGS_DIR}/tests/e2e)
 
-    include(${CMAKE_SETTINGS_DIR}/tests/e2e/create-all-e2e-tests.cmake)
+    include(${CMAKE_E2E_TESTS_SETTING_DIR}/add-e2e-to-target-function.cmake)
+    include(${CMAKE_E2E_TESTS_SETTING_DIR}/e2e-paracl-python-script.cmake)
+
+    set(PARACL_E2E_TESTS_DIR ${PROJECT_SOURCE_DIR}/tests/e2e)
+    set(PARACL_E2E_DAT_DIR ${PARACL_E2E_TESTS_DIR}/dat)
+    set(PARACL_E2E_ANS_DIR ${PARACL_E2E_TESTS_DIR}/ans)
+
+
+    # target_e2e_test test_target run_script test_dir ans_dir
+    target_e2e_test(${PARACL_EXE}
+        ${PYTHON_RUN_TEST_SCRIPT}
+        ${PARACL_E2E_DAT_DIR}
+        ${PARACL_E2E_ANS_DIR}
+    )
 endif()
 
-
+# =============================================================================================================

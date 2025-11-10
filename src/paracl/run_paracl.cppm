@@ -17,14 +17,12 @@ module;
 import paracl_extension;
 import options_parser;
 
+extern FILE* yyin;
+extern int yyparse();
+
 //---------------------------------------------------------------------------------------------------------------
 
 export module run_paracl;
-
-//---------------------------------------------------------------------------------------------------------------
-
-extern FILE* yyin;
-// extern int yyparse();
 
 //---------------------------------------------------------------------------------------------------------------
 
@@ -48,15 +46,10 @@ int run_paracl(const OptionsParsing::program_options_t& program_options)
     msg_bad_exit(sources_quantity <= 1, "now we work only with 1 input file :(");
 
     if (sources_quantity == 0)
-    {
-        msg_assert(0, "");
         return no_sources_action();
-    }
+
     if (sources_quantity == 1)
-    {
-        msg_assert(0, "");
         return one_source_action(sources[0]);
-    }
 
     builtin_unreachable_wrapper("now we dont parse any situations");
 }
