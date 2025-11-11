@@ -90,7 +90,7 @@ statement:
 
 assignment:
     VAR AS expression {
-        $$ = new ParaCL::Parser::AssignStmt(*$1, *$3);
+        $$ = new ParaCL::Parser::AssignStmt(*$1, std::unique_ptr<ParaCL::Parser::Expr>($3));
         #ifdef DEBUG
             std::cout << "Created assignment for variable " << *$1 << std::endl;
         #endif
@@ -100,21 +100,21 @@ assignment:
 
 print_statement:
     PRINT expression {
-        $$ = new ParaCL::Parser::PrintStmt(*$2);
+        $$ = new ParaCL::Parser::PrintStmt(std::unique_ptr<ParaCL::Parser::Expr>($2));
     }
     ;
 
 while_statement:
     WH LCIB expression RCIB LCUB statements RCUB {
-        // Конвертируем вектор указателей в вектор unique_ptr для BlockStmt
         auto body_stmts = std::vector<std::unique_ptr<ParaCL::Parser::Stmt>>();
         for (auto stmt : *$6) {
             body_stmts.push_back(std::unique_ptr<ParaCL::Parser::Stmt>(stmt));
         }
         auto body = new ParaCL::Parser::BlockStmt(std::move(body_stmts));
-        auto condition = new ParaCL::Parser::Expr(std::move(*$3));
-        $$ = new ParaCL::Parser::WhileStmt(std::unique_ptr<ParaCL::Parser::Expr>(condition), 
-                                           std::unique_ptr<ParaCL::Parser::BlockStmt>(body));
+        $$ = new ParaCL::Parser::WhileStmt(
+            std::unique_ptr<ParaCL::Parser::Expr>($3), 
+            std::unique_ptr<ParaCL::Parser::BlockStmt>(body)
+        );
         #ifdef DEBUG
             std::cout << "Created while statement" << std::endl;
         #endif
@@ -124,47 +124,81 @@ while_statement:
 
 input_statement:
     IN AS VAR {
-        // $$ = new ParaCL::Parser::InputExpr(*$3);
-        // delete $3;
     }
     ;
 
 expression:
     simple_expression { $$ = $1; }
     | expression ISAB simple_expression { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::ISAB, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::ISAB, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     | expression ISABE simple_expression { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::ISABE, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::ISABE, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     | expression ISLS simple_expression { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::ISLS, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::ISLS, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     | expression ISLSE simple_expression { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::ISLSE, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::ISLSE, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     | expression ISEQ simple_expression { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::ISEQ, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::ISEQ, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     ;
 
 simple_expression:
     term { $$ = $1; }
     | simple_expression ADD term { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::ADD, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::ADD, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     | simple_expression SUB term { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::SUB, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::SUB, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     ;
 
 term:
     factor { $$ = $1; }
     | term MUL factor { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::MUL, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::MUL, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     | term DIV factor { 
-        $$ = new ParaCL::Parser::BinExpr(ParaCL::token_t::DIV, *$1, *$3);
+        $$ = new ParaCL::Parser::BinExpr(
+            ParaCL::token_t::DIV, 
+            std::unique_ptr<ParaCL::Parser::Expr>($1), 
+            std::unique_ptr<ParaCL::Parser::Expr>($3)
+        );
     }
     ;
 
@@ -189,7 +223,7 @@ factor:
 
 assignment_expression:
     VAR AS expression {
-        $$ = new ParaCL::Parser::AssignExpr(*$1, *$3);
+        $$ = new ParaCL::Parser::AssignExpr(*$1, std::unique_ptr<ParaCL::Parser::Expr>($3));
         delete $1;
     }
     ;

@@ -2,24 +2,18 @@
 #define PARACL_H
 
 #include "token_t.hpp"
-
 #include <vector>
-#include <variant>
 #include <string>
 #include <memory>
 
 namespace ParaCL
 {
-// ================================ parser ================================
 
 namespace Parser {
 
-// Abstract Syntax Tree (AST) node
 struct ASTNode {
     virtual ~ASTNode() = default;
 };
-
-using ASTNodePtr = std::unique_ptr<ASTNode>;
 
 // expressions
 struct Expr : ASTNode {};
@@ -29,74 +23,62 @@ struct NumExpr : Expr {
     NumExpr(int v) : value(v) {}
 };
 
-struct VarExpr final : Expr {
+struct VarExpr : Expr {
     std::string name;
     VarExpr(std::string n) : name(std::move(n)) {}
 };
 
-struct InputExpr final : Expr {};
+struct InputExpr : Expr {};
 
-struct BinExpr final : Expr {
+struct BinExpr : Expr {
     token_t op;
-    Expr left;
-    Expr right;
-    BinExpr(token_t op, Expr lhs, Expr rhs)
+    std::unique_ptr<Expr> left;
+    std::unique_ptr<Expr> right;
+    BinExpr(token_t op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : op(op), left(std::move(lhs)), right(std::move(rhs)) {}
 };
 
-struct AssignExpr final : Expr {
+struct AssignExpr : Expr {
     std::string name;
-    Expr value;
-    AssignExpr(std::string n, Expr v)
+    std::unique_ptr<Expr> value;
+    AssignExpr(std::string n, std::unique_ptr<Expr> v)
         : name(std::move(n)), value(std::move(v)) {}
 };
 
-// statements (=, print, block, while)
+// statements
 struct Stmt : ASTNode {};
 
-struct AssignStmt final : Stmt {
+struct AssignStmt : Stmt {
     std::string name;
-    Expr value;
-    AssignStmt(std::string n, Expr v)
+    std::unique_ptr<Expr> value;
+    AssignStmt(std::string n, std::unique_ptr<Expr> v)
         : name(std::move(n)), value(std::move(v)) {}
 };
 
-struct PrintStmt final : Stmt {
-    Expr expr;
-    PrintStmt(Expr e) : expr(std::move(e)) {}
+struct PrintStmt : Stmt {
+    std::unique_ptr<Expr> expr;
+    PrintStmt(std::unique_ptr<Expr> e) : expr(std::move(e)) {}
 };
 
-struct BlockStmt final : Stmt {
+struct BlockStmt : Stmt {
     std::vector<std::unique_ptr<Stmt>> statements;
     BlockStmt() = default;
     BlockStmt(std::vector<std::unique_ptr<Stmt>> stmts)
         : statements(std::move(stmts)) {}
 };
 
-struct WhileStmt final : Stmt {
+struct WhileStmt : Stmt {
     std::unique_ptr<Expr> condition;
     std::unique_ptr<BlockStmt> body;
     WhileStmt(std::unique_ptr<Expr> cond, std::unique_ptr<BlockStmt> b)
         : condition(std::move(cond)), body(std::move(b)) {}
 };
 
-struct ProgramAST final : ASTNode {
+struct ProgramAST {
     std::vector<std::unique_ptr<Stmt>> statements;
 };
 
 }; // namespace Parser
-
-// ================================ compiler ================================
-namespace Compiler {
-
-void compileByCpp(const ParaCL::Parser::ProgramAST& progAST);
-
-
-
-
-}; // namespace Compiler
-
 }; // namespace ParaCL
-
 
 #endif
