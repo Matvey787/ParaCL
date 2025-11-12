@@ -8,19 +8,21 @@ module;
 
 #include "global/global.hpp"
 #include "global/custom_console_output.hpp"
-#include "paraCL.hpp"
 
 #include "lexer.hpp"
-#include "parser.tab.hpp"
 
 import paracl_extension;
 import options_parser;
-import paraCL;
+// import paraCL;
+#include "paraCL_crutch_for_parsery.hpp"
+#include "parser.tab.hpp"
+import dump;
+import compiler;
 
 extern FILE* yyin;
 extern int yyparse();
 
-extern ParaCL::Parser::ProgramAST program;
+extern ParaCL::ProgramAST program;
 
 
 export module run_paracl;
@@ -77,7 +79,8 @@ int one_source_action(const std::string& source)
     yyin = input_file;
 
     int result = yyparse();
-    ParaCL::Parser::dump(program);
+    ParaCL::dump(program);
+    ParaCL::compile(program);
     
     fclose(input_file);
 

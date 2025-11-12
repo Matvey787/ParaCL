@@ -92,7 +92,7 @@ target_sources(${PARSER_LIB}
 
 target_include_directories(${PARSER_LIB}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/back/inc
+        ${PROJECT_SOURCE_DIR}/src/back/inc/
         ${BISON_PARSER_SRC_DIR}/
         ${FLEX_INC_DIR}/
 )
@@ -126,7 +126,7 @@ target_sources(${LEXER_LIB}
 
 target_include_directories(${LEXER_LIB}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/back/inc
+        ${PROJECT_SOURCE_DIR}/src/back/inc/
         ${BISON_PARSER_SRC_DIR}
 )
 
@@ -209,18 +209,18 @@ set(RUN_PARACL_SRC
 
 target_sources(${RUN_PARACL_LIB}
     PUBLIC
-        FILE_SET
-            CXX_MODULES
-        TYPE
-            CXX_MODULES
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
         FILES
             ${PROJECT_SOURCE_DIR}/src/back/src/paraCL.cppm
-            ${RUN_PARACL_SRC}
+            ${PROJECT_SOURCE_DIR}/src/back/src/compiler.cppm
+            ${PROJECT_SOURCE_DIR}/src/back/src/dump.cppm
+            ${RUN_PARACL_SRC} 
 )
 
 target_include_directories(${RUN_PARACL_LIB}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/back/inc
+        ${PROJECT_SOURCE_DIR}/src/back/inc/
         ${INC_DIR}
         ${LEXER_SRC_DIR}
         ${BISON_OUT_DIR}

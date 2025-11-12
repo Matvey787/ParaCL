@@ -1,11 +1,19 @@
-#include "paraCL.hpp"
+module;
 
 #include <optional>
 #include <limits>
 #include <stdexcept>
 #include <iostream>
+#include <vector>
+#include <memory>
+#include <unordered_map>
+#include "paraCL_crutch_for_parsery.hpp"
 
-namespace ParaCL::Compiler {
+// import paraCL;
+
+export module compiler;
+
+using namespace ParaCL;
 
 class SymbolTable {
     struct SymbolData {
@@ -24,31 +32,35 @@ public:
         scopes.pop_back();
     }
 
-    std::optional<std::reference_wrapper<SymbolData>> lookup(const std::string& name)
+    SymbolData* lookup(const std::string& name)
     {
         for (auto it = scopes.rbegin(), itend = scopes.rend(); it != itend; ++it)
         {
             auto founded = it->find(name);
 
-            if (founded != it->end()) return founded->second;
+            if (founded != it->end()) return &(founded->second);
         }
-        return std::nullopt;
+        return nullptr;
     }
 
-    void declare(const std::string& name, const int value)
+    void
+    declare(const std::string& name, const int value)
     {
         scopes.back()[name] = {value};
     }
 };
 
 static void
-handleStmt(const ParaCL::Parser::Stmt* stmt, SymbolTable& table);
+handleStmt(const Stmt* stmt, SymbolTable& table);
 static int
-handleExpr(const ParaCL::Parser::Expr* expr, SymbolTable& table);
+handleExpr(const Expr* expr, SymbolTable& table);
 static int
 executeBinOp(int leftOp, int rightOp, token_t binOp);
 
-void compileByCpp(const ParaCL::Parser::ProgramAST& progAST)
+export namespace ParaCL {
+
+void
+compile(const ParaCL::ProgramAST& progAST)
 {
     SymbolTable table;
     table.enter(); // global scope
@@ -58,30 +70,33 @@ void compileByCpp(const ParaCL::Parser::ProgramAST& progAST)
     }
     table.leave();
 }
+ 
+}
 
-static void
-handleStmt(const ParaCL::Parser::Stmt* stmt, SymbolTable& table)
+
+void
+handleStmt(const ParaCL::Stmt* stmt, SymbolTable& table)
 {
-    if (auto assign = dynamic_cast<const ParaCL::Parser::AssignStmt*>(stmt))
+    if (auto assign = dynamic_cast<const ParaCL::AssignStmt*>(stmt))
     {
-        auto e = dynamic_cast<const ParaCL::Parser::Expr*>(assign->value.get());
+        auto e = dynamic_cast<const ParaCL::Expr*>(assign->value.get());
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
 
         table.declare(assign->name, result);
     }
-    else if (auto print = dynamic_cast<const ParaCL::Parser::PrintStmt*>(stmt))
+    else if (auto print = dynamic_cast<const ParaCL::PrintStmt*>(stmt))
     {
-        auto e = dynamic_cast<const ParaCL::Parser::Expr*>(print->expr.get());
+        auto e = dynamic_cast<const ParaCL::Expr*>(print->expr.get());
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
         std::cout << result << '\n'; 
     }
-    else if (auto whileStmt = dynamic_cast<const ParaCL::Parser::WhileStmt*>(stmt))
+    else if (auto whileStmt = dynamic_cast<const ParaCL::WhileStmt*>(stmt))
     {
-        const std::vector<std::unique_ptr<ParaCL::Parser::Stmt>>&
+        const std::vector<std::unique_ptr<ParaCL::Stmt>>&
         bodyStmts = whileStmt->body->statements;
 
 
@@ -89,9 +104,9 @@ handleStmt(const ParaCL::Parser::Stmt* stmt, SymbolTable& table)
             for (auto& s : bodyStmts) handleStmt(s.get(), table);
 
     }
-    else if (auto block = dynamic_cast<const ParaCL::Parser::BlockStmt*>(stmt))
+    else if (auto block = dynamic_cast<const ParaCL::BlockStmt*>(stmt))
     {
-        const std::vector<std::unique_ptr<ParaCL::Parser::Stmt>>& blockStmts = block->statements;
+        const std::vector<std::unique_ptr<ParaCL::Stmt>>& blockStmts = block->statements;
 
         bool blockIsEmpty = blockStmts.empty();
 
@@ -106,13 +121,13 @@ handleStmt(const ParaCL::Parser::Stmt* stmt, SymbolTable& table)
 }
 
 
-static int
-handleExpr(const ParaCL::Parser::Expr* expr, SymbolTable& table)
+int
+handleExpr(const ParaCL::Expr* expr, SymbolTable& table)
 {
-    if (auto bin = dynamic_cast<const ParaCL::Parser::BinExpr*>(expr))
+    if (auto bin = dynamic_cast<const ParaCL::BinExpr*>(expr))
     {
-        auto leftExpr =  dynamic_cast<const ParaCL::Parser::Expr*>(bin->left.get());
-        auto rightExpr = dynamic_cast<const ParaCL::Parser::Expr*>(bin->right.get());
+        auto leftExpr =  dynamic_cast<const ParaCL::Expr*>(bin->left.get());
+        auto rightExpr = dynamic_cast<const ParaCL::Expr*>(bin->right.get());
 
         if (!leftExpr || !rightExpr) throw std::runtime_error("BinExpr children are not Expr");
 
@@ -121,16 +136,17 @@ handleExpr(const ParaCL::Parser::Expr* expr, SymbolTable& table)
 
         return executeBinOp(leftResult, rightResult, bin->op);
     }
-    else if (auto num = dynamic_cast<const ParaCL::Parser::NumExpr*>(expr)) {
+    else if (auto num = dynamic_cast<const ParaCL::NumExpr*>(expr)) {
         return num->value;
     }
-    else if (auto var = dynamic_cast<const ParaCL::Parser::VarExpr*>(expr)) {
-        if (!table.lookup(var->name).has_value())
+    else if (auto var = dynamic_cast<const ParaCL::VarExpr*>(expr)) {
+        auto* varValue = table.lookup(var->name);
+        if (!varValue)
             throw std::runtime_error("Var [ " + var->name + " ] doesn't found in table");
 
-        return table.lookup(var->name).value().get().value;
+        return varValue->value;
     }
-    else if (auto in = dynamic_cast<const ParaCL::Parser::InputExpr*>(expr)) {
+    else if (auto in = dynamic_cast<const ParaCL::InputExpr*>(expr)) {
         int value = 0;
         std::cin >> value;
         return value;
@@ -141,7 +157,7 @@ handleExpr(const ParaCL::Parser::Expr* expr, SymbolTable& table)
     }
 }
 
-static int
+int
 executeBinOp(int leftOp, int rightOp, token_t binOp)
 {
     switch (binOp)
@@ -159,4 +175,3 @@ executeBinOp(int leftOp, int rightOp, token_t binOp)
     }
 }
 
-}; // namespace ParaCL::Compiler

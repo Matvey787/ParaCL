@@ -1,130 +1,153 @@
 module;
-#include <memory>
-#include <stdexcept>
-#include <fstream>
-#include <sstream>
-#include <iostream>
+
+#include <unordered_map>
 #include <string>
 #include <vector>
-#include <unordered_map>
-
-#include "paraCL.hpp" 
+#include <string>
+#include <memory>
 
 export module paraCL;
 
-namespace {
+export namespace ParaCL {
 
-std::string ptrToStr(const void* ptr) {
-    std::ostringstream oss;
-    oss << ptr;
-    return oss.str();
-}
-
-void dumpExpr(std::ostream& out, const ParaCL::Parser::Expr* expr);
-void dumpStmt(std::ostream& out, const ParaCL::Parser::Stmt* stmt);
-
-}
-
-export namespace ParaCL::Parser {
-
-void dump(ProgramAST& progAST, const std::string& filename = "imgs/ast.dot")
+enum class token_t
 {
-    std::ofstream out(filename);
-    out << "digraph AST {\n";
-    out << "  node [shape=box];\n";
+    // +, -, *, /  tokens
+    ADD,
+    SUB,
+    MUL,
+    DIV,
 
-    std::string rootId = "Program";
-    out << "  \"" << rootId << "\" [label=\"Program\"];\n";
+    // >, >=, <, <=, ==  tokens
+    ISAB,
+    ISABE,
+    ISLS,
+    ISLSE,
+    ISEQ,
 
-    for (auto& stmt : progAST.statements)
-    {
-        dumpStmt(out, stmt.get());
-        out << "  \"" << rootId << "\" -> \"" << ptrToStr(stmt.get()) << "\";\n";
-    }
+    // (, ), {, }  tokens
+    LCIB,
+    RCIB,
+    LCUB,
+    RCUB,
 
-    out << "}\n";
-    out.close();
+    // while, input, =, print  tokens
+    WH,
+    IN,
+    AS,
+    PRINT,
 
-    std::string dot_cmd = "dot -Tsvg " + filename + " -o imgs/ast.svg";
-    system(dot_cmd.c_str());
-}
+    // number, variable, semicolon  tokens 
+    NUM,
+    VAR,
+    SC,
 
-} // namespace ParaCL::Parser
+    // end of translation  token
+    EOT
+};
 
-namespace {
+const std::unordered_map<std::string, token_t> tokenMap =
+{
+    { "+",     token_t::ADD   },
+    { "-",     token_t::SUB   },
+    { "*",     token_t::MUL   },
+    { "/",     token_t::DIV   },
 
-void dumpExpr(std::ostream& out, const ParaCL::Parser::Expr* expr) {
-    std::string nodeId = ptrToStr(expr);
-    std::string label;
+    { ">",     token_t::ISAB  },
+    { ">=",    token_t::ISABE },
+    { "<",     token_t::ISLS  },
+    { "<=",    token_t::ISLSE },
+    { "==",    token_t::ISEQ  },
 
-    if (auto bin = dynamic_cast<const ParaCL::Parser::BinExpr*>(expr)) {
-        label = ParaCL::reverseTokenMap.at(bin->op);
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\", style=filled, fillcolor=\"lightyellow\"];\n";
+    { "(",     token_t::LCIB  },
+    { ")",     token_t::RCIB  },
+    { "{",     token_t::LCUB  },
+    { "}",     token_t::RCUB  },
 
-        dumpExpr(out, bin->left.get());
-        dumpExpr(out, bin->right.get());
+    { "while", token_t::WH    },
+    { "?",     token_t::IN    },
+    { "=",     token_t::AS    },
+    { "print", token_t::PRINT },
 
-        out << "  \"" << nodeId << "\" -> \"" << ptrToStr(bin->left.get()) << "\";\n";
-        out << "  \"" << nodeId << "\" -> \"" << ptrToStr(bin->right.get()) << "\";\n";
-    }
-    else if (auto num = dynamic_cast<const ParaCL::Parser::NumExpr*>(expr)) {
-        label = "Num: " + std::to_string(num->value);
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\"];\n";
-    }
-    else if (auto var = dynamic_cast<const ParaCL::Parser::VarExpr*>(expr)) {
-        label = "Var: " + var->name;
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\"];\n";
-    }
-    else if (auto in = dynamic_cast<const ParaCL::Parser::InputExpr*>(expr)) {
-        label = "Input";
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\"];\n";
-    }
-    else {
-        throw std::runtime_error("Unknown expression!");
-    }
-}
+    { ";",     token_t::SC    }
+};
 
-void dumpStmt(std::ostream& out, const ParaCL::Parser::Stmt* stmt) {
-    std::string nodeId = ptrToStr(stmt);
-    std::string label;
+const std::unordered_map<token_t, std::string> reverseTokenMap = []
+{
+    std::unordered_map<token_t, std::string> rev;
 
-    if (auto assign = dynamic_cast<const ParaCL::Parser::AssignStmt*>(stmt)) {
-        label = "Assign: " + assign->name;
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\", style=filled, fillcolor=\"lightblue\"];\n";
+    for (const auto& [key, val] : tokenMap) rev[val] = key;
+    
+    return rev;
+} ();
 
-        dumpExpr(out, assign->value.get());
-        out << "  \"" << nodeId << "\" -> \"" << ptrToStr(assign->value.get()) << "\";\n";
-    }
-    else if (auto print = dynamic_cast<const ParaCL::Parser::PrintStmt*>(stmt)) {
-        label = "Print";
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\"];\n";
 
-        dumpExpr(out, print->expr.get());
-        out << "  \"" << nodeId << "\" -> \"" << ptrToStr(print->expr.get()) << "\";\n";
-    }
-    else if (auto whileStmt = dynamic_cast<const ParaCL::Parser::WhileStmt*>(stmt)) {
-        label = "While";
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\"];\n";
 
-        dumpExpr(out, whileStmt->condition.get());
-        out << "  \"" << nodeId << "\" -> \"" << ptrToStr(whileStmt->condition.get())
-            << "\" [label=\"cond\", fontcolor=\"gray50\"];\n";
+struct ASTNode {
+    virtual ~ASTNode() = default;
+};
 
-        for (auto& s : whileStmt->body->statements) {
-            dumpStmt(out, s.get());
-            out << "  \"" << nodeId << "\" -> \"" << ptrToStr(s.get())
-                << "\" [label=\"body\", fontcolor=\"gray50\"];\n";
-        }
-    }
-    else if (auto block = dynamic_cast<const ParaCL::Parser::BlockStmt*>(stmt)) {
-        label = "Block";
-        out << "  \"" << nodeId << "\" [label=\"" << label << "\"];\n";
+// expressions
+struct Expr : ASTNode {};
 
-        for (auto& s : block->statements) {
-            dumpStmt(out, s.get());
-            out << "  \"" << nodeId << "\" -> \"" << ptrToStr(s.get()) << "\";\n";
-        }
-    }
-}
+struct NumExpr : Expr {
+    int value;
+    NumExpr(int v) : value(v) {}
+};
 
-} // namespace
+struct VarExpr : Expr {
+    std::string name;
+    VarExpr(std::string n) : name(std::move(n)) {}
+};
+
+struct InputExpr : Expr {};
+
+struct BinExpr : Expr {
+    token_t op;
+    std::unique_ptr<Expr> left;
+    std::unique_ptr<Expr> right;
+    BinExpr(token_t op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
+        : op(op), left(std::move(lhs)), right(std::move(rhs)) {}
+};
+
+struct AssignExpr : Expr {
+    std::string name;
+    std::unique_ptr<Expr> value;
+    AssignExpr(std::string n, std::unique_ptr<Expr> v)
+        : name(std::move(n)), value(std::move(v)) {}
+};
+
+// statements
+struct Stmt : ASTNode {};
+
+struct AssignStmt : Stmt {
+    std::string name;
+    std::unique_ptr<Expr> value;
+    AssignStmt(std::string n, std::unique_ptr<Expr> v)
+        : name(std::move(n)), value(std::move(v)) {}
+};
+
+struct PrintStmt : Stmt {
+    std::unique_ptr<Expr> expr;
+    PrintStmt(std::unique_ptr<Expr> e) : expr(std::move(e)) {}
+};
+
+struct BlockStmt : Stmt {
+    std::vector<std::unique_ptr<Stmt>> statements;
+    BlockStmt() = default;
+    BlockStmt(std::vector<std::unique_ptr<Stmt>> stmts)
+        : statements(std::move(stmts)) {}
+};
+
+struct WhileStmt : Stmt {
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<BlockStmt> body;
+    WhileStmt(std::unique_ptr<Expr> cond, std::unique_ptr<BlockStmt> b)
+        : condition(std::move(cond)), body(std::move(b)) {}
+};
+
+struct ProgramAST {
+    std::vector<std::unique_ptr<Stmt>> statements;
+};
+}; // namespace ParaCL
+
