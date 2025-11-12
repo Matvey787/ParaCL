@@ -50,7 +50,7 @@ function check_that_exists
 function no_such_file_message
 {
     local file="$1"
-    custom_echo_err "$CONSOLE_COLOR_RED" "${No such file:}"
+    custom_echo_err "$CONSOLE_COLOR_RED" "No such file:"
     custom_echo_err "" "\`$file'"
 
 }
