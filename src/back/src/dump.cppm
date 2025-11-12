@@ -10,9 +10,10 @@ module;
 #include <unordered_map>
 #include "paraCL_crutch_for_parsery.hpp"
 
-// import paraCL;
 
 export module dump;
+
+// import paraCL;
 
 std::string ptrToStr(const void* ptr);
 void dumpExpr(std::ostream& out, const ParaCL::Expr* expr);

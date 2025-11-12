@@ -8,14 +8,15 @@ module;
 
 #include "global/global.hpp"
 #include "global/custom_console_output.hpp"
-
+// могли бы import paraCL; но спасибо нашему доблестному bison
+#include "paraCL_crutch_for_parsery.hpp"
+#include "parser.tab.hpp"
 #include "lexer.hpp"
 
 import paracl_extension;
 import options_parser;
 // import paraCL;
-#include "paraCL_crutch_for_parsery.hpp"
-#include "parser.tab.hpp"
+
 import dump;
 import compiler;
 

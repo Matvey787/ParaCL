@@ -24,6 +24,7 @@ endif()
 
 option(BUILD_TESTING "Build tests" OFF)
 option(LOGGER "logger" OFF)
+option(GRAPHVIZ "Enable graphviz visualization (graphviz)" OFF)
 
 # =================================================================================================
 

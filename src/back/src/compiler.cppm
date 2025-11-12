@@ -9,9 +9,9 @@ module;
 #include <unordered_map>
 #include "paraCL_crutch_for_parsery.hpp"
 
-// import paraCL;
-
 export module compiler;
+
+// import paraCL;
 
 using namespace ParaCL;
 
