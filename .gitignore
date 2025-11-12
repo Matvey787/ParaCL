@@ -4,3 +4,4 @@ build/
 settings.json
 *.png
 Doxyfile
+imgs/
