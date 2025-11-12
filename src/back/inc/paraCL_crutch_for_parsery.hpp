@@ -149,6 +149,12 @@ struct ProgramAST {
     std::vector<std::unique_ptr<Stmt>> statements;
 };
 
+void
+compile(const ParaCL::ProgramAST& progAST);
+    
+void
+dump(ProgramAST& progAST, const std::string& filename = "imgs/ast.dot");
+
 }; // namespace ParaCL
 
 #endif // PARACL_CRUTCH_FOR_PARSERY

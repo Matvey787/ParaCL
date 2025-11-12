@@ -213,10 +213,13 @@ target_sources(${RUN_PARACL_LIB}
         FILE_SET CXX_MODULES
         TYPE CXX_MODULES
         FILES
-            ${PROJECT_SOURCE_DIR}/src/back/src/paraCL.cppm
-            ${PROJECT_SOURCE_DIR}/src/back/src/compiler.cppm
-            ${PROJECT_SOURCE_DIR}/src/back/src/dump.cppm
             ${RUN_PARACL_SRC} 
+)
+
+target_sources(${RUN_PARACL_LIB}
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/back/src/compiler.cpp
+        ${PROJECT_SOURCE_DIR}/src/back/src/dump.cpp
 )
 
 target_include_directories(${RUN_PARACL_LIB}
@@ -234,6 +237,10 @@ target_link_libraries(${RUN_PARACL_LIB}
         ${PARSER_LIB}
         ${LEXER_LIB}
 )
+
+if(GRAPHVIZ)
+    target_compile_definitions(${RUN_PARACL_LIB} PRIVATE GRAPHVIZ)
+endif()
 
 add_target_debug_options(${RUN_PARACL_LIB} hard)
 target_add_logger(${RUN_PARACL_LIB})

@@ -1,5 +1,3 @@
-module;
-
 #include <memory>
 #include <stdexcept>
 #include <fstream>
@@ -10,19 +8,14 @@ module;
 #include <unordered_map>
 #include "paraCL_crutch_for_parsery.hpp"
 
-
-export module dump;
-
-// import paraCL;
-
 std::string ptrToStr(const void* ptr);
 void dumpExpr(std::ostream& out, const ParaCL::Expr* expr);
 void dumpStmt(std::ostream& out, const ParaCL::Stmt* stmt);
 
 
-export namespace ParaCL {
+namespace ParaCL {
 
-void dump(ProgramAST& progAST, const std::string& filename = "imgs/ast.dot")
+void dump(ProgramAST& progAST, const std::string& filename)
 {
     std::ofstream out(filename);
     out << "digraph AST {\n";

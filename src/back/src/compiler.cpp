@@ -1,5 +1,3 @@
-module;
-
 #include <optional>
 #include <limits>
 #include <stdexcept>
@@ -8,8 +6,6 @@ module;
 #include <memory>
 #include <unordered_map>
 #include "paraCL_crutch_for_parsery.hpp"
-
-export module compiler;
 
 // import paraCL;
 
@@ -57,7 +53,7 @@ handleExpr(const Expr* expr, SymbolTable& table);
 static int
 executeBinOp(int leftOp, int rightOp, token_t binOp);
 
-export namespace ParaCL {
+namespace ParaCL {
 
 void
 compile(const ParaCL::ProgramAST& progAST)

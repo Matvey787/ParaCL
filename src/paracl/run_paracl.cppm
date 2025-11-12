@@ -15,10 +15,6 @@ module;
 
 import paracl_extension;
 import options_parser;
-// import paraCL;
-
-import dump;
-import compiler;
 
 extern FILE* yyin;
 extern int yyparse();
@@ -68,7 +64,10 @@ int no_sources_action()
     yyin = stdin;
     int result =  yyparse();
 
-    // ParaCL::dump(program);
+    #ifdef GRAPHVIZ
+        ParaCL::dump(program);
+    #endif
+
     ParaCL::compile(program);
 
     return result;
@@ -86,7 +85,10 @@ int one_source_action(const std::string& source)
 
     int result = yyparse();
 
-    // ParaCL::dump(program);
+    #ifdef GRAPHVIZ
+        ParaCL::dump(program);
+    #endif
+
     ParaCL::compile(program);
     
     fclose(input_file);
