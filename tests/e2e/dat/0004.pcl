@@ -4,4 +4,4 @@ while (b > 0) {
     a = a + b * b;
     b = b - 1;
 }
-print a;
+print a;\nexpected
