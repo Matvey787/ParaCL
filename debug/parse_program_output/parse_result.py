@@ -67,11 +67,11 @@ def main():
             )
 
 
-        if expect_death:
-            if result.returncode == exit_code:
-                color_print(Colors.GREEN, "TEST PASSED")
-                return 0
+        if expect_death and result.returncode == exit_code:
+            color_print(Colors.GREEN, "TEST PASSED")
+            return 0
 
+        if expect_death and result.returncode != exit_code:
             color_print(Colors.WHITE, "Expect DEATH", end = '\n\n')
             color_print(Colors.GREEN, f"[ expected exit code ]: {exit_code}")
             color_print(Colors.RED,   f"[ program  exit code ]: {result.returncode}", end = '\n\n')
@@ -86,11 +86,20 @@ def main():
 
             return 1
 
+        if not expect_death and result.returncode != 0:
+            color_print(Colors.RED, f"Error: Program failed with exit code {result.returncode}\nBut expect good work.")
+            print(f"stderr: {result.stderr}")
+            print(f"stdout: {result.stdout}")
+
+            color_print(Colors.RED, "\n\nTEST FAILED")
+            return 1
+
         program_stdout = result.stdout
         program_stderr = result.stderr
 
         expected_numbers = extract_numbers(answer_content)        
         program_output = extract_numbers(program_stdout)
+
 
     except Exception as e:
         color_print(Colors.RED, f"Error reading file: {e}")
