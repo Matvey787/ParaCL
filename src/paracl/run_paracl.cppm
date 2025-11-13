@@ -60,13 +60,12 @@ int run_paracl(const OptionsParsing::program_options_t& program_options)
 int no_sources_action()
 {
     // std::cout << "Enter your program (Ctrl+D to finish):" << std::endl;
-
     yyin = stdin;
     int result =  yyparse();
 
-    #ifdef GRAPHVIZ
-        ParaCL::dump(program);
-    #endif
+#if defined(GRAPHVIZ)
+    ParaCL::dump(program);
+#endif /* defined(GRAPHVIZ) */
 
     ParaCL::compile(program);
 
@@ -85,9 +84,9 @@ int one_source_action(const std::string& source)
 
     int result = yyparse();
 
-    #ifdef GRAPHVIZ
-        ParaCL::dump(program);
-    #endif
+#if defined(GRAPHVIZ)
+    ParaCL::dump(program);
+#endif /* defined(GRAPHVIZ) */
 
     ParaCL::compile(program);
     

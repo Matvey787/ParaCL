@@ -5,3 +5,6 @@ settings.json
 *.png
 Doxyfile
 imgs/
+log/
+.cache
+ast-dump/

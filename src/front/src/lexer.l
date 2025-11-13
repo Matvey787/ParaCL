@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <cassert>
 #include "paraCL_crutch_for_parsery.hpp"
 #include "parser.tab.hpp"
 
@@ -28,6 +29,7 @@ int eof_reached = 0;
 %option nounput
 %option noinput
 
+
 DIGIT       [0-9]
 LETTER      [a-zA-Z_]
 WHITESPACE  [ \t\r]
@@ -37,6 +39,19 @@ NEWLINE     \n
 
 {WHITESPACE}+   { }
 {NEWLINE}       { current_line++; }
+
+"#".*          { }
+
+"/*"([^*]|"*"+[^*/])*"*"+"/" {
+    const char* p = yytext; assert(p);
+    while (*p)
+    {
+        if (*p != '\n')
+            current_line++;
+        p++;
+
+    }
+}
 
 "+"     { return ADD; }
 "-"     { return SUB; }

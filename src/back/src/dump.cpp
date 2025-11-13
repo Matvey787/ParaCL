@@ -4,9 +4,10 @@
 #include <sstream>
 #include <iostream>
 #include <string>
-#include <vector>
+#include <system_error>
 #include <unordered_map>
 #include "paraCL_crutch_for_parsery.hpp"
+#include <filesystem>
 
 std::string ptrToStr(const void* ptr);
 void dumpExpr(std::ostream& out, const ParaCL::Expr* expr);
@@ -15,9 +16,13 @@ void dumpStmt(std::ostream& out, const ParaCL::Stmt* stmt);
 
 namespace ParaCL {
 
-void dump(ProgramAST& progAST, const std::string& filename)
+void dump(const ProgramAST& progAST, const std::string& filename)
 {
+    std::filesystem::create_directories("dot-out");
     std::ofstream out(filename);
+    if (out.fail())
+        throw std::runtime_error("failed open " + filename);
+
     out << "digraph AST {\n";
     out << "  node [shape=box];\n";
 
@@ -33,7 +38,8 @@ void dump(ProgramAST& progAST, const std::string& filename)
     out << "}\n";
     out.close();
 
-    std::string dot_cmd = "dot -Tsvg " + filename + " -o imgs/ast.svg";
+    std::filesystem::create_directories("../ast-dump");
+    std::string dot_cmd = "dot -Tsvg " + filename + " -o ../ast-dump/ast.svg";
     system(dot_cmd.c_str());
 }
 

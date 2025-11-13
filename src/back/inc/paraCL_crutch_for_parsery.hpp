@@ -155,7 +155,7 @@ void
 compile(const ParaCL::ProgramAST& progAST);
     
 void
-dump(ProgramAST& progAST, const std::string& filename = "imgs/ast.dot");
+dump(const ProgramAST& progAST, const std::string& filename = "dot-out/ast.dot");
 
 }; // namespace ParaCL
 
