@@ -115,10 +115,10 @@ program_options_()
     
         switch (option)
         {
-            case 'h'                 : parse_flag_help    ();                    continue;
-            case 'v'                 : parse_flag_version ();                    continue;
-            case undefined_option_key: parse_not_a_flag(argv[options_iterator]); continue;
-            default                  : undefined_option(argv[options_iterator]); continue;
+            case 'h'                 : parse_flag_help   ();                        continue;
+            case 'v'                 : parse_flag_version();                        continue;
+            case undefined_option_key: parse_not_a_flag  (argv[options_iterator]); continue;
+            default                  : undefined_option  (argv[options_iterator]); continue;
         }
     }
 
@@ -159,7 +159,7 @@ void options_parser::parse_flag_help() const
     
     So, that was all, what I know about flags in this program.
     Good luck, I love you )"
-    << HEART;
+    << HEART << std::endl;
 
     exit(EXIT_SUCCESS); // good exit :)
 }

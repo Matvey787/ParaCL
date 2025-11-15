@@ -22,7 +22,7 @@ set(RUN_TEST_SCRIPT_IN     ${DEBUG_IN_DIR}/run_test.sh.in)
 set(DEBUG_RUN_TEST_DIR     ${DEBUG_DIR}/parse_program_output)
 set(PYTHON_RUN_TEST_SCRIPT ${DEBUG_RUN_TEST_DIR}/parse_result.py)
 
-set(OUTPUT_SCRIPT          ${PROJECT_BINARY_DIR}/run_test)
+set(OUTPUT_SCRIPT          ${PROJECT_BINARY_DIR}/rt)
 
 string(TIMESTAMP CURRENT_TIME "%Y-%m-%d %H:%M:%S")
 

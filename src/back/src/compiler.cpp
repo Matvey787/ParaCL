@@ -1,6 +1,4 @@
 #include <cstdlib>
-#include <optional>
-#include <limits>
 #include <stdexcept>
 #include <iostream>
 #include <vector>
@@ -10,8 +8,7 @@
 #include "global//global.hpp"
 
 // import paraCL;
-
-using namespace ParaCL;
+namespace ParaCL {
 
 class SymbolTable {
     struct SymbolData {
@@ -51,67 +48,60 @@ public:
 static void handleStmt(const Stmt* stmt, SymbolTable& table);
 static int  handleExpr(const Expr* expr, SymbolTable& table);
 static int  executeBinOp(int leftOp, int rightOp, token_t binOp);
-static int  executeUnOp(int operand, token_t unOp);
 static void executeCombinedAssign(int& operand, int value, token_t combAsgn);
+// static int  executeUnOp(int operand, token_t unOp);
 
-namespace ParaCL {
-
-    void compile(const ParaCL::ProgramAST& progAST)
+void compile(const ProgramAST& progAST)
 {
     SymbolTable table;
     table.enter(); // global scope
     for (auto& stmt : progAST.statements)
-    {
         handleStmt(stmt.get(), table);
-    }
+
     table.leave();
 }
  
-}
 
-
-static void handleStmt(const ParaCL::Stmt* stmt, SymbolTable& table)
+static void handleStmt(const Stmt* stmt, SymbolTable& table)
 {
-    if (auto assign = dynamic_cast<const ParaCL::AssignStmt*>(stmt))
+    if (auto assign = dynamic_cast<const AssignStmt*>(stmt))
     {
-        auto e = dynamic_cast<const ParaCL::Expr*>(assign->value.get());
+        auto e = dynamic_cast<const Expr*>(assign->value.get());
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
 
         table.declare(assign->name, result);
     }
-    else if (auto combinedAssingExpr = dynamic_cast<const ParaCL::CombinedAssingStmt*>(stmt))
+    else if (auto combinedAssingExpr = dynamic_cast<const CombinedAssingStmt*>(stmt))
     {
         auto* varValue = table.lookup(combinedAssingExpr->name);
         if (!varValue)
         {
-            std::cerr << "error: ‘" << combinedAssingExpr->name << "’ was not declared in this scope\n"
+            std::cerr << "error: '" << combinedAssingExpr->name << "' was not declared in this scope\n"
                       << "paracl: failed with exit code 1";
             exit(EXIT_FAILURE);   
         }
 
-        auto e = dynamic_cast<const ParaCL::Expr*>(combinedAssingExpr->value.get());
+        auto e = dynamic_cast<const Expr*>(combinedAssingExpr->value.get());
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
 
         executeCombinedAssign(varValue->value, result, combinedAssingExpr->op);
-        // FIXME: maybe need decalre in table (porentially not, because executa function takes ref on varValue->value)
-        // table.declare(assignExpr->name, result);
     }
 
-    else if (auto print = dynamic_cast<const ParaCL::PrintStmt*>(stmt))
+    else if (auto print = dynamic_cast<const PrintStmt*>(stmt))
     {
-        auto e = dynamic_cast<const ParaCL::Expr*>(print->expr.get());
+        auto e = dynamic_cast<const Expr*>(print->expr.get());
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
         std::cout << result << '\n'; 
     }
-    else if (auto whileStmt = dynamic_cast<const ParaCL::WhileStmt*>(stmt))
+    else if (auto whileStmt = dynamic_cast<const WhileStmt*>(stmt))
     {
-        const std::vector<std::unique_ptr<ParaCL::Stmt>>&
+        const std::vector<std::unique_ptr<Stmt>>&
         bodyStmts = whileStmt->body->statements;
 
 
@@ -119,9 +109,9 @@ static void handleStmt(const ParaCL::Stmt* stmt, SymbolTable& table)
             for (auto& s : bodyStmts) handleStmt(s.get(), table);
 
     }
-    else if (auto block = dynamic_cast<const ParaCL::BlockStmt*>(stmt))
+    else if (auto block = dynamic_cast<const BlockStmt*>(stmt))
     {
-        const std::vector<std::unique_ptr<ParaCL::Stmt>>& blockStmts = block->statements;
+        const std::vector<std::unique_ptr<Stmt>>& blockStmts = block->statements;
 
         bool blockIsEmpty = blockStmts.empty();
 
@@ -133,15 +123,22 @@ static void handleStmt(const ParaCL::Stmt* stmt, SymbolTable& table)
         }
         if (!blockIsEmpty) table.leave();
     }
+    else if (auto condition = dynamic_cast<const IfStatement*>(stmt))
+    {
+        const bool flag = handleExpr(condition->condition.get(), table);
+        if (not flag) return;
+
+        handleStmt(condition->body.get(),table);
+    }
 }
 
 
-static int handleExpr(const ParaCL::Expr* expr, SymbolTable& table)
+static int handleExpr(const Expr* expr, SymbolTable& table)
 {
-    if (auto bin = dynamic_cast<const ParaCL::BinExpr*>(expr))
+    if (auto bin = dynamic_cast<const BinExpr*>(expr))
     {
-        auto leftExpr =  dynamic_cast<const ParaCL::Expr*>(bin->left.get());
-        auto rightExpr = dynamic_cast<const ParaCL::Expr*>(bin->right.get());
+        auto leftExpr =  dynamic_cast<const Expr*>(bin->left.get());
+        auto rightExpr = dynamic_cast<const Expr*>(bin->right.get());
 
         if (!leftExpr || !rightExpr) throw std::runtime_error("BinExpr children are not Expr");
 
@@ -150,30 +147,30 @@ static int handleExpr(const ParaCL::Expr* expr, SymbolTable& table)
 
         return executeBinOp(leftResult, rightResult, bin->op);
     }
-    else if (auto num = dynamic_cast<const ParaCL::NumExpr*>(expr)) {
+    else if (auto num = dynamic_cast<const NumExpr*>(expr)) {
         return num->value;
     }
-    else if (auto var = dynamic_cast<const ParaCL::VarExpr*>(expr)) {
+    else if (auto var = dynamic_cast<const VarExpr*>(expr)) {
         auto* varValue = table.lookup(var->name);
         if (!varValue)
         {
             // throw std::runtime_error("Var [ " + var->name + " ] doesn't found in table");
-            std::cerr << "error: ‘" << var->name << "’ was not declared in this scope\n"
+            std::cerr << "error: '" << var->name << "' was not declared in this scope\n"
                       << "paracl: failed with exit code 1";
             exit(EXIT_FAILURE);
         }
 
         return varValue->value;
     }
-    else if ([[maybe_unused]] auto in = dynamic_cast<const ParaCL::InputExpr*>(expr))
+    else if ([[maybe_unused]] auto in = dynamic_cast<const InputExpr*>(expr))
     {
         int value = 0;
         std::cin >> value;
         return value;
     }
-    else if (auto assignExpr = dynamic_cast<const ParaCL::AssignExpr*>(expr))
+    else if (auto assignExpr = dynamic_cast<const AssignExpr*>(expr))
     {
-        auto e = dynamic_cast<const ParaCL::Expr*>(assignExpr->value.get());
+        auto e = dynamic_cast<const Expr*>(assignExpr->value.get());
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
@@ -182,17 +179,17 @@ static int handleExpr(const ParaCL::Expr* expr, SymbolTable& table)
 
         return result;
     }
-    else if (auto combinedAssingExpr = dynamic_cast<const ParaCL::CombinedAssingExpr*>(expr))
+    else if (auto combinedAssingExpr = dynamic_cast<const CombinedAssingExpr*>(expr))
     {
         auto* varValue = table.lookup(combinedAssingExpr->name);
         if (!varValue)
         {
-            std::cerr << "error: ‘" << combinedAssingExpr->name << "’ was not declared in this scope\n"
+            std::cerr << "error: '" << combinedAssingExpr->name << "' was not declared in this scope\n"
                       << "paracl: failed with exit code 1";
             exit(EXIT_FAILURE);   
         }
 
-        auto e = dynamic_cast<const ParaCL::Expr*>(combinedAssingExpr->value.get());
+        auto e = dynamic_cast<const Expr*>(combinedAssingExpr->value.get());
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
@@ -229,17 +226,18 @@ static int executeBinOp(int leftOp, int rightOp, token_t binOp)
     builtin_unreachable_wrapper("we must return in switch");
 }
 
-static int executeUnOp(int operand, token_t unOp)
-{
-    switch (unOp)
-    {
-    case token_t::UNPLUS : return +operand;
-    case token_t::UNMINUS: return -operand;
-    case token_t::NOT    : return !operand;
-    default: builtin_unreachable_wrapper("here we parse onlu unary operation");
-    }
-    builtin_unreachable_wrapper("we must return in switch");
-}
+/* TODO: add parsing is unary operations */
+// static int executeUnOp(int operand, token_t unOp)
+// {
+//     switch (unOp)
+//     {
+//     case token_t::UNPLUS : return +operand;
+//     case token_t::UNMINUS: return -operand;
+//     case token_t::NOT    : return !operand;
+//     default: builtin_unreachable_wrapper("here we parse onlu unary operation");
+//     }
+//     builtin_unreachable_wrapper("we must return in switch");
+// }
 
 static void executeCombinedAssign(int& operand, int value, token_t combAsgn)
 {
@@ -253,3 +251,5 @@ static void executeCombinedAssign(int& operand, int value, token_t combAsgn)
     }
     return;
 }
+
+} /* namespace ParaCL */

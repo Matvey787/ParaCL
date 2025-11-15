@@ -226,11 +226,11 @@ struct ElseStatement : Stmt {
 
 struct ConditionStatement : Stmt {
     std::unique_ptr<IfStatement> if_stmt;
-    std::vector<std::unique_ptr<ElifStatement>> elif_stmts;
-    std::unique_ptr<ElseStatement> else_stmt;
+    // std::vector<std::unique_ptr<ElifStatement>> elif_stmts;
+    // std::unique_ptr<ElseStatement> else_stmt;
 
-    ConditionStatement(std::unique_ptr<IfStatement> base_if_stmt, std::vector<std::unique_ptr<ElifStatement>> elif_stmts, std::unique_ptr<ElseStatement> else_stmt)
-        : if_stmt(std::move(base_if_stmt)), elif_stmts(std::move(elif_stmts)), else_stmt(std::move(else_stmt)) {}
+    ConditionStatement(std::unique_ptr<IfStatement> base_if_stmt /*, std::vector<std::unique_ptr<ElifStatement>> elif_stmts, std::unique_ptr<ElseStatement> else_stmt*/)
+        : if_stmt(std::move(base_if_stmt))/*, elif_stmts(std::move(elif_stmts)), else_stmt(std::move(else_stmt))*/ {}
 
     // ConditionStatement(std::unique_ptr<IfStatement> base_if_stmt)
     //     // : if_stmt(std::make_unique<IfStatement>(std::move(cond), std::move(b))) {} 

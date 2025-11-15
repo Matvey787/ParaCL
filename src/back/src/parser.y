@@ -10,17 +10,7 @@
 #include "global/global.hpp"
 
 extern FILE* yyin;
-extern int yylex();
 extern int yyparse();
-
-extern int yylex();
-
-void yyerror(const char* msg)
-{
-    std::cerr << get_current_code_place()
-              << ": paracl: error: "
-              << msg << "\n";
-}
 
 #ifdef DEBUG
     #define DEBUG_COUT_M(message)                \
@@ -34,8 +24,17 @@ void yyerror(const char* msg)
 
 ParaCL::ProgramAST program;
 
+extern std::string current_file;
+
+typedef struct YYLTYPE YYLTYPE;
+typedef union YYSTYPE YYSTYPE;
+
+void yyerror(YYLTYPE* loc, const char* msg);
+int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param);
+
 %}
 
+%define api.pure full
 %locations
 
 %union {
@@ -55,10 +54,10 @@ ParaCL::ProgramAST program;
 %token LCIB RCIB LCUB RCUB
 %token WH IN AS PRINT
 %token SC
-%token IF ELIF ELSE
+%token IF // ELIF ELSE
 
 %type <stmt_vector> program statements
-%type <stmt> statement assignment combined_assignment print_statement while_statement input_statement if_statement elif_statement else_statement
+%type <stmt> statement assignment combined_assignment print_statement while_statement input_statement if_statement // condition_statement // lif_statement else_statement
 %type <expr> expression bool_expression and_or_expression math_comparison_expression add_sub_expression mul_div_expression factor assignment_expression
 
 %%
@@ -67,7 +66,7 @@ program:
     statements {
         for (auto stmt : *$1) {
             // std::cerr << "token {" << yylloc.first_line << ":" << yylloc.first_column << "}\n";
-            std::cerr << get_current_code_place() << "\n";
+            // std::cerr << format_location(yylloc) << "\n";
             program.statements.push_back(std::unique_ptr<ParaCL::Stmt>(stmt));
         }
         delete $1;
@@ -77,6 +76,7 @@ program:
 
 statements:
     {
+        /* FIXME: stament on unique_ptr*/
         $$ = new std::vector<ParaCL::Stmt*>(); 
     }
     | statements statement {
@@ -101,8 +101,8 @@ statement:
     | input_statement SC { 
         $$ = $1;
     }
-    | condition_statement {
-        $$ = $1
+    | if_statement {
+        $$ = $1;
     }
     ;
 
@@ -173,6 +173,17 @@ while_statement:
         ON_DEBUG(std::cout << "Created while statement" << std::endl;)
         delete $6;
     }
+    | WH LCIB expression RCIB statement {
+        auto body_stmts = std::vector<std::unique_ptr<ParaCL::Stmt>>();
+        body_stmts.push_back(std::unique_ptr<ParaCL::Stmt>($5));
+        auto body = new ParaCL::BlockStmt(std::move(body_stmts));
+    
+        $$ = new ParaCL::WhileStmt(
+            std::unique_ptr<ParaCL::Expr>($3), 
+            std::unique_ptr<ParaCL::BlockStmt>(body)
+        );
+        ON_DEBUG(std::cout << "Created while statement" << std::endl;)
+    }
     ;
 
 input_statement:
@@ -180,24 +191,45 @@ input_statement:
     }
     ;
 
+/* condition_statement:
+    if_statement { 
+        $$ = new ParaCL::ConditionStatement(
+            std::unique_ptr<ParaCL::IfStatement>($1)
+        );
+    }
+    ; */
+
 if_statement:
-    IF LCIB expression RCIB LCUB statement RCUB {
-        auto body_stmts = std::vector<std::unique_ptr<ParaCL::stmt>>();
-        for (auto stmt: *$6) {
-            body_stmts.emplace_back(std::unique_ptr<ParaCL::Stmt>(stmt));
+    IF LCIB expression RCIB LCUB statements RCUB {
+        auto body_stmts = std::vector<std::unique_ptr<ParaCL::Stmt>>();
+        for (auto stmt : *$6) {
+            body_stmts.push_back(std::unique_ptr<ParaCL::Stmt>(stmt));
         }
-        auto body 
-        $$ = new ParaCL::IfStmt(
+        auto body = new ParaCL::BlockStmt(std::move(body_stmts));
+        $$ = new ParaCL::IfStatement(
             std::unique_ptr<ParaCL::Expr>($3),
+            std::unique_ptr<ParaCL::BlockStmt>(body)
+        );
+        ON_DEBUG(std::cout << "Created if statement with {}" << std::endl;)
+        delete $6;
+    }
+    | IF LCIB expression RCIB statement {
+        auto body_stmts = std::vector<std::unique_ptr<ParaCL::Stmt>>();
+        body_stmts.push_back(std::unique_ptr<ParaCL::Stmt>($5));
+        auto body = new ParaCL::BlockStmt(std::move(body_stmts));
+
+        $$ = new ParaCL::IfStatement(
             std::unique_ptr<ParaCL::Expr>($3),
-        )
+            std::unique_ptr<ParaCL::BlockStmt>(body)
+        );
+        ON_DEBUG(std::cout << "Created if statement whithOUT {}" << std::endl;)
     }
     ;
 
-elif_statement:
+/* elif_statement:
     { ELIF LCIB expression RCIB LCUB statement RCUB }  { $$ = }
     | elif_statement
-    ;
+    ; */
 
 expression:
     bool_expression { $$ = $1; }
@@ -334,3 +366,14 @@ assignment_expression:
     ;
 
 %%
+
+/* int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param); */
+
+
+void yyerror(YYLTYPE* loc, const char* msg)
+{
+    std::cerr << current_file     << ":"
+              << loc->first_line   << ":"
+              << loc->first_column << ":"
+              " paracl: error: " << msg << "\n";
+}

@@ -100,6 +100,7 @@ target_include_directories(${PARSER_LIB}
 )
 
 add_target_DEBUG__DEBUG_options(${PARSER_LIB})
+target_add_logger(${PARSER_LIB})
 
 # =================================================================================================
 # flex generating command
@@ -134,6 +135,8 @@ target_include_directories(${LEXER_LIB}
 )
 
 add_target_DEBUG__DEBUG_options(${LEXER_LIB})
+
+target_add_logger(${LEXER_LIB})
 
 # =================================================================================================
 # add paracl extension library

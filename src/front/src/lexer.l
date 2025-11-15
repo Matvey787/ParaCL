@@ -1,4 +1,9 @@
 %{
+
+#if defined(LOGGER)
+#include "pineaplog.hpp"
+#endif /* defined(LOGGER) */
+
 #include <string>
 #include <cstdlib>
 #include <cassert>
@@ -14,7 +19,6 @@
 #include "global/global.hpp"
 #include "global/custom_console_output.hpp"
 
-
 std::string current_file;
 int current_num_value;
 std::string current_var_value;
@@ -23,21 +27,23 @@ int eof_reached = 0;
 void process_number  (const char* text);
 void process_variable(const char* text);
 
+extern void yyerror(YYLTYPE* loc, const char* msg);
+
 extern FILE* yyin;
 
-// extern int yylineno;
-// extern int yycolumn;
-
-extern YYLTYPE yylloc;
-
-// #define YY_USER_INIT yycolumn=1;
-
-// #define YY_USER_ACTION do {             \
-//     yylloc.first_line = yylineno;        \
-//     yylloc.first_column = yycolumn;       \
-//     yylloc.last_line = yylineno;           \
-//     yylloc.last_column = yycolumn + yyleng; \
-// } while(0);
+#define YY_USER_ACTION \
+    do { \
+        yylloc->first_line = yylloc->last_line; \
+        yylloc->first_column = yylloc->last_column; \
+        for (int i = 0; i < yyleng; i++) { \
+            if (yytext[i] == '\n') { \
+                yylloc->last_line++; \
+                yylloc->last_column = 0; \
+            } else { \
+                yylloc->last_column++; \
+            } \
+        } \
+    } while (0);
 
 
 %}
@@ -46,6 +52,8 @@ extern YYLTYPE yylloc;
 %option nounput
 %option noinput
 %option yylineno
+%option bison-bridge
+%option bison-locations
 
 DIGIT       [0-9]
 LETTER      [a-zA-Z_]
@@ -59,27 +67,15 @@ WHITESPACE  {SPACE}|{TAB}|{CARRIEGE}
 
 SPACE          
 
-{SPACE}         { /*yycolumn++; */ }
-{TAB}           { /*yycolumn += 4; */ }
+{SPACE}         { }
+{TAB}           { }
 {CARRIEGE}      { }
 {WHITESPACE}+   { }
-{NEWLINE}       { /*yylineno++; yycolumn = 1;*/ }
+{NEWLINE}       { }
 
 "#".*          { }
 
-"/*"([^*]|"*"+[^*/])*"*"+"/" {
-    const char* p = yytext; assert(p);
-    while (*p)
-    {
-        /*
-        if (*p == '\n')
-            { yylineno++; yycolumn = 1; }
-        else
-            yycolumn++;
-        */
-        p++;
-    }
-}
+"/*"([^*]|"*"+[^*/])*"*"+"/" { }
 
 "and"     { return AND; }
 "or"      { return OR; }
@@ -106,30 +102,29 @@ SPACE
 "="       { return AS; }
 "print"   { return PRINT; }
 "if"      { return IF; }
-"else if" { return ELIF; }
-"else"    { return ELSE; }
 ";"       { return SC; }
 
 [+-]?{DIGIT}+    { 
                 process_number(yytext); 
-                yylval.num_value = current_num_value;
+                yylval->num_value = current_num_value;
                 return NUM; 
             }
 
 {LETTER}({LETTER}|{DIGIT})* { 
                 process_variable(yytext); 
-                yylval.str_value = new std::string(current_var_value);
+                yylval->str_value = new std::string(current_var_value);
                 return VAR; 
             }
 
-<<EOF>>     { 
+<<EOF>>     {
                 return EXIT_SUCCESS;
             }
 
-. { 
-    std::cerr << "Error at line " << yylloc.first_line 
-              << ", column " << yylloc.first_column 
-              << ": unknown character '" << yytext << "'" << std::endl;
+. {
+    std::ostringstream oss;
+    oss << "use of undeclared identifier '" << yytext << "'";
+
+    yyerror(yylloc, oss.str().c_str());
     return EXIT_FAILURE;
 }
 
@@ -143,21 +138,7 @@ void process_variable(const char* text) {
     current_var_value = text;
 }
 
-std::string get_current_code_place()
-{
-    std::ostringstream code_place;
-    code_place << current_file << ":" << yylloc.first_line << ":" << yylloc.first_column;
-    return code_place.str();
-}
-
-std::string get_marked_line_with_error()
-{
-    return "no line with err";
-}
-
 void set_current_paracl_file(const std::string& file)
 {
     current_file = file;
 }
-
-
