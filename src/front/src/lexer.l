@@ -31,19 +31,25 @@ extern void yyerror(YYLTYPE* loc, const char* msg);
 
 extern FILE* yyin;
 
-#define YY_USER_ACTION \
-    do { \
-        yylloc->first_line = yylloc->last_line; \
-        yylloc->first_column = yylloc->last_column; \
-        for (int i = 0; i < yyleng; i++) { \
-            if (yytext[i] == '\n') { \
-                yylloc->last_line++; \
-                yylloc->last_column = 0; \
-            } else { \
-                yylloc->last_column++; \
-            } \
-        } \
-    } while (0);
+#define YY_USER_ACTION do {                      \
+    yylloc->first_line = yylloc->last_line;       \
+    yylloc->first_column = yylloc->last_column;    \
+    char c = '\0';                                  \
+    for (size_t i = 0; (c = yytext[i]) != '\0'; ++i) \
+    {                                                 \
+        if (c == '\n') {                               \
+            yylloc->last_line++;                        \
+            yylloc->last_column = 1;                     \
+            continue;                                     \
+        } else if (c == '\t') {                            \
+            yylloc->last_column += 4;                       \
+            continue;                                        \
+        } else if (c == '\r') {                               \
+            continue;                                          \
+        }                                                       \
+        yylloc->last_column++;                                   \
+    }                                                             \
+} while (0);
 
 
 %}
@@ -73,9 +79,9 @@ SPACE
 {WHITESPACE}+   { }
 {NEWLINE}       { }
 
-"#".*          { }
+"#".*           { /* one-line comment */ }
 
-"/*"([^*]|"*"+[^*/])*"*"+"/" { }
+"/*"([^*]|"*"+[^*/])*"*"+"/" { /* multy-line comment */ }
 
 "and"     { return AND; }
 "or"      { return OR; }
