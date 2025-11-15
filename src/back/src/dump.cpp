@@ -5,9 +5,9 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include "global.hpp"
 #include "paraCL_crutch_for_parsery.hpp"
 #include <filesystem>
+#include "global/global.hpp"
 
 namespace ParaCL {
 

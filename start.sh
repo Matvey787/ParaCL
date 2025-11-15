@@ -65,6 +65,10 @@ function need_logger
     find_option "logger" "$@"
 }
 
+function need_graph
+{
+    find_option "graph" "$@"
+}
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -116,6 +120,10 @@ fi
 
 if need_logger "$@"; then
     cmake_command="$cmake_command -DLOGGER=ON"
+fi
+
+if need_graph "$@"; then
+    cmake_command="$cmake_command -DGRAPHVIZ=ON"
 fi
 
 custom_echo "${CONSOLE_COLOR_WHITE}" "" "${cmake_command}"
