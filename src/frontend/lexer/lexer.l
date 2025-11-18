@@ -1,5 +1,4 @@
 %{
-
 #if defined(LOGGER)
 #include "pineaplog.hpp"
 #endif /* defined(LOGGER) */
@@ -65,7 +64,6 @@ static size_t tokens_counter = 0;
     ) \
 } while (0); /* YY_USER_ACTION */
 
-
 %}
 
 %option noyywrap
@@ -101,6 +99,8 @@ SPACE
 "&&"      { return AND; }
 "or"      { return OR; }
 "||"      { return OR; }
+"!"       { return NOT; }
+"not "    { return NOT; }
 "+"       { return ADD; }
 "-"       { return SUB; }
 "*"       { return MUL; }

@@ -7,22 +7,18 @@ module;
 #include <filesystem>
 #include <stdexcept>
 
-#include "global/global.hpp"
-#include "global/custom_console_output.hpp"
-
-/* FIXME: next line */
-// могли бы import paraCL; но спасибо нашему доблестному bison
-
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "parser.tab.hpp"
+
+#include "global/global.hpp"
+#include "global/custom_console_output.hpp"
 
 extern int yyparse();
 extern void set_current_paracl_file(const std::string&);
 
 extern FILE* yyin;
 extern ParaCL::ProgramAST program;
-
 
 export module run_paracl;
 
@@ -40,12 +36,7 @@ namespace ParaCL
 int  no_sources_action      ();
 int  one_source_action      (const std::string& source);
 
-} /* namespace ParaCL */
-
-export namespace ParaCL
-{
-
-int run_paracl(const OptionsParsing::program_options_t& program_options)
+export int run_paracl(const OptionsParsing::program_options_t& program_options)
 {
     const std::vector<std::string> sources          = program_options.sources  ;
     const size_t                   sources_quantity = sources        .size   ();
@@ -63,12 +54,6 @@ int run_paracl(const OptionsParsing::program_options_t& program_options)
 
     return parse_paracl_exit_code(program_options.program_name, paracil_exit_code);
 }
-
-} /* export namespace ParaCL */
-
-
-namespace ParaCL
-{
 
 int no_sources_action()
 {

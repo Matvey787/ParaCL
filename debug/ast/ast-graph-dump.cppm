@@ -52,7 +52,7 @@ export void ast_dump(const ProgramAST& progAST, const std::string& filename = "d
 
     std::filesystem::create_directories("../ast-dump");
     std::string dot_cmd = "dot -Tsvg " + filename + " -o ../ast-dump/ast.svg";
-    system(dot_cmd.c_str());
+    std::system(dot_cmd.c_str());
 }
 
 
@@ -88,6 +88,21 @@ void dumpExpr(std::ostream& out, const Expr* expr)
         link_nodes(out, expr, bin->right.get());
         return;
     }
+    else if (auto un = dynamic_cast<const UnExpr*>(expr))
+    {
+        std::string label;
+        switch (un->op)
+        {
+            case token_t::SUB: label += "-"; break;
+            case token_t::ADD: label += "+"; break;
+            case token_t::NOT: label += "not"; break;
+            default: builtin_unreachable_wrapper("here we parse onlu unary operation");
+        }
+        create_node(out, expr, label);
+        dumpExpr(out, un->operand.get());
+        link_nodes(out, expr, un->operand.get());
+        return;
+    }
     else if (auto num = dynamic_cast<const NumExpr*>(expr))
     {
         std::string label = "Num: " + std::to_string(num->value);
@@ -113,6 +128,24 @@ void dumpExpr(std::ostream& out, const Expr* expr)
 
         dumpExpr(out, assign->value.get());
         link_nodes(out, expr, assign->value.get());
+        return;
+    }
+
+    else if (auto combined_assign = dynamic_cast<const CombinedAssingExpr*>(expr))
+    {
+        std::string label = combined_assign->name + " ";
+        switch (combined_assign->op)
+        {
+            case token_t::ADDASGN: label += "+= :"; break;
+            case token_t::SUBASGN: label += "-= :"; break;
+            case token_t::MULASGN: label += "*= :"; break;
+            case token_t::DIVASGN: label += "/= :"; break;
+            case token_t::REMASGN: label += "%= :"; break;
+            default: builtin_unreachable_wrapper("here we parse only combined assign");
+        }
+        create_node(out, expr, label);
+        dumpExpr(out, combined_assign->value.get());
+        link_nodes(out, expr, combined_assign->value.get());
         return;
     }
 

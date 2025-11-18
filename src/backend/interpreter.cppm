@@ -47,11 +47,11 @@ public:
     }
 };
 
-static void handleStmt(const Stmt* stmt, SymbolTable& table);
-static int  handleExpr(const Expr* expr, SymbolTable& table);
-static int  executeBinOp(int leftOp, int rightOp, token_t binOp);
-static void executeCombinedAssign(int& operand, int value, token_t combAsgn);
-// static int  executeUnOp(int operand, token_t unOp);
+void handleStmt(const Stmt* stmt, SymbolTable& table);
+int  handleExpr(const Expr* expr, SymbolTable& table);
+int  executeBinOp(int leftOp, int rightOp, token_t binOp);
+void executeCombinedAssign(int& operand, int value, token_t combAsgn);
+int  executeUnOp(int operand, token_t unOp);
 
 export void interpet(const ProgramAST& progAST)
 {
@@ -64,7 +64,7 @@ export void interpet(const ProgramAST& progAST)
 }
  
 
-static void handleStmt(const Stmt* stmt, SymbolTable& table)
+void handleStmt(const Stmt* stmt, SymbolTable& table)
 {
     if (auto assign = dynamic_cast<const AssignStmt*>(stmt))
     {
@@ -153,7 +153,7 @@ static void handleStmt(const Stmt* stmt, SymbolTable& table)
 }
 
 
-static int handleExpr(const Expr* expr, SymbolTable& table)
+int handleExpr(const Expr* expr, SymbolTable& table)
 {
     if (auto bin = dynamic_cast<const BinExpr*>(expr))
     {
@@ -167,18 +167,21 @@ static int handleExpr(const Expr* expr, SymbolTable& table)
 
         return executeBinOp(leftResult, rightResult, bin->op);
     }
-    else if (auto num = dynamic_cast<const NumExpr*>(expr)) {
+    else if (auto un = dynamic_cast<const UnExpr*>(expr))
+    {
+        auto child_expr = dynamic_cast<const Expr*>(un->operand.get());
+        int child_value = handleExpr(child_expr, table);
+        return executeUnOp(child_value, un->op);
+    }
+    else if (auto num = dynamic_cast<const NumExpr*>(expr))
+    {
         return num->value;
     }
-    else if (auto var = dynamic_cast<const VarExpr*>(expr)) {
+    else if (auto var = dynamic_cast<const VarExpr*>(expr))
+    {
         auto* varValue = table.lookup(var->name);
-        if (!varValue)
-        {
-            // throw std::runtime_error("Var [ " + var->name + " ] doesn't found in table");
-            std::cerr << "error: '" << var->name << "' was not declared in this scope\n"
-                      << "paracl: failed with exit code 1";
-            exit(EXIT_FAILURE);
-        }
+        if (not varValue)
+            throw std::runtime_error("'" + var->name + "' was not declared in this scope\n");
 
         return varValue->value;
     }
@@ -222,7 +225,7 @@ static int handleExpr(const Expr* expr, SymbolTable& table)
     builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-static int executeBinOp(int leftOp, int rightOp, token_t binOp)
+int executeBinOp(int leftOp, int rightOp, token_t binOp)
 {
     switch (binOp)
     {
@@ -244,20 +247,19 @@ static int executeBinOp(int leftOp, int rightOp, token_t binOp)
     builtin_unreachable_wrapper("we must return in switch");
 }
 
-/* TODO: add parsing is unary operations */
-// static int executeUnOp(int operand, token_t unOp)
-// {
-//     switch (unOp)
-//     {
-//     case token_t::UNPLUS : return +operand;
-//     case token_t::UNMINUS: return -operand;
-//     case token_t::NOT    : return !operand;
-//     default: builtin_unreachable_wrapper("here we parse onlu unary operation");
-//     }
-//     builtin_unreachable_wrapper("we must return in switch");
-// }
+int executeUnOp(int operand, token_t unOp)
+{
+    switch (unOp)
+    {
+    case token_t::SUB : return +operand;
+    case token_t::ADD : return -operand;
+    case token_t::NOT : return !operand;
+    default: builtin_unreachable_wrapper("here we parse onlu unary operation");
+    }
+    builtin_unreachable_wrapper("we must return in switch");
+}
 
-static void executeCombinedAssign(int& operand, int value, token_t combAsgn)
+void executeCombinedAssign(int& operand, int value, token_t combAsgn)
 {
     switch (combAsgn)
     {

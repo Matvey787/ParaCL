@@ -16,9 +16,6 @@ enum class token_t
     DIV,
     REM,
 
-    UNMINUS, /* - */
-    UNPLUS,  /* + */
-
     // combined assignment operators
     ADDASGN, /* += */
     SUBASGN, /* -= */

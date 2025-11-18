@@ -1,5 +1,4 @@
 %{
-
 #include <iostream>
 #include <cstdio>
 #include <unordered_map>
@@ -27,12 +26,18 @@ int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param);
 %define api.pure full
 %locations
 
-%left OR
-%left AND
-%nonassoc ISEQ ISNE
-%nonassoc ISAB ISABE ISLS ISLSE
-%left ADD SUB
-%left MUL DIV REM
+%precedence OR
+%precedence AND
+%precedence ISEQ ISNE
+%precedence ISAB ISABE ISLS ISLSE
+%precedence ADD SUB
+%precedence MUL DIV REM
+%precedence NEG NOT
+%precedence AS
+%precedence ADDASGN
+%precedence SUBASGN
+%precedence MULASGN
+%precedence DIVASGN
 
 %union {
     int                                      num_value     ;
@@ -50,20 +55,18 @@ int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param);
 
 %token <num_value> NUM
 %token <str_value> VAR
-%token ADDASGN SUBASGN MULASGN DIVASGN
 %token LCIB RCIB LCUB RCUB
-%token WH IN AS PRINT IF ELIF ELSE
+%token WH IN PRINT IF ELIF ELSE
 %token SC
 
 %type <stmt_vector> program statements
 %type <block> block one_stmt_block
 %type <stmt> statement assignment combined_assignment print_statement while_statement
-%type <expr> expression logical_or_expression logical_and_expression equality_expression relational_expression additive_expression multiplicative_expression unary_expression factor assignment_expression
+%type <expr> expression assignment_expression logical_or_expression logical_and_expression equality_expression relational_expression additive_expression multiplicative_expression unary_expression factor
 
 %type <condition_stmt> condition_statement
 %type <if_stmt>               if_statement
 %type <elif_stmts>          elif_statements
-%type <elif_stmt>           elif_statement
 %type <else_stmt>           else_statement
 
 %start program
@@ -81,7 +84,7 @@ program:
     ;
 
 statements:
-    {
+    %empty {
         $$ = new std::vector<ParaCL::Stmt*>();
     }
     | statements statement {
@@ -163,14 +166,10 @@ while_statement:
             std::unique_ptr<ParaCL::BlockStmt>($6)
         );
     }
-    | WH LCIB expression RCIB statement {
-        auto body_stmts = std::vector<std::unique_ptr<ParaCL::Stmt>>();
-        body_stmts.push_back(std::unique_ptr<ParaCL::Stmt>($5));
-        auto body = new ParaCL::BlockStmt(std::move(body_stmts));
-
+    | WH LCIB expression RCIB one_stmt_block {
         $$ = new ParaCL::WhileStmt(
             std::unique_ptr<ParaCL::Expr>($3), 
-            std::unique_ptr<ParaCL::BlockStmt>(body)
+            std::unique_ptr<ParaCL::BlockStmt>($5)
         );
     }
     ;
@@ -206,32 +205,27 @@ if_statement:
     ;
 
 elif_statements:
-    {
+    %empty {
         $$ = new std::vector<ParaCL::ElifStatement*>();
     }
-    | elif_statements elif_statement {
-        $1->push_back($2);
+    | elif_statements ELIF LCIB expression RCIB LCUB block RCUB {
+        $1->push_back(new ParaCL::ElifStatement(
+            std::unique_ptr<ParaCL::Expr>($4),
+            std::unique_ptr<ParaCL::BlockStmt>($7)
+        ));
+        $$ = $1;
+    }
+    | elif_statements ELIF LCIB expression RCIB one_stmt_block {
+        $1->push_back(new ParaCL::ElifStatement(
+            std::unique_ptr<ParaCL::Expr>($4),
+            std::unique_ptr<ParaCL::BlockStmt>($6)
+        ));
         $$ = $1;
     }
     ;
 
-elif_statement:
-    ELIF LCIB expression RCIB LCUB block RCUB {
-        $$ = new ParaCL::ElifStatement(
-            std::unique_ptr<ParaCL::Expr>($3),
-            std::unique_ptr<ParaCL::BlockStmt>($6)
-        );
-    }
-    | ELIF LCIB expression RCIB one_stmt_block {
-        $$ = new ParaCL::ElifStatement(
-            std::unique_ptr<ParaCL::Expr>($3),
-            std::unique_ptr<ParaCL::BlockStmt>($5)
-        );
-    }
-    ;
-
 else_statement:
-    { $$ = nullptr; }
+    %empty { $$ = nullptr; }
     | ELSE LCUB block RCUB {
         $$ = new ParaCL::ElseStatement(
             std::unique_ptr<ParaCL::BlockStmt>($3)
@@ -245,12 +239,52 @@ else_statement:
     ;
 
 expression:
+    assignment_expression { $$ = $1; }
+    ;
+
+assignment_expression:
     logical_or_expression { $$ = $1; }
+    | VAR AS assignment_expression %prec AS {
+        $$ = new ParaCL::AssignExpr(*$1, std::unique_ptr<ParaCL::Expr>($3));
+        delete $1;
+    }
+    | VAR ADDASGN assignment_expression %prec ADDASGN {
+        $$ = new ParaCL::CombinedAssingExpr(
+            ParaCL::token_t::ADDASGN,
+            *$1,
+            std::unique_ptr<ParaCL::Expr>($3)
+        );
+        delete $1;
+    }
+    | VAR SUBASGN assignment_expression %prec SUBASGN {
+        $$ = new ParaCL::CombinedAssingExpr(
+            ParaCL::token_t::SUBASGN,
+            *$1,
+            std::unique_ptr<ParaCL::Expr>($3)
+        );
+        delete $1;
+    }
+    | VAR MULASGN assignment_expression %prec MULASGN {
+        $$ = new ParaCL::CombinedAssingExpr(
+            ParaCL::token_t::MULASGN,
+            *$1,
+            std::unique_ptr<ParaCL::Expr>($3)
+        );
+        delete $1;
+    }
+    | VAR DIVASGN assignment_expression %prec DIVASGN {
+        $$ = new ParaCL::CombinedAssingExpr(
+            ParaCL::token_t::DIVASGN,
+            *$1,
+            std::unique_ptr<ParaCL::Expr>($3)
+        );
+        delete $1;
+    }
     ;
 
 logical_or_expression:
     logical_and_expression { $$ = $1; }
-    | logical_or_expression OR logical_and_expression {
+    | logical_or_expression OR logical_and_expression %prec OR {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::OR,
             std::unique_ptr<ParaCL::Expr>($1),
@@ -261,7 +295,7 @@ logical_or_expression:
 
 logical_and_expression:
     equality_expression { $$ = $1; }
-    | logical_and_expression AND equality_expression {
+    | logical_and_expression AND equality_expression %prec AND {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::AND,
             std::unique_ptr<ParaCL::Expr>($1),
@@ -272,14 +306,14 @@ logical_and_expression:
 
 equality_expression:
     relational_expression { $$ = $1; }
-    | equality_expression ISEQ relational_expression {
+    | equality_expression ISEQ relational_expression %prec ISEQ {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::ISEQ,
             std::unique_ptr<ParaCL::Expr>($1),
             std::unique_ptr<ParaCL::Expr>($3)
         );
     }
-    | equality_expression ISNE relational_expression {
+    | equality_expression ISNE relational_expression %prec ISNE {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::ISNE,
             std::unique_ptr<ParaCL::Expr>($1),
@@ -290,28 +324,28 @@ equality_expression:
 
 relational_expression:
     additive_expression { $$ = $1; }
-    | relational_expression ISAB additive_expression {
+    | relational_expression ISAB additive_expression %prec ISAB {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::ISAB,
             std::unique_ptr<ParaCL::Expr>($1),
             std::unique_ptr<ParaCL::Expr>($3)
         );
     }
-    | relational_expression ISABE additive_expression {
+    | relational_expression ISABE additive_expression %prec ISABE {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::ISABE,
             std::unique_ptr<ParaCL::Expr>($1),
             std::unique_ptr<ParaCL::Expr>($3)
         );
     }
-    | relational_expression ISLS additive_expression {
+    | relational_expression ISLS additive_expression %prec ISLS {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::ISLS,
             std::unique_ptr<ParaCL::Expr>($1),
             std::unique_ptr<ParaCL::Expr>($3)
         );
     }
-    | relational_expression ISLSE additive_expression {
+    | relational_expression ISLSE additive_expression %prec ISLSE {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::ISLSE,
             std::unique_ptr<ParaCL::Expr>($1),
@@ -322,14 +356,14 @@ relational_expression:
 
 additive_expression:
     multiplicative_expression { $$ = $1; }
-    | additive_expression ADD multiplicative_expression { 
+    | additive_expression ADD multiplicative_expression %prec ADD { 
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::ADD,
             std::unique_ptr<ParaCL::Expr>($1),
             std::unique_ptr<ParaCL::Expr>($3)
         );
     }
-    | additive_expression SUB multiplicative_expression { 
+    | additive_expression SUB multiplicative_expression %prec SUB { 
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::SUB,
             std::unique_ptr<ParaCL::Expr>($1),
@@ -340,21 +374,21 @@ additive_expression:
 
 multiplicative_expression:
     unary_expression { $$ = $1; }
-    | multiplicative_expression MUL unary_expression { 
+    | multiplicative_expression MUL unary_expression %prec MUL { 
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::MUL, 
             std::unique_ptr<ParaCL::Expr>($1),
             std::unique_ptr<ParaCL::Expr>($3)
         );
     }
-    | multiplicative_expression DIV unary_expression {
+    | multiplicative_expression DIV unary_expression %prec DIV {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::DIV, 
             std::unique_ptr<ParaCL::Expr>($1),
             std::unique_ptr<ParaCL::Expr>($3)
         );
     }
-    | multiplicative_expression REM unary_expression {
+    | multiplicative_expression REM unary_expression %prec REM {
         $$ = new ParaCL::BinExpr(
             ParaCL::token_t::REM,
             std::unique_ptr<ParaCL::Expr>($1),
@@ -365,6 +399,18 @@ multiplicative_expression:
 
 unary_expression:
     factor { $$ = $1; }
+    | SUB unary_expression %prec NEG {
+        $$ = new ParaCL::UnExpr(
+            ParaCL::token_t::SUB,
+            std::unique_ptr<ParaCL::Expr>($2)
+        );
+    }
+    | NOT unary_expression %prec NOT {
+        $$ = new ParaCL::UnExpr(
+            ParaCL::token_t::NOT,
+            std::unique_ptr<ParaCL::Expr>($2)
+        );
+    }
     ;
 
 factor:
@@ -378,18 +424,8 @@ factor:
     | LCIB expression RCIB { 
         $$ = $2;
     }
-    | assignment_expression { 
-        $$ = $1;
-    }
     | IN {
         $$ = new ParaCL::InputExpr();
-    }
-    ;
-
-assignment_expression:
-    VAR AS expression {
-        $$ = new ParaCL::AssignExpr(*$1, std::unique_ptr<ParaCL::Expr>($3));
-        delete $1;
     }
     ;
 
@@ -412,9 +448,6 @@ one_stmt_block:
     }
     ;
 %%
-
-/* int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param); */
-
 
 void yyerror(YYLTYPE* loc, const char* msg)
 {
