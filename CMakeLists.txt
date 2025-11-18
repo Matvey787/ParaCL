@@ -47,7 +47,12 @@ include(${CMAKE_DEPS_DIR}/check-bison.cmake)
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 set(INC_DIR ${PROJECT_SOURCE_DIR}/include)
 
-set(PARACL_SRC_DIR ${SRC_DIR}/paracl)
+set(BACKEND_SRC_DIR ${SRC_DIR}/backend)
+set(FRONTEND_SRC_DIR ${SRC_DIR}/frontend)
+
+set(FRONTEND_INC_DIR ${INC_DIR}/frontend)
+
+set(DEBUG_DIR ${PROJECT_SOURCE_DIR}/debug)
 
 # =================================================================================================
 # set some bison and flex variables
@@ -56,15 +61,15 @@ set( BISON_OUT_DIR        ${CMAKE_BINARY_DIR}/bison-out )
 set( BISON_PARSER_SRC_DIR ${BISON_OUT_DIR}              )
 set( BISON_PARSER_CPP     parser.tab.cpp                )
 set( BISON_PARSER_HPP     parser.tab.hpp                )
-set( BISON_SRC_DIR        ${SRC_DIR}/back/src           )
+set( BISON_SRC_DIR        ${FRONTEND_SRC_DIR}/parser    )
 set( BISON_SRC            ${BISON_SRC_DIR}/parser.y     )
 
 set( FLEX_OUT_DIR         ${CMAKE_BINARY_DIR}/flex-out  )
 set( LEXER_SRC_DIR        ${FLEX_OUT_DIR}               )
 set( LEXER_CPP            lexer.yy.cpp                  )
-set( FLEX_SRC_DIR         ${SRC_DIR}/front/src          )
-set( FLEX_INC_DIR         ${SRC_DIR}/front/inc          )
+set( FLEX_SRC_DIR         ${FRONTEND_SRC_DIR}/lexer     )
 set( FLEX_SRC             ${FLEX_SRC_DIR}/lexer.l       )
+set( FLEX_INC_DIR         ${FRONTEND_INC_DIR}/lexer      )
 
 # =================================================================================================
 # bison generating command
@@ -93,13 +98,12 @@ target_sources(${PARSER_LIB}
 
 target_include_directories(${PARSER_LIB}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/back/inc/
+        ${FRONTEND_INC_DIR}
         ${BISON_PARSER_SRC_DIR}/
-        ${FLEX_INC_DIR}/
         ${INC_DIR}/
 )
 
-add_target_DEBUG__DEBUG_options(${PARSER_LIB})
+target_debug_definitions(${PARSER_LIB})
 target_add_logger(${PARSER_LIB})
 
 # =================================================================================================
@@ -129,38 +133,14 @@ target_sources(${LEXER_LIB}
 
 target_include_directories(${LEXER_LIB}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/back/inc/
+        ${FRONTEND_INC_DIR}
         ${BISON_PARSER_SRC_DIR}/
         ${INC_DIR}
 )
 
-add_target_DEBUG__DEBUG_options(${LEXER_LIB})
+target_debug_definitions(${LEXER_LIB})
 
 target_add_logger(${LEXER_LIB})
-
-# =================================================================================================
-# add paracl extension library
-
-set(PARACL_EXTENSION_LIB paracl_extension)
-add_library(${PARACL_EXTENSION_LIB})
-
-set(PARACL_EXTENSION_SRC_DIR ${PARACL_SRC_DIR})
-set(PARACL_SRC
-    ${PARACL_EXTENSION_SRC_DIR}/paracl_extension.cppm
-)
-
-target_sources(${PARACL_EXTENSION_LIB}
-    PUBLIC
-        FILE_SET
-            CXX_MODULES
-        TYPE
-            CXX_MODULES
-        FILES
-            ${PARACL_SRC}
-)
-
-add_target_debug_options(${PARACL_EXTENSION_LIB} hard)
-target_add_logger(${PARACL_EXTENSION_LIB})
 
 # =================================================================================================
 # add options parser library
@@ -171,6 +151,7 @@ add_library(${OPTIONS_PARSER_LIB})
 set(OPTIONS_PARSER_SRC_DIR ${SRC_DIR}/options_parser)
 set(OPTIONS_PARSER_SRC
     ${OPTIONS_PARSER_SRC_DIR}/options_parser.cppm
+    ${OPTIONS_PARSER_SRC_DIR}/paracl_extension.cppm
 )
 
 target_sources(${OPTIONS_PARSER_LIB}
@@ -207,11 +188,21 @@ target_add_logger(${OPTIONS_PARSER_LIB})
 set(RUN_PARACL_LIB run_paracl)
 add_library(${RUN_PARACL_LIB})
 
-set(RUN_PARACL_SRC_DIR ${PARACL_SRC_DIR})
+set(RUN_PARACL_SRC_DIR ${BACKEND_SRC_DIR})
 set(RUN_PARACL_SRC
+    ${RUN_PARACL_SRC_DIR}/interpreter.cppm
     ${RUN_PARACL_SRC_DIR}/run_paracl.cppm
     ${RUN_PARACL_SRC_DIR}/parse_paracl_exit_code.cppm
 )
+
+if (GRAPHVIZ)
+set(RUN_PARACL_SRC
+    ${RUN_PARACL_SRC}
+    ${DEBUG_DIR}/ast/ast-graph-dump.cppm    
+)
+endif(GRAPHVIZ)
+
+message(${RUN_PARACL_SRC})
 
 target_sources(${RUN_PARACL_LIB}
     PUBLIC
@@ -219,21 +210,17 @@ target_sources(${RUN_PARACL_LIB}
         TYPE CXX_MODULES
         FILES
             ${RUN_PARACL_SRC}
-)
-
-target_sources(${RUN_PARACL_LIB}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/back/src/compiler.cpp
-        ${PROJECT_SOURCE_DIR}/src/back/src/dump.cpp
+        
 )
 
 target_include_directories(${RUN_PARACL_LIB}
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/src/back/inc/
+        ${FRONTEND_DIR}
         ${INC_DIR}
         ${LEXER_SRC_DIR}
         ${BISON_OUT_DIR}
-        ${FLEX_INC_DIR}
+        ${FRONTEND_INC_DIR}
 )
 
 target_link_libraries(${RUN_PARACL_LIB}

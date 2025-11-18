@@ -5,33 +5,41 @@ module;
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <stdexcept>
 
 #include "global/global.hpp"
 #include "global/custom_console_output.hpp"
+
+/* FIXME: next line */
 // могли бы import paraCL; но спасибо нашему доблестному bison
-#include "paraCL_crutch_for_parsery.hpp"
+
+#include "lexer/lexer.hpp"
+#include "parser/parser.hpp"
 #include "parser.tab.hpp"
-#include "lexer.hpp"
 
-
-extern FILE* yyin;
 extern int yyparse();
 extern void set_current_paracl_file(const std::string&);
 
+extern FILE* yyin;
 extern ParaCL::ProgramAST program;
+
 
 export module run_paracl;
 
 import paracl_extension;
 import options_parser;
+import paracl_interpreter;
+import parse_paracl_exit_code;
+
+#if defined(GRAPHVIZ)
+import ast_graph_dump;
+#endif /* defined(GRAPHVIZ) */
 
 namespace ParaCL
 {
 int  no_sources_action      ();
 int  one_source_action      (const std::string& source);
 
-[[noreturn]]
-void failed_open_source_file(const std::string& source);
 } /* namespace ParaCL */
 
 export namespace ParaCL
@@ -44,15 +52,17 @@ int run_paracl(const OptionsParsing::program_options_t& program_options)
 
     msg_bad_exit(sources_quantity <= 1, "now we work only with 1 input file :(");
 
+    int paracil_exit_code = EXIT_SUCCESS;
+
     if (sources_quantity == 0)
-        return no_sources_action();
+        paracil_exit_code = no_sources_action();
+    else if (sources_quantity == 1)
+        paracil_exit_code =  one_source_action(sources[0]);
+    else
+        builtin_unreachable_wrapper("now we dont parse any situations");
 
-    if (sources_quantity == 1)
-        return one_source_action(sources[0]);
-
-    builtin_unreachable_wrapper("now we dont parse any situations");
+    return parse_paracl_exit_code(program_options.program_name, paracil_exit_code);
 }
-
 
 } /* export namespace ParaCL */
 
@@ -67,45 +77,56 @@ int no_sources_action()
     yyin = stdin;
     int result =  yyparse();
 
+    if (result != EXIT_SUCCESS)
+        return result;
+
+
 #if defined(GRAPHVIZ)
-    dump(program);
+    try {
+        ast_dump(program);
+    } catch(const std::runtime_error& e) {
+        std::cerr << ERROR_MSG("Dump failed:\n") << e.what() << "\n";
+    } catch(...) {
+        std::cerr << "Dump failed!\n";
+    }
 #endif /* defined(GRAPHVIZ) */
 
-    compile(program);
+    interpet(program);
 
     return result;
 }
-
 
 int one_source_action(const std::string& source)
 {
     set_current_paracl_file(source);
 
-    FILE* input_file = fopen(source.c_str(), "r");
+    FILE* input_file = fopen(source.c_str(), "rb");
 
     if (not input_file)
-        failed_open_source_file(source); // exit 1
+        throw std::runtime_error(RED BOLD "no such file: " RESET_CONSOLE_OUT WHITE + source);
 
     yyin = input_file;
 
     int result = yyparse();
 
-#if defined(GRAPHVIZ)
-    dump(program);
-#endif /* defined(GRAPHVIZ) */
-
-    compile(program);
-    
     fclose(input_file);
 
-    return result;
-}
+    if (result != EXIT_SUCCESS)
+        return result;
 
-[[noreturn]]
-void failed_open_source_file(const std::string& source)
-{
-    std::cerr << RED BOLD "No such file: " RESET_CONSOLE_OUT WHITE << source << "\n";
-    exit(EXIT_FAILURE);
+#if defined(GRAPHVIZ)
+    try {
+        ast_dump(program);
+    } catch(const std::runtime_error& e) {
+        std::cerr << ERROR_MSG("Dump failed:\n") << e.what() << "\n";
+    } catch(...) {
+        std::cerr << ERROR_MSG("Dump failed!\n");
+    }
+#endif /* defined(GRAPHVIZ) */
+
+    interpet(program);
+
+    return result;
 }
 
 } /* namespace ParaCL */

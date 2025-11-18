@@ -14,6 +14,7 @@ module;
 #include <cstdlib>
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 #include "global/global.hpp"
 #include "global/custom_console_output.hpp"
@@ -39,7 +40,8 @@ export namespace OptionsParsing
 
 struct program_options_t
 {
-    bool                     help    : 1 = false;
+    std::string              program_name = "";
+    bool                     help : 1 = false;
     std::vector<std::string> sources;
 };
 
@@ -58,6 +60,8 @@ class options_parser
     private:
         OptionsParsing::program_options_t program_options_;
 
+        void set_program_name         (const char* argv0);
+
         [[noreturn]]        
         void parse_flag_help          () const;
         [[noreturn]]
@@ -73,7 +77,6 @@ class options_parser
 
 export namespace OptionsParsing
 {
-
 //---------------------------------------------------------------------------------------------------------------
 
 program_options_t parse_program_options(int argc, char* argv[])
@@ -93,8 +96,6 @@ constexpr option long_options[] =
     {""       , 0          , 0,  0 }, /* just for safety */
 };
 
-//---------------------------------------------------------------------------------------------------------------
-
 
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
@@ -108,6 +109,8 @@ constexpr option long_options[] =
 options_parser::options_parser(int argc, char* argv[]) :
 program_options_()
 {
+    set_program_name(argv[0]);
+
     static constexpr int undefined_option_key = -1;
 
     for (int options_iterator = 1; options_iterator < argc; options_iterator++)
@@ -136,6 +139,14 @@ OptionsParsing::program_options_t options_parser::get_program_options() const
 // class private methods
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------
+
+void options_parser::set_program_name(const char* argv0)
+{
+    msg_assert(argv0, "argv[0] is nullptr? are you sure, that you give here arg[0]?");
+    program_options_.program_name = std::string(argv0);
+}
+
 //---------------------------------------------------------------------------------------------------------------
 
 [[noreturn]]
@@ -173,8 +184,8 @@ void options_parser::parse_flag_version() const
 #if not defined(PARACL_VERSION)
 #error "ParaCL version is unknowed."
 #endif /* not defined(PARACL_VERSION) */
-
     std::cout << "ParaCL " PARACL_VERSION << std::endl;
+
 
     exit(EXIT_SUCCESS); // good exit :)
 }
@@ -184,13 +195,9 @@ void options_parser::parse_flag_version() const
 void options_parser::parse_not_a_flag(const char* argument)
 {
     if (ParaCL::is_paracl_file_name(argument))
-    {
-        program_options_.sources.push_back(std::string(argument));
-        return;
-    }
+        return program_options_.sources.push_back(std::string(argument));   
 
-    std::cerr << "Bad format of input file: '" << argument << "'\n"
-                  "Expect only '" << ParaCL::paracl_extension << "' extension in sources files\n" ;
+    throw std::invalid_argument("bad source file: unexpected extentsion: '" WHITE + std::string(argument) + RESET_CONSOLE_OUT "', expect " + ParaCL::paracl_extension);
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -199,10 +206,8 @@ void options_parser::parse_not_a_flag(const char* argument)
 void options_parser::undefined_option(const char* argument) const
 {
     assert(argument);
-    std::cerr << "Undefined option '" << argument << "'\n"
-                 "I don`t know, what i need to do :(\n";
 
-    exit(EXIT_FAILURE);
+    throw std::invalid_argument("Undefined option: '" + std::string(argument) + "'");
 }
 
 //---------------------------------------------------------------------------------------------------------------

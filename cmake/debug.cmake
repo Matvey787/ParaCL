@@ -193,7 +193,7 @@ endfunction(target_hard_debug_sanitizers)
 # =================================================================================================
 # functions to add all debug options, that autor know and sanitizers to target in Debug mode
 
-function(add_target_DEBUG__DEBUG_options target)
+function(target_debug_definitions target)
     
     set(DEBUG_MACROSES
         _DEBUG
@@ -204,7 +204,7 @@ function(add_target_DEBUG__DEBUG_options target)
         target_compile_definitions(${target} PRIVATE ${DEBUG_MACROSES})
     endif()
 
-endfunction(add_target_DEBUG__DEBUG_options)
+endfunction(target_debug_definitions)
 
 
 function(add_target_debug_options target type)
@@ -221,7 +221,7 @@ function(add_target_debug_options target type)
             target_debug_options(${target})
         endif()
 
-        add_target_DEBUG__DEBUG_options(${target})
+        target_debug_definitions(${target})
 
     endif()
 endfunction(add_target_debug_options)

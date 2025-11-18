@@ -64,6 +64,22 @@ if (not (bool_expression)) {                                  \
 
 //---------------------------------------------------------------------------------------------------------------
 
+#define msg_warning(bool_expression, message) do {           \
+if (not (bool_expression)) {                                  \
+    std::cerr << YELLOW BOLD "warning: " ON_DEBUG("\n")        \
+                 RESET_CONSOLE_OUT WHITE                        \
+            ON_DEBUG(                                            \
+              << #bool_expression << "\n"                         \
+              << __FILE__ <<   ":" << __LINE__  <<                 \
+              " [" << __func__ << "]\n" YELLOW                      \
+              "message:\n"                                           \
+            ) /* ON_DEBUG */                                          \
+               BOLD                                                    \
+              << message << RESET_CONSOLE_OUT "\n";                     \
+}} while (0)
+
+//---------------------------------------------------------------------------------------------------------------
+
 #if defined(LOGGER)
 #define ON_LOGGER(...) __VA_ARGS__
 #include <sstream>

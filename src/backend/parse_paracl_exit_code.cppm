@@ -8,8 +8,8 @@ module;
 
 #include <iostream>
 #include <cstdlib>
+#include <string>
 
-#include "global/global.hpp"
 #include "global/custom_console_output.hpp"
 
 //---------------------------------------------------------------------------------------------------------------
@@ -20,12 +20,15 @@ export module parse_paracl_exit_code;
 
 export namespace ParaCL
 {
+
 //---------------------------------------------------------------------------------------------------------------
 
-int parse_paracl_exit_code(const char* argv0, int paracl_exit_code)
-{
-    msg_assert(argv0, "argv[0] is nullptr. maybe you give not a argv[0]?");
+const std::string paracl_failed_message_before = "paracl: error: ";
 
+//---------------------------------------------------------------------------------------------------------------
+
+int parse_paracl_exit_code(const std::string& argv0, int paracl_exit_code)
+{
     if (paracl_exit_code == EXIT_SUCCESS)
         return EXIT_SUCCESS;
 

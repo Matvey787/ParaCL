@@ -1,30 +1,32 @@
+module;
+
 #include <memory>
 #include <ostream>
 #include <stdexcept>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <unordered_map>
-#include "paraCL_crutch_for_parsery.hpp"
 #include <filesystem>
 #include "global/global.hpp"
+#include "parser/parser.hpp"
+
+
+export module ast_graph_dump;
+
 
 namespace ParaCL {
 
+void link_nodes(std::ostream& out, const void* lhs, const void* rhs);
+void condition_link_type(std::ostream& out, const void* lhs, const void* rhs);
+void body_link_type(std::ostream& out, const void* lhs, const void* rhs);
+void create_node(std::ostream& out, const void* node, const std::string& label, const std::string& more_settings = "");
+void dump_body(std::ostream& out, const void* node, const BlockStmt* body);
 
-static void dumpASTNode  (std::ostream& out, const ASTNode* node, const void* root, std::string_view linke_type = "");
+void dumpExpr(std::ostream& out, const ParaCL::Expr* expr);
+void dumpStmt(std::ostream& out, const ParaCL::Stmt* stmt);
 
-static void dumpStmt     (std::ostream& out, const ParaCL::Stmt* stmt);
-static void dumpCondition(std::ostream& out, const Condition* condition);
-static void dumpExpr     (std::ostream& out, const ParaCL::Expr* expr);
 
-static void link_nodes         (std::ostream& out, const void* lhs , const void* rhs);
-static void condition_link_type(std::ostream& out, const void* lhs , const void* rhs);
-static void body_link_type     (std::ostream& out, const void* lhs , const void* rhs);
-static void create_node        (std::ostream& out, const void* node, const std::string& label, const std::string& more_settings = "");
-static void dump_body          (std::ostream& out, const void* node, const BlockStmt* body);
-
-void dump(const ProgramAST& progAST, const std::string& filename)
+export void ast_dump(const ProgramAST& progAST, const std::string& filename = "dot-out/ast.dot")
 {
     std::filesystem::create_directories("dot-out");
     std::ofstream out(filename);
@@ -39,8 +41,11 @@ void dump(const ProgramAST& progAST, const std::string& filename)
     std::string label = "Program";
     create_node(out, rootId, label);
 
-    for (auto& node : progAST.nodes)
-        dumpASTNode(out, node.get(), rootId);
+    for (auto& stmt : progAST.statements)
+    {
+        dumpStmt(out, stmt.get());
+        link_nodes(out, rootId, stmt.get());
+    }
 
     out << "}\n";
     out.close();
@@ -51,31 +56,29 @@ void dump(const ProgramAST& progAST, const std::string& filename)
 }
 
 
-static void dumpASTNode(std::ostream& out, const ASTNode* node, const void* root, std::string_view linke_type)
-{
-    if (auto statement = dynamic_cast<const Stmt*>(node))
-        dumpStmt(out, statement);
-
-    else if (auto condition = dynamic_cast<const Condition*>(node))
-        dumpCondition(out, condition);
-
-    else
-        throw std::runtime_error("Bad AST node type");
-
-    if (linke_type == "body")
-        return body_link_type(out, root, node);
-
-    else if (linke_type == "condition")
-        return condition_link_type(out, root, node);
-
-    return link_nodes(out, root, node);
-}
-
-static void dumpExpr(std::ostream& out, const Expr* expr)
+void dumpExpr(std::ostream& out, const Expr* expr)
 {
     if (auto bin = dynamic_cast<const BinExpr*>(expr))
     {
-        std::string label = reverseTokenMap.at(bin->op);
+        std::string label;
+        switch (bin->op)
+        {
+            case token_t::ADD:   label = "+"; break;
+            case token_t::SUB:   label = "-"; break;
+            case token_t::MUL:   label = "*"; break;
+            case token_t::DIV:   label = "/"; break;
+            case token_t::REM:   label = "%"; break;
+            case token_t::ISAB:  label = ">"; break;
+            case token_t::ISABE: label = ">="; break;
+            case token_t::ISLS:  label = "<"; break;
+            case token_t::ISLSE: label = "<="; break;
+            case token_t::ISEQ:  label = "=="; break;
+            case token_t::ISNE:  label = "!="; break;
+            case token_t::AND:   label = "&&"; break;
+            case token_t::OR:    label = "||"; break;
+
+            default: builtin_unreachable_wrapper("here we parse only binary operations");
+        }
         create_node(out, expr, label, "style=filled, fillcolor=\"lightyellow\"");
 
         dumpExpr(out, bin->left.get());
@@ -113,10 +116,10 @@ static void dumpExpr(std::ostream& out, const Expr* expr)
         return;
     }
 
-    throw std::runtime_error("dump: Unknown expression!");
+    builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-static void dumpStmt(std::ostream& out, const Stmt* stmt)
+void dumpStmt(std::ostream& out, const Stmt* stmt)
 {
     if (auto assign = dynamic_cast<const AssignStmt*>(stmt))
     {
@@ -133,9 +136,10 @@ static void dumpStmt(std::ostream& out, const Stmt* stmt)
         switch (combined_assign->op)
         {
             case token_t::ADDASGN: label += " += :"; break;
-        case token_t::SUBASGN: label += " -= :"; break;
+            case token_t::SUBASGN: label += " -= :"; break;
             case token_t::MULASGN: label += " *= :"; break;
             case token_t::DIVASGN: label += " /= :"; break;
+            case token_t::REMASGN: label += " %= :"; break;
             default: builtin_unreachable_wrapper("no :)");
         }
 
@@ -162,7 +166,8 @@ static void dumpStmt(std::ostream& out, const Stmt* stmt)
 
         dumpExpr(out, whileStmt->condition.get());
         condition_link_type(out, stmt, whileStmt->condition.get());
-        dump_body(out, stmt, whileStmt->body.get());
+        dump_body(out, whileStmt, whileStmt->body.get());
+
         return;
     }
     else if (auto block = dynamic_cast<const BlockStmt*>(stmt))
@@ -170,41 +175,52 @@ static void dumpStmt(std::ostream& out, const Stmt* stmt)
         std::string label = "Block";
         create_node(out, stmt, label);
 
-        for (auto& s : block->nodes)
-            dumpASTNode(out, s.get(), block);
-    
+        for (auto& s : block->statements) {
+            dumpStmt(out, s.get());
+            link_nodes(out, stmt, s.get());
+        }
         return;
     }
-    throw std::runtime_error("dump: Unknown statement!");
+    else if (auto condition = dynamic_cast<const ConditionStatement*>(stmt))
+    {
+        create_node(out, condition, "Condition");
+
+        const auto if_stmt = condition->if_stmt.get(); msg_assert(if_stmt, "in condition we always expect if");
+        create_node        (out, if_stmt, "IF");
+        link_nodes         (out, stmt, if_stmt);
+        dumpExpr           (out, if_stmt->condition.get());
+        condition_link_type(out, if_stmt, if_stmt->condition.get());
+        dump_body          (out, if_stmt, if_stmt->body.get());
+
+        
+        for (auto& elif_stmt: condition->elif_stmts)
+        {
+            create_node(out, elif_stmt.get(), "ELSE IF");
+            link_nodes(out, stmt, elif_stmt.get());
+            dumpExpr(out, elif_stmt->condition.get());
+            condition_link_type(out, elif_stmt.get(), elif_stmt->condition.get());
+            dump_body(out, elif_stmt.get(), elif_stmt->body.get());
+        }
+        
+        const auto else_stmt = condition->else_stmt.get();
+        if (not else_stmt) return;
+
+        create_node(out, else_stmt, "ELSE");
+        link_nodes (out, stmt, else_stmt);
+        dump_body  (out, else_stmt, else_stmt->body.get());
+
+        return;
+    }
+    builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-static void dumpCondition(std::ostream& out, const Condition* condition)
-{
-    create_node(out, condition, "Condition");
-
-    const auto if_stmt = condition->if_stmt.get(); msg_assert(if_stmt, "in condition we always expect if");
-    create_node        (out, if_stmt, "IF");
-    link_nodes         (out, condition, if_stmt);
-    dumpExpr           (out, if_stmt->condition.get());
-    condition_link_type(out, if_stmt, if_stmt->condition.get());
-    dump_body          (out, if_stmt, if_stmt->body.get());
-
-    const auto else_stmt = condition->else_stmt.get();
-
-    if (not else_stmt) return;
-
-    create_node(out, else_stmt, "ELSE");
-    link_nodes (out, condition, else_stmt);
-    dump_body  (out, else_stmt, else_stmt->body.get());
-}
-
-static void link_nodes(std::ostream& out, const void* lhs, const void* rhs)
+void link_nodes(std::ostream& out, const void* lhs, const void* rhs)
 {
     out << "  \"" << lhs << "\" -> \"" << rhs << "\";\n";
 }
 
 
-static void create_node(std::ostream& out, const void* node, const std::string& label, const std::string& more_settings)
+void create_node(std::ostream& out, const void* node, const std::string& label, const std::string& more_settings)
 {
     out << "  \"" << node << "\" [label=\"" << label << "\"";
     
@@ -218,22 +234,25 @@ static void create_node(std::ostream& out, const void* node, const std::string& 
     
 }
 
-static void condition_link_type(std::ostream& out, const void* lhs, const void* rhs)
+void condition_link_type(std::ostream& out, const void* lhs, const void* rhs)
 {
     out << "  \"" << lhs << "\" -> \"" << rhs
         << "\" [label=\"cond\", fontcolor=\"gray50\"];\n";
 }
 
-static void body_link_type(std::ostream& out, const void* lhs, const void* rhs)
+void body_link_type(std::ostream& out, const void* lhs, const void* rhs)
 {
     out << "  \"" << lhs << "\" -> \"" << rhs
         << "\" [label=\"body\", fontcolor=\"gray50\"];\n";
 }
 
-static void dump_body(std::ostream& out, const void* node, const BlockStmt* body)
+void dump_body(std::ostream& out, const void* node, const BlockStmt* body)
 {
-    for (auto& s: body->nodes)
-        dumpASTNode(out, s.get(), node, "body");
+    for (auto& s: body->statements)
+    {
+        dumpStmt(out, s.get());
+        body_link_type(out, node, s.get());
+    }
 }
 
 

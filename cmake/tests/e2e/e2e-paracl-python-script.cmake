@@ -14,7 +14,6 @@ endif()
 # =================================================================================================
 
 # create tun_test script for e2e triangles test
-set(DEBUG_DIR              ${PROJECT_SOURCE_DIR}/debug)
 
 set(DEBUG_IN_DIR           ${DEBUG_DIR}/in)
 set(RUN_TEST_SCRIPT_IN     ${DEBUG_IN_DIR}/run_test.sh.in)

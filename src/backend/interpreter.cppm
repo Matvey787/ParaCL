@@ -1,13 +1,17 @@
+module;
+
 #include <cstdlib>
 #include <stdexcept>
 #include <iostream>
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include "paraCL_crutch_for_parsery.hpp"
+#include "parser/parser.hpp"
+
 #include "global//global.hpp"
 
-// import paraCL;
+export module paracl_interpreter;
+
 namespace ParaCL {
 
 class SymbolTable {
@@ -38,42 +42,27 @@ public:
         return nullptr;
     }
 
-    void
-    declare(const std::string& name, const int value)
-    {
+    void declare(const std::string& name, const int value) {
         scopes.back()[name] = {value};
     }
 };
 
-static void handleNode(const ASTNode* node, SymbolTable& table);
-static void handleStmt     (const Stmt              * stmt     , SymbolTable& table);
-static int  handleExpr     (const Expr              * expr     , SymbolTable& table);
-static void handleCondition(const Condition* condition, SymbolTable& table);
-
-static int  executeBinOp         (int leftOp, int rightOp, token_t binOp);
+static void handleStmt(const Stmt* stmt, SymbolTable& table);
+static int  handleExpr(const Expr* expr, SymbolTable& table);
+static int  executeBinOp(int leftOp, int rightOp, token_t binOp);
 static void executeCombinedAssign(int& operand, int value, token_t combAsgn);
 // static int  executeUnOp(int operand, token_t unOp);
 
-void compile(const ProgramAST& progAST)
+export void interpet(const ProgramAST& progAST)
 {
     SymbolTable table;
     table.enter(); // global scope
-    for (auto& node : progAST.nodes)
-        handleNode(node.get(), table);
+    for (auto& stmt : progAST.statements)
+        handleStmt(stmt.get(), table);
 
     table.leave();
 }
  
-static void handleNode(const ASTNode* node, SymbolTable& table)
-{
-    if (auto statement = dynamic_cast<const Stmt*>(node))
-        return handleStmt(statement, table);
-    
-    else if (auto condition = dynamic_cast<const Condition*>(node))
-        return handleCondition(condition, table);
-
-    throw std::runtime_error("Bad type of AST node");
-}
 
 static void handleStmt(const Stmt* stmt, SymbolTable& table)
 {
@@ -84,9 +73,7 @@ static void handleStmt(const Stmt* stmt, SymbolTable& table)
 
         auto result = handleExpr(e, table);
 
-        table.declare(assign->name, result);
-
-        return;
+        return table.declare(assign->name, result);
     }
     else if (auto combinedAssingExpr = dynamic_cast<const CombinedAssingStmt*>(stmt))
     {
@@ -103,8 +90,7 @@ static void handleStmt(const Stmt* stmt, SymbolTable& table)
 
         auto result = handleExpr(e, table);
 
-        executeCombinedAssign(varValue->value, result, combinedAssingExpr->op);
-        return;
+        return executeCombinedAssign(varValue->value, result, combinedAssingExpr->op);
     }
 
     else if (auto print = dynamic_cast<const PrintStmt*>(stmt))
@@ -113,37 +99,59 @@ static void handleStmt(const Stmt* stmt, SymbolTable& table)
         if (!e) throw std::runtime_error("BinExpr children are not Expr");
 
         auto result = handleExpr(e, table);
-        std::cout << result << '\n';
+        std::cout << result << '\n'; 
+
         return;
     }
     else if (auto whileStmt = dynamic_cast<const WhileStmt*>(stmt))
     {
-        const std::vector<std::unique_ptr<ASTNode>>& bodyStmts = whileStmt->body->nodes;
+        const std::vector<std::unique_ptr<Stmt>>&
+        bodyStmts = whileStmt->body->statements;
 
 
         while (handleExpr(whileStmt->condition.get(), table))
-            for (auto& s : bodyStmts) handleNode(s.get(), table);
+            for (auto& s : bodyStmts) handleStmt(s.get(), table);
 
         return;
     }
     else if (auto block = dynamic_cast<const BlockStmt*>(stmt))
     {
-        const std::vector<std::unique_ptr<ASTNode>>& blockStmts = block->nodes;
+        const std::vector<std::unique_ptr<Stmt>>& blockStmts = block->statements;
 
         bool blockIsEmpty = blockStmts.empty();
 
         if (!blockIsEmpty) table.enter();
 
-        for (auto& s : block->nodes)
-            handleNode(s.get(), table);
+        for (auto& s : block->statements)
+            handleStmt(s.get(), table);
 
         if (!blockIsEmpty) table.leave();
 
         return;
     }
+    else if (auto condition = dynamic_cast<const ConditionStatement*>(stmt))
+    {
+        auto if_stmt = condition->if_stmt.get(); msg_assert(if_stmt, "in condition we always expect IF");
 
-    throw std::runtime_error("Bad Statement node type");
+        bool flag = handleExpr(if_stmt->condition.get(), table);
+        if (flag) return handleStmt(if_stmt->body.get(), table);
+        
+        for (auto& elif_statement: condition->elif_stmts)
+        {
+            flag = handleExpr(elif_statement->condition.get(), table);
+            if (not flag) continue;
+            return handleStmt(elif_statement->body.get(), table);
+        }
+            
+        auto else_stmt = condition->else_stmt.get(); 
+        if (not else_stmt) return; /* no ELSE */
+
+        return handleStmt(else_stmt->body.get(), table);
+    }
+
+    builtin_unreachable_wrapper("we must return in some else-if");
 }
+
 
 static int handleExpr(const Expr* expr, SymbolTable& table)
 {
@@ -209,25 +217,9 @@ static int handleExpr(const Expr* expr, SymbolTable& table)
         executeCombinedAssign(varValue->value, result, combinedAssingExpr->op);
 
         return varValue->value;
-    
     }
 
-    throw std::runtime_error("Bad expression node format");
-}
-
-static void handleCondition(const Condition* condition, SymbolTable& table)
-{
-    auto if_stmt = condition->if_stmt.get(); msg_assert(if_stmt, "in condition we always expect IF");
-    
-    bool flag = handleExpr(if_stmt->condition.get(), table);
-    if (flag) return handleNode(if_stmt->body.get(), table);
-    
-    /* TODO: add parsing of else if */
-        
-    auto else_stmt = condition->else_stmt.get(); 
-    if (not else_stmt) return; /* no ELSE */
-
-    return handleNode(else_stmt->body.get(), table);
+    builtin_unreachable_wrapper("we must return in some else-if");
 }
 
 static int executeBinOp(int leftOp, int rightOp, token_t binOp)
@@ -238,6 +230,7 @@ static int executeBinOp(int leftOp, int rightOp, token_t binOp)
     case token_t::SUB:   return leftOp -  rightOp;
     case token_t::MUL:   return leftOp *  rightOp;
     case token_t::DIV:   return leftOp /  rightOp;
+    case token_t::REM:   return leftOp %  rightOp;
     case token_t::ISAB:  return leftOp >  rightOp;
     case token_t::ISABE: return leftOp >= rightOp;
     case token_t::ISLS:  return leftOp <  rightOp;
@@ -268,13 +261,14 @@ static void executeCombinedAssign(int& operand, int value, token_t combAsgn)
 {
     switch (combAsgn)
     {
-    case token_t::ADDASGN: operand += value; break;
-    case token_t::SUBASGN: operand -= value; break;
-    case token_t::MULASGN: operand *= value; break;
-    case token_t::DIVASGN: operand /= value; break;
+    case token_t::ADDASGN: operand += value; return;
+    case token_t::SUBASGN: operand -= value; return;
+    case token_t::MULASGN: operand *= value; return;
+    case token_t::DIVASGN: operand /= value; return;
+    case token_t::REMASGN: operand %= value; return;
     default: builtin_unreachable_wrapper("here we parse only combined assing operations");
     }
-    return;
+    builtin_unreachable_wrapper("we must return in switch");
 }
 
 } /* namespace ParaCL */
