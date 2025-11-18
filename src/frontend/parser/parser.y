@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include <string.h>
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "global/global.hpp"
@@ -18,7 +19,10 @@ extern std::string current_file;
 typedef struct YYLTYPE YYLTYPE;
 typedef union YYSTYPE YYSTYPE;
 
-void yyerror(YYLTYPE* loc, const char* msg);
+void show_error_context(YYLTYPE* loc);
+
+void yyerror(YYLTYPE* loc, const char* msg, std::string possible_token = "");
+
 int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param);
 
 %}
@@ -40,17 +44,17 @@ int yylex(YYSTYPE* yylval_param, YYLTYPE* yylloc_param);
 %precedence DIVASGN
 
 %union {
-    int                                      num_value     ;
-    std   ::string                         * str_value     ;
-    ParaCL::Stmt                           * stmt          ;
-    ParaCL::Expr                           * expr          ;
-    ParaCL::BlockStmt                      * block         ;
-    ParaCL::ConditionStatement             * condition_stmt;
-    ParaCL::IfStatement                    * if_stmt       ;
-    std   ::vector<ParaCL::ElifStatement*> * elif_stmts    ;
-    ParaCL::ElifStatement                  * elif_stmt     ;
-    ParaCL::ElseStatement                  * else_stmt     ;
-    std   ::vector<ParaCL::Stmt*>          * stmt_vector   ;
+    int                                     num_value      ;
+    std   ::string*                         str_value      ;
+    ParaCL::Stmt*                           stmt           ;
+    ParaCL::Expr*                           expr           ;
+    ParaCL::BlockStmt*                      block          ;
+    ParaCL::ConditionStatement*             condition_stmt ;
+    ParaCL::IfStatement*                    if_stmt        ;
+    std   ::vector<ParaCL::ElifStatement*>* elif_stmts     ;
+    ParaCL::ElifStatement*                  elif_stmt      ;
+    ParaCL::ElseStatement*                  else_stmt      ;
+    std   ::vector<ParaCL::Stmt*>*          stmt_vector    ;
 }
 
 %token <num_value> NUM
@@ -449,10 +453,52 @@ one_stmt_block:
     ;
 %%
 
-void yyerror(YYLTYPE* loc, const char* msg)
+void yyerror(YYLTYPE* loc, const char* msg, std::string possible_token)
 {
-    std::cerr << current_file     << ":"
-              << loc->first_line   << ":"
+    std::cerr << current_file << ":"
+              << loc->first_line << ":"
               << loc->first_column << ":"
-              " paracl: error: " << msg << "\n";
+              " ---> " << msg << "\n";
+    
+    if (!possible_token.empty()) {
+        std::cerr << "Did you mean: '" << possible_token << "'?\n";
+    }
+    
+    show_error_context(loc);
+}
+
+void show_error_context(YYLTYPE* loc) {
+    if (!yyin) return;
+    
+    long current_file_pos = ftell(yyin);
+    
+    // Go to start of the file
+    rewind(yyin);
+    
+    char buffer[1024];
+    int current_line = 1;
+
+    while (current_line < loc->first_line && fgets(buffer, sizeof(buffer), yyin)) current_line++;
+
+    if (current_line == loc->first_line && fgets(buffer, sizeof(buffer), yyin))
+    {
+        size_t len = strlen(buffer);
+
+        if (len > 0 && buffer[len-1] == '\n') buffer[len-1] = '\0';
+        
+        std::cerr << loc->first_line << " | " << buffer << std::endl;
+        
+        std::cerr << "  | ";
+        for (int i = 1; i < loc->first_column; i++)
+        {
+            if (i < (int)strlen(buffer) && buffer[i-1] == '\t')
+                std::cerr << "    ";
+            else
+                std::cerr << " ";
+        }
+        std::cerr << "^--- Unexpected token" << std::endl;
+    }
+    
+    // Restoring the position in the file
+    fseek(yyin, current_file_pos, SEEK_SET);
 }

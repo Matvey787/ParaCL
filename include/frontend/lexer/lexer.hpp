@@ -8,3 +8,4 @@ extern std::string current_var_value;
 extern std::string current_file;
 
 int yylex();
+

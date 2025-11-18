@@ -27,7 +27,10 @@ int eof_reached = 0;
 void process_number  (const char* text);
 void process_variable(const char* text);
 
-extern void yyerror(YYLTYPE* loc, const char* msg);
+extern void yyerror(YYLTYPE* loc, const char* msg, std::string possible_token);
+
+std::string find_possible_token(const char* unexpected);
+size_t levenshtein_distance(const std::string& s1, const std::string& s2);
 
 extern FILE* yyin;
 
@@ -146,10 +149,10 @@ SPACE
             }
 
 . {
-    std::ostringstream oss;
-    oss << "use of undeclared identifier '" << yytext << "'";
-
-    yyerror(yylloc, oss.str().c_str());
+    std::string unexpected = yytext;
+    std::string possible_token = find_possible_token(yytext);
+    
+    yyerror(yylloc, ("unexpected character '" + unexpected + "'").c_str(), possible_token);
     return EXIT_FAILURE;
 }
 
@@ -162,8 +165,57 @@ void process_number(const char* text) {
 void process_variable(const char* text) {
     current_var_value = text;
 }
-
+find_possible_token
 void set_current_paracl_file(const std::string& file)
 {
     current_file = file;
+}
+
+size_t levenshtein_distance(const std::string& s1, const std::string& s2)
+{
+    const size_t len1 = s1.size(), len2 = s2.size();
+    std::vector<std::vector<size_t>> dp(len1 + 1, std::vector<size_t>(len2 + 1));
+    
+    for (size_t i = 0; i <= len1; ++i) dp[i][0] = i;
+    for (size_t j = 0; j <= len2; ++j) dp[0][j] = j;
+    
+    for (size_t i = 1; i <= len1; ++i)
+    {
+        for (size_t j = 1; j <= len2; ++j)
+        {
+            size_t cost = (s1[i-1] == s2[j-1]) ? 0 : 1;
+            dp[i][j] = std::min(
+            {
+                dp[i-1][j] + 1,      // deletion
+                dp[i][j-1] + 1,      // insertion  
+                dp[i-1][j-1] + cost  // substitution
+            });
+        }
+    }
+    
+    return dp[len1][len2];
+}
+
+std::string find_possible_token(const char* unexpected) {
+    static const std::vector<std::string> known_tokens = {
+        "if", "else", "while", "print", 
+        "and", "or", "not",
+        "+", "-", "*", "/", "%",
+        "==", "!=", ">", ">=", "<", "<=",
+        "=", "+=", "-=", "*=", "/=",
+        "(", ")", "{", "}", ";", "?"
+    };
+    
+    std::string best_match;
+    size_t min_distance = std::numeric_limits<size_t>::max();
+    
+    for (const auto& token : known_tokens) {
+        size_t distance = levenshtein_distance(unexpected, token);
+        if (distance < min_distance && distance <= token.length() / 2) {
+            min_distance = distance;
+            best_match = token;
+        }
+    }
+    
+    return best_match;
 }
