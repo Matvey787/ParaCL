@@ -151,7 +151,7 @@ SPACE
 . {
     std::string unexpected = yytext;
     std::string possible_token = find_possible_token(yytext);
-    
+
     yyerror(yylloc, ("unexpected character '" + unexpected + "'").c_str(), possible_token);
     return EXIT_FAILURE;
 }
@@ -165,7 +165,7 @@ void process_number(const char* text) {
 void process_variable(const char* text) {
     current_var_value = text;
 }
-find_possible_token
+
 void set_current_paracl_file(const std::string& file)
 {
     current_file = file;
