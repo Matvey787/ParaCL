@@ -86,6 +86,8 @@ add_custom_command(
         ${BISON_SRC}
     COMMENT
         "Generate `${BISON_PARSER_CPP}' and `${BISON_PARSER_HPP}' with bison..."
+    COMMENT
+        "${BISON_EXECUTABLE} -o ${BISON_OUT_DIR}/${BISON_PARSER_CPP} ${BISON_SRC} -d"
 )
 
 set(PARSER_LIB parser)
@@ -114,13 +116,15 @@ add_custom_command(
         ${LEXER_SRC_DIR}/${LEXER_CPP}
     COMMAND
         ${CMAKE_COMMAND} -E make_directory ${FLEX_OUT_DIR}
-    COMMAND
+    COMMAND 
         ${FLEX_EXECUTABLE} -o ${FLEX_OUT_DIR}/${LEXER_CPP} ${FLEX_SRC}
     DEPENDS
         ${FLEX_SRC}
         ${BISON_PARSER_SRC_DIR}/${BISON_PARSER_HPP}
     COMMENT
         "Generate ${LEXER_CPP} with flex..."
+    COMMENT
+        "${FLEX_EXECUTABLE} -o ${FLEX_OUT_DIR}/${LEXER_CPP} ${FLEX_SRC}"
 )
 
 set(LEXER_LIB lexer)
@@ -201,8 +205,6 @@ set(RUN_PARACL_SRC
     ${DEBUG_DIR}/ast/ast-graph-dump.cppm    
 )
 endif(GRAPHVIZ)
-
-message(${RUN_PARACL_SRC})
 
 target_sources(${RUN_PARACL_LIB}
     PUBLIC
