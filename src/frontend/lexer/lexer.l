@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include "parser/parse_error.hpp"
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "global/global.hpp"
@@ -124,8 +125,9 @@ WHITESPACE  {SPACE}|{TAB}|{CARRIEGE}
 <<EOF>>     { return yy::parser::token::YYEOF; }
 
 .           { 
-                // std::string error_msg = "unexpected character '" + std::string(yytext) + "'";
-                // yy::parser::error(*yylloc, error_msg);
+                ErrorHandler::throwError(*yylloc,
+                                         "unexpected character '" + std::string(yytext) + "'", 
+                                         {1, 1, 1});
                 return yy::parser::token::YYerror; 
             }
 

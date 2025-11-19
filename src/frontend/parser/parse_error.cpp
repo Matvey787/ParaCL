@@ -2,37 +2,25 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <limits>
 #include <string.h>
 #include "parser.tab.hpp"
 #include "parser/parse_error.hpp"
 
 extern FILE* yyin;
-extern ParseError::ErrorParseOptions error_parse_options;
 
 void yy::parser::error(const location& loc, const std::string& msg)
 {
-    std::cerr << current_file << ":"
-              << loc.begin.line << ":"
-              << loc.begin.column << ": paracl: error:"
-              " ---> " << msg << "\n";
-
-    std::string problematic_token = ParseError::extract_token_at_position(loc);
-    std::string possible_token = ParseError::find_possible_token(problematic_token.c_str());
-
-    if (error_parse_options.show_bad_token && !problematic_token.empty())
-        std::cerr << "Problematic place: '" << problematic_token << "'\n\n";   
-
-    if (error_parse_options.show_error_context)
-        ParseError::show_error_context(loc);
-
-    if (error_parse_options.show_similar_token && !possible_token.empty())
-        std::cerr << "\nDid you mean: '" << possible_token << "'?\n";
+    ErrorHandler::throwError(loc, msg, {false, true, false});
 }
 
-namespace ParseError
-{
+namespace ErrorHandler {
 
-void show_error_context(const yy::location& loc) {
+namespace Detail {
+
+void show_error_context(const yy::location& loc)
+{
     if (!yyin) return;
 
     long current_file_pos = ftell(yyin);
@@ -193,11 +181,40 @@ std::string extract_token_at_position(const yy::location& loc) {
     return token;
 }
 
-void set_error_parse_options(bool show_similar, bool show_bad_token, bool show_error_context)
+} // namespace Detail
+
+void
+throwError(const yy::location& loc,
+                         const std::string& msg,
+                         const ErrorParseOptions& options)
 {
-    error_parse_options.show_similar_token = show_similar      ;
-    error_parse_options.show_bad_token     = show_bad_token    ;
-    error_parse_options.show_error_context = show_error_context;
+    std::cerr << current_file << ":"
+        << loc.begin.line << ":"
+        << loc.begin.column << ": paracl: error:"
+        " ---> " << msg << "\n";
+
+    std::string bad_token = ErrorHandler::Detail::extract_token_at_position(loc);
+
+    if (options.show_bad_token)
+    {
+        std::cerr << "Problematic place: '";
+        bad_token.empty() ? std::cerr << "???" : std::cerr << bad_token;
+        std::cerr << "'\n\n";
+    }
+
+    if (options.show_error_context)
+    {
+        ErrorHandler::Detail::show_error_context(loc);
+    }
+
+    if (options.show_posible_token)
+    {
+        std::string possible_token = ErrorHandler::Detail::find_possible_token(bad_token.c_str());
+        std::cerr << "\nPossible fix: ";
+        possible_token.empty() ? std::cerr << "no suggestions" :
+                                    std::cerr << "Did you mean: '" << possible_token << "'?";
+        std::cerr << "\n";
+    }
 }
 
-} /* namespace ParseError */
+} // namespace ErrorHandler

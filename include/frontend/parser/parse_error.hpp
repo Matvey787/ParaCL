@@ -4,22 +4,20 @@
 #include <cstdint>
 #include "parser.tab.hpp"
 
-namespace ParseError
+namespace ErrorHandler
 {
 
 struct ErrorParseOptions
 {
-    bool show_similar_token : 1 = true;
-    bool show_bad_token     : 1 = true;
-    bool show_error_context : 1 = true;
-    bool show_error_place   : 1 = true;
+    bool show_bad_token     : 1 = false;
+    bool show_error_context : 1 = false;
+    bool show_posible_token : 1 = false;
+    // bool show_error_place   : 1 = true; по моему бред, мы это всегда показываем
 };
 
+void
+throwError(const yy::location& loc,
+           const std::string& msg,
+           const ErrorParseOptions& options = {});
 
-void        show_error_context(const yy::location& loc);
-size_t      levenshtein_distance(const std::string& s1, const std::string& s2);
-std::string find_possible_token(const char* unexpected);
-std::string extract_token_at_position(const yy::location& loc);
-void        set_error_parse_options(bool show_similar, bool show_bad_token, bool show_error_context);
-
-} /* namespace ParseError */
+} // namespace ErrorHandler

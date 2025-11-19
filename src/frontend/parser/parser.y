@@ -32,7 +32,6 @@ extern std::string current_var_value;
 #include "lexer/lexer.hpp"
 
 ParaCL    ::ProgramAST        program;
-ParseError::ErrorParseOptions error_parse_options;
 
 int  yylex            (yy::parser::semantic_type* yylval, yy::parser::location_type* yylloc);
 } /* %code */
@@ -103,7 +102,6 @@ statement:
         $$ = std::move($1);
     }
     | SC {
-        /* TODO: add empty block like new class */
         $$ = std::make_unique<ParaCL::BlockStmt>();
     }
     ;
@@ -113,9 +111,8 @@ assignment:
         $$ = std::make_unique<ParaCL::AssignStmt>($1, std::move($3));
     }
     | VAR AS error {
-        
-        error(@3, "expected expression after assignment");
-        YYABORT; // не ну а зачем парсить остальные ошибки? 
+        ErrorHandler::throwError(@3, "expected expression after assignment");
+        YYABORT;
     }
     ;
 
@@ -148,11 +145,31 @@ combined_assignment:
             std::move($3)
         );
     }
+    | VAR ADDASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '+=' assignment");
+        YYABORT;
+    }
+    | VAR SUBASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '-=' assignment");
+        YYABORT;
+    }
+    | VAR MULASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '*=' assignment");
+        YYABORT;
+    }
+    | VAR DIVASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '/=' assignment");
+        YYABORT;
+    }
     ;
 
 print_statement:
     PRINT expression {
         $$ = std::make_unique<ParaCL::PrintStmt>(std::move($2));
+    }
+    | PRINT error {
+        ErrorHandler::throwError(@2, "expected expression after print");
+        YYABORT;
     }
     ;
 
@@ -168,6 +185,22 @@ while_statement:
             std::move($3), 
             std::move($5)
         );
+    }
+    | WH LCIB error RCIB LCUB block RCUB {
+        ErrorHandler::throwError(@3, "expected condition expression in while statement");
+        YYABORT;
+    }
+    | WH LCIB expression error LCUB block RCUB {
+        ErrorHandler::throwError(@4, "expected ')' after while condition");
+        YYABORT;
+    }
+    | WH LCIB expression RCIB error {
+        ErrorHandler::throwError(@5, "expected block or statement after while condition");
+        YYABORT;
+    }
+    | WH error {
+        ErrorHandler::throwError(@2, "expected '(' after while");
+        YYABORT;
     }
     ;
 
@@ -199,6 +232,22 @@ if_statement:
             std::move($5)
         );
     }
+    | IF LCIB error RCIB LCUB block RCUB {
+        ErrorHandler::throwError(@3, "expected condition expression in if statement");
+        YYABORT;
+    }
+    | IF LCIB expression error LCUB block RCUB {
+        ErrorHandler::throwError(@4, "expected ')' after if condition");
+        YYABORT;
+    }
+    | IF LCIB expression RCIB error {
+        ErrorHandler::throwError(@5, "expected block or statement after if condition");
+        YYABORT;
+    }
+    | IF error {
+        ErrorHandler::throwError(@2, "expected '(' after if");
+        YYABORT;
+    }
     ;
 
 elif_statements:
@@ -219,6 +268,22 @@ elif_statements:
         ));
         $$ = std::move($1);
     }
+    | elif_statements ELIF LCIB error RCIB LCUB block RCUB {
+        ErrorHandler::throwError(@4, "expected condition expression in elif statement");
+        YYABORT;
+    }
+    | elif_statements ELIF LCIB expression error LCUB block RCUB {
+        ErrorHandler::throwError(@5, "expected ')' after elif condition");
+        YYABORT;
+    }
+    | elif_statements ELIF LCIB expression RCIB error {
+        ErrorHandler::throwError(@6, "expected block or statement after elif condition");
+        YYABORT;
+    }
+    | elif_statements ELIF error {
+        ErrorHandler::throwError(@3, "expected '(' after elif");
+        YYABORT;
+    }
     ;
 
 else_statement:
@@ -232,6 +297,10 @@ else_statement:
         $$ = std::make_unique<ParaCL::ElseStatement>(
             std::move($2)
         );
+    }
+    | ELSE error {
+        ErrorHandler::throwError(@2, "expected block or statement after else");
+        YYABORT;
     }
     ;
 
@@ -272,6 +341,26 @@ assignment_expression:
             std::move($3)
         );
     }
+    | VAR AS error {
+        ErrorHandler::throwError(@3, "expected expression after assignment");
+        YYABORT;
+    }
+    | VAR ADDASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '+=' assignment");
+        YYABORT;
+    }
+    | VAR SUBASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '-=' assignment");
+        YYABORT;
+    }
+    | VAR MULASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '*=' assignment");
+        YYABORT;
+    }
+    | VAR DIVASGN error {
+        ErrorHandler::throwError(@3, "expected expression after '/=' assignment");
+        YYABORT;
+    }
     ;
 
 logical_or_expression:
@@ -283,6 +372,10 @@ logical_or_expression:
             std::move($3)
         );
     }
+    | logical_or_expression OR error {
+        ErrorHandler::throwError(@3, "expected expression after 'or' operator");
+        YYABORT;
+    }
     ;
 
 logical_and_expression:
@@ -293,6 +386,10 @@ logical_and_expression:
             std::move($1),
             std::move($3)
         );
+    }
+    | logical_and_expression AND error {
+        ErrorHandler::throwError(@3, "expected expression after 'and' operator");
+        YYABORT;
     }
     ;
 
@@ -311,6 +408,14 @@ equality_expression:
             std::move($1),
             std::move($3)
         );
+    }
+    | equality_expression ISEQ error {
+        ErrorHandler::throwError(@3, "expected expression after '==' operator");
+        YYABORT;
+    }
+    | equality_expression ISNE error {
+        ErrorHandler::throwError(@3, "expected expression after '!=' operator");
+        YYABORT;
     }
     ;
 
@@ -344,6 +449,22 @@ relational_expression:
             std::move($3)
         );
     }
+    | relational_expression ISAB error {
+        ErrorHandler::throwError(@3, "expected expression after '>' operator");
+        YYABORT;
+    }
+    | relational_expression ISABE error {
+        ErrorHandler::throwError(@3, "expected expression after '>=' operator");
+        YYABORT;
+    }
+    | relational_expression ISLS error {
+        ErrorHandler::throwError(@3, "expected expression after '<' operator");
+        YYABORT;
+    }
+    | relational_expression ISLSE error {
+        ErrorHandler::throwError(@3, "expected expression after '<=' operator");
+        YYABORT;
+    }
     ;
 
 additive_expression:
@@ -361,6 +482,14 @@ additive_expression:
             std::move($1),
             std::move($3)
         );
+    }
+    | additive_expression ADD error {
+        ErrorHandler::throwError(@3, "expected expression after '+' operator");
+        YYABORT;
+    }
+    | additive_expression SUB error {
+        ErrorHandler::throwError(@3, "expected expression after '-' operator");
+        YYABORT;
     }
     ;
 
@@ -387,6 +516,18 @@ multiplicative_expression:
             std::move($3)
         );
     }
+    | multiplicative_expression MUL error {
+        ErrorHandler::throwError(@3, "expected expression after '*' operator");
+        YYABORT;
+    }
+    | multiplicative_expression DIV error {
+        ErrorHandler::throwError(@3, "expected expression after '/' operator");
+        YYABORT;
+    }
+    | multiplicative_expression REM error {
+        ErrorHandler::throwError(@3, "expected expression after '%' operator");
+        YYABORT;
+    }
     ;
 
 unary_expression:
@@ -406,6 +547,18 @@ unary_expression:
     | ADD unary_expression %prec NEG {
         $$ = std::move($2);
     }
+    | SUB error {
+        ErrorHandler::throwError(@2, "expected expression after unary '-'");
+        YYABORT;
+    }
+    | NOT error {
+        ErrorHandler::throwError(@2, "expected expression after 'not' operator");
+        YYABORT;
+    }
+    | ADD error {
+        ErrorHandler::throwError(@2, "expected expression after unary '+'");
+        YYABORT;
+    }
     ;
 
 factor:
@@ -420,6 +573,14 @@ factor:
     }
     | IN {
         $$ = std::make_unique<ParaCL::InputExpr>();
+    }
+    | LCIB error RCIB {
+        ErrorHandler::throwError(@2, "expected expression inside parentheses");
+        YYABORT;
+    }
+    | LCIB expression error {
+        ErrorHandler::throwError(@3, "expected ')' after expression");
+        YYABORT;
     }
     ;
 
