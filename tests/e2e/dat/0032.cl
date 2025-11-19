@@ -1,5 +1,5 @@
-a = 90;
-if (a orr 21)
-{
-    print a;
-}
+// comments test
+iters = 0;
+        iters = iters -1;
+;
+print 2+2*2;
