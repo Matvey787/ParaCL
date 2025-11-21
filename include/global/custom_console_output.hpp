@@ -10,163 +10,163 @@
 //---------------------------------------------------------------------------------------------------------------
 
 // 🎨 Basic Colors
-#define RED               "\033[31m"
-#define GREEN             "\033[32m" 
-#define YELLOW            "\033[33m"
-#define BLUE              "\033[34m"
-#define VIOLET            "\033[35m"
-#define CYAN              "\033[36m"
-#define WHITE             "\033[37m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW "\033[33m"
+#define BLUE "\033[34m"
+#define VIOLET "\033[35m"
+#define CYAN "\033[36m"
+#define WHITE "\033[37m"
 
 // Bright Colors
-#define BRIGHT_RED        "\033[91m"
-#define BRIGHT_GREEN      "\033[92m"
-#define BRIGHT_YELLOW     "\033[93m"
-#define BRIGHT_BLUE       "\033[94m"
-#define BRIGHT_VIOLET     "\033[95m"
-#define BRIGHT_CYAN       "\033[96m"
-#define BRIGHT_WHITE      "\033[97m"
+#define BRIGHT_RED "\033[91m"
+#define BRIGHT_GREEN "\033[92m"
+#define BRIGHT_YELLOW "\033[93m"
+#define BRIGHT_BLUE "\033[94m"
+#define BRIGHT_VIOLET "\033[95m"
+#define BRIGHT_CYAN "\033[96m"
+#define BRIGHT_WHITE "\033[97m"
 
 // Background Colors
-#define BG_RED            "\033[41m"
-#define BG_GREEN          "\033[42m"
-#define BG_YELLOW         "\033[43m"
-#define BG_BLUE           "\033[44m"
-#define BG_VIOLET         "\033[45m"
-#define BG_CYAN           "\033[46m"
-#define BG_WHITE          "\033[47m"
+#define BG_RED "\033[41m"
+#define BG_GREEN "\033[42m"
+#define BG_YELLOW "\033[43m"
+#define BG_BLUE "\033[44m"
+#define BG_VIOLET "\033[45m"
+#define BG_CYAN "\033[46m"
+#define BG_WHITE "\033[47m"
 
 //---------------------------------------------------------------------------------------------------------------
 
 // ✨ Font Styles
-#define BOLD              "\033[1m"      // Жирный
-#define DIM               "\033[2m"      // Тонкий  
-#define ITALIC            "\033[3m"      // Курсив
-#define UNDERLINE         "\033[4m"      // Подчеркнутый
-#define BLINK             "\033[5m"      // Мигающий
-#define REVERSE           "\033[7m"      // Инверсный цвет
-#define HIDDEN            "\033[8m"      // Скрытый
-#define STRIKETHROUGH     "\033[9m"      // Зачеркнутый
+#define BOLD "\033[1m"          // Жирный
+#define DIM "\033[2m"           // Тонкий
+#define ITALIC "\033[3m"        // Курсив
+#define UNDERLINE "\033[4m"     // Подчеркнутый
+#define BLINK "\033[5m"         // Мигающий
+#define REVERSE "\033[7m"       // Инверсный цвет
+#define HIDDEN "\033[8m"        // Скрытый
+#define STRIKETHROUGH "\033[9m" // Зачеркнутый
 
 //---------------------------------------------------------------------------------------------------------------
 // ❤️  Emotions & Love
 //---------------------------------------------------------------------------------------------------------------
 
-#define HEART             "\u2764"       // ❤️  пусть в мире будет больше любви
-#define HEART_EYES        "\U0001F60D"   // 😍 влюбленные глаза
-#define HEART_HANDS       "\U0001FAF6"   // 🩶 рука образующая сердце
-#define SPARKLING_HEART   "\U0001F496"   // 💖 блестящее сердце
-#define GROWING_HEART     "\U0001F497"   // 💗 растущее сердце
-#define BEATING_HEART     "\U0001F493"   // 💓 бьющееся сердце
-#define BROKEN_HEART      "\U0001F494"   // 💔 разбитое сердце
-#define TWO_HEARTS        "\U0001F495"   // 💕 два сердца
-#define HEART_DECORATION  "\U0001F49F"   // 💟 украшение в виде сердца
+#define HEART "\u2764"                // ❤️  пусть в мире будет больше любви
+#define HEART_EYES "\U0001F60D"       // 😍 влюбленные глаза
+#define HEART_HANDS "\U0001FAF6"      // 🩶 рука образующая сердце
+#define SPARKLING_HEART "\U0001F496"  // 💖 блестящее сердце
+#define GROWING_HEART "\U0001F497"    // 💗 растущее сердце
+#define BEATING_HEART "\U0001F493"    // 💓 бьющееся сердце
+#define BROKEN_HEART "\U0001F494"     // 💔 разбитое сердце
+#define TWO_HEARTS "\U0001F495"       // 💕 два сердца
+#define HEART_DECORATION "\U0001F49F" // 💟 украшение в виде сердца
 
 //---------------------------------------------------------------------------------------------------------------
 // 😊 Smileys & People
 //---------------------------------------------------------------------------------------------------------------
 
-#define SMILE             "\U0001F600"   // 😀 улыбка
-#define BIG_SMILE         "\U0001F603"   // 😃 широкая улыбка
-#define LAUGH             "\U0001F606"   // 😆 смех
-#define JOY               "\U0001F602"   // 😂 слезы радости
-#define WINK              "\U0001F609"   // 😉 подмигивание
-#define BLUSH             "\U0001F60A"   // 😊 смущенная улыбка
-#define RELIEVED          "\U0001F60C"   // 😌 облегчение
-#define HEART_EYES_SMILE  "\U0001F60D"   // 😍 улыбка с сердцами вместо глаз
-#define KISS              "\U0001F618"   // 😘 воздушный поцелуй
-#define THINKING          "\U0001F914"   // 🤔 размышление
-#define SALUTE            "\U0001F44B"   // 👋 приветствие
-#define THUMBS_UP         "\U0001F44D"   // 👍 палец вверх
-#define THUMBS_DOWN       "\U0001F44E"   // 👎 палец вниз
-#define CLAP              "\U0001F44F"   // 👏 аплодисменты
-#define PRAY              "\U0001F64F"   // 🙏 молитва/спасибо
-#define OK_HAND           "\U0001F44C"   // 👌 знак "окей"
+#define SMILE "\U0001F600"            // 😀 улыбка
+#define BIG_SMILE "\U0001F603"        // 😃 широкая улыбка
+#define LAUGH "\U0001F606"            // 😆 смех
+#define JOY "\U0001F602"              // 😂 слезы радости
+#define WINK "\U0001F609"             // 😉 подмигивание
+#define BLUSH "\U0001F60A"            // 😊 смущенная улыбка
+#define RELIEVED "\U0001F60C"         // 😌 облегчение
+#define HEART_EYES_SMILE "\U0001F60D" // 😍 улыбка с сердцами вместо глаз
+#define KISS "\U0001F618"             // 😘 воздушный поцелуй
+#define THINKING "\U0001F914"         // 🤔 размышление
+#define SALUTE "\U0001F44B"           // 👋 приветствие
+#define THUMBS_UP "\U0001F44D"        // 👍 палец вверх
+#define THUMBS_DOWN "\U0001F44E"      // 👎 палец вниз
+#define CLAP "\U0001F44F"             // 👏 аплодисменты
+#define PRAY "\U0001F64F"             // 🙏 молитва/спасибо
+#define OK_HAND "\U0001F44C"          // 👌 знак "окей"
 
 //---------------------------------------------------------------------------------------------------------------
-// 🚀 Status & Actions  
+// 🚀 Status & Actions
 //---------------------------------------------------------------------------------------------------------------
 
-#define CHECK_MARK        "\u2705"       // ✅ галочка
-#define CROSS_MARK        "\u274C"       // ❌ крестик
-#define WARNING           "\u26A0"       // ⚠️ предупреждение
-#define INFO              "\u2139"       // ℹ️ информация
-#define QUESTION          "\u2753"       // ❓ вопрос
-#define EXCLAMATION       "\u2757"       // ❗ восклицание
-#define LIGHT_BULB        "\U0001F4A1"   // 💡 идея
-#define ROCKET            "\U0001F680"   // 🚀 ракета
-#define FIRE              "\U0001F525"   // 🔥 огонь
-#define ZAP               "\u26A1"       // ⚡ молния
-#define STAR              "\u2B50"       // ⭐ звезда
-#define TROPHY            "\U0001F3C6"   // 🏆 трофей
-#define TADA              "\U0001F389"   // 🎉 праздник
+#define CHECK_MARK "\u2705"     // ✅ галочка
+#define CROSS_MARK "\u274C"     // ❌ крестик
+#define WARNING "\u26A0"        // ⚠️ предупреждение
+#define INFO "\u2139"           // ℹ️ информация
+#define QUESTION "\u2753"       // ❓ вопрос
+#define EXCLAMATION "\u2757"    // ❗ восклицание
+#define LIGHT_BULB "\U0001F4A1" // 💡 идея
+#define ROCKET "\U0001F680"     // 🚀 ракета
+#define FIRE "\U0001F525"       // 🔥 огонь
+#define ZAP "\u26A1"            // ⚡ молния
+#define STAR "\u2B50"           // ⭐ звезда
+#define TROPHY "\U0001F3C6"     // 🏆 трофей
+#define TADA "\U0001F389"       // 🎉 праздник
 
 //---------------------------------------------------------------------------------------------------------------
 // ⚠️  Problems & Errors
 //---------------------------------------------------------------------------------------------------------------
 
-#define SKULL             "\U0001F480"   // 💀 череп
-#define BOMB              "\U0001F4A3"   // 💣 бомба
-#define COLLISION         "\U0001F4A5"   // 💥 взрыв
-#define PILE_OF_POO       "\U0001F4A9"   // 💩 проблемы
-#define GHOST             "\U0001F47B"   // 👻 призрак
-#define ALIEN             "\U0001F47D"   // 👽 что-то странное
-#define ROBOT             "\U0001F916"   // 🤖 автоматизация
+#define SKULL "\U0001F480"       // 💀 череп
+#define BOMB "\U0001F4A3"        // 💣 бомба
+#define COLLISION "\U0001F4A5"   // 💥 взрыв
+#define PILE_OF_POO "\U0001F4A9" // 💩 проблемы
+#define GHOST "\U0001F47B"       // 👻 призрак
+#define ALIEN "\U0001F47D"       // 👽 что-то странное
+#define ROBOT "\U0001F916"       // 🤖 автоматизация
 
 //---------------------------------------------------------------------------------------------------------------
 // 📊 Progress & Loading
 //---------------------------------------------------------------------------------------------------------------
 
-#define HOURGLASS         "\u23F3"       // ⏳ песочные часы
-#define CLOCK             "\u23F0"       // ⏰ часы
-#define STOPWATCH         "\u23F1"       // ⏱️ секундомер
-#define GEAR              "\u2699"       // ⚙️ настройки
-#define MAGNIFYING_GLASS  "\U0001F50D"   // 🔍 поиск
-#define WRENCH            "\U0001F527"   // 🔧 инструменты
-#define HAMMER            "\U0001F528"   // 🔨 работа
-#define LINK              "\U0001F517"   // 🔗 ссылка
+#define HOURGLASS "\u23F3"            // ⏳ песочные часы
+#define CLOCK "\u23F0"                // ⏰ часы
+#define STOPWATCH "\u23F1"            // ⏱️ секундомер
+#define GEAR "\u2699"                 // ⚙️ настройки
+#define MAGNIFYING_GLASS "\U0001F50D" // 🔍 поиск
+#define WRENCH "\U0001F527"           // 🔧 инструменты
+#define HAMMER "\U0001F528"           // 🔨 работа
+#define LINK "\U0001F517"             // 🔗 ссылка
 
 //---------------------------------------------------------------------------------------------------------------
 // 🌟 Decorative & Fun
 //---------------------------------------------------------------------------------------------------------------
 
-#define SPARKLES          "\u2728"       // ✨ блестки
-#define TREE              "\U0001F384"   // 🎄 елка
-#define GIFT              "\U0001F381"   // 🎁 подарок
-#define BALLOON           "\U0001F388"   // 🎈 шарик
-#define PARTY_POPPER      "\U0001F389"   // 🎉 конфетти
-#define CONFETTI_BALL     "\U0001F38A"   // 🎊 шар конфетти
-#define DIZZY             "\U0001F4AB"   // 💫 головокружение
-#define SPEECH_BALLOON    "\U0001F4AC"   // 💬 речь
+#define SPARKLES "\u2728"           // ✨ блестки
+#define TREE "\U0001F384"           // 🎄 елка
+#define GIFT "\U0001F381"           // 🎁 подарок
+#define BALLOON "\U0001F388"        // 🎈 шарик
+#define PARTY_POPPER "\U0001F389"   // 🎉 конфетти
+#define CONFETTI_BALL "\U0001F38A"  // 🎊 шар конфетти
+#define DIZZY "\U0001F4AB"          // 💫 головокружение
+#define SPEECH_BALLOON "\U0001F4AC" // 💬 речь
 
 //---------------------------------------------------------------------------------------------------------------
 // 🎯 Quick Combinations for Common Use Cases
 //---------------------------------------------------------------------------------------------------------------
 
-#define SUCCESS_MSG(msg)  GREEN  "✅ " << msg << RESET_CONSOLE_OUT
-#define ERROR_MSG(msg)    RED    "❌ " << msg << RESET_CONSOLE_OUT
-#define WARNING_MSG(msg)  YELLOW "⚠️ " << msg << RESET_CONSOLE_OUT
-#define INFO_MSG(msg)     CYAN   "ℹ️ " << msg << RESET_CONSOLE_OUT
-#define DEBUG_MSG(msg)    VIOLET "🐛 " << msg << RESET_CONSOLE_OUT
-#define LOADING_MSG(msg)  BLUE   "⏳ " << msg << RESET_CONSOLE_OUT
-#define COMPLETE_MSG(msg) GREEN  "🎉 " << msg << RESET_CONSOLE_OUT
+#define SUCCESS_MSG(msg) GREEN "✅ " << msg << RESET_CONSOLE_OUT
+#define ERROR_MSG(msg) RED "❌ " << msg << RESET_CONSOLE_OUT
+#define WARNING_MSG(msg) YELLOW "⚠️ " << msg << RESET_CONSOLE_OUT
+#define INFO_MSG(msg) CYAN "ℹ️ " << msg << RESET_CONSOLE_OUT
+#define DEBUG_MSG(msg) VIOLET "🐛 " << msg << RESET_CONSOLE_OUT
+#define LOADING_MSG(msg) BLUE "⏳ " << msg << RESET_CONSOLE_OUT
+#define COMPLETE_MSG(msg) GREEN "🎉 " << msg << RESET_CONSOLE_OUT
 
 //---------------------------------------------------------------------------------------------------------------
 // 📝 Example Usage:
 /*
-#include <iostream>
 #include "console_utils.h"
+#include <iostream>
 
 int main() {
     std::cout << SUCCESS("Operation completed successfully!") << std::endl;
     std::cout << ERROR("Failed to open file!") << std::endl;
     std::cout << WARNING("Disk space is running low") << std::endl;
     std::cout << INFO("Processing data...") << std::endl;
-    
+
     std::cout << RED HEART " " GREEN HEART " " BLUE HEART RESET_CONSOLE_OUT << std::endl;
     std::cout << ROCKET " " FIRE " " ZAP " Let's go!" RESET_CONSOLE_OUT << std::endl;
-    
+
     return 0;
 }
 */
-//---------------------------------------------------------------------------------------------------------------%                                             
+//---------------------------------------------------------------------------------------------------------------%

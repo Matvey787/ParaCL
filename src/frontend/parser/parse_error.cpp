@@ -1,27 +1,30 @@
 
-#include <string>
-#include <vector>
-#include <iostream>
+#include "parser/parse_error.hpp"
+#include "parser.tab.hpp"
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <string.h>
-#include "parser.tab.hpp"
-#include "parser/parse_error.hpp"
+#include <string>
+#include <vector>
 
-extern FILE* yyin;
+extern FILE *yyin;
 
-void yy::parser::error(const location& loc, const std::string& msg)
+void yy::parser::error(const location &loc, const std::string &msg)
 {
     ErrorHandler::throwError(loc, msg, {false, true, false});
 }
 
-namespace ErrorHandler {
-
-namespace Detail {
-
-void show_error_context(const yy::location& loc)
+namespace ErrorHandler
 {
-    if (!yyin) return;
+
+namespace Detail
+{
+
+void show_error_context(const yy::location &loc)
+{
+    if (!yyin)
+        return;
 
     long current_file_pos = ftell(yyin);
 
@@ -31,28 +34,31 @@ void show_error_context(const yy::location& loc)
     char buffer[1024];
     int current_line = 1;
 
-    while (current_line < loc.begin.line && fgets(buffer, sizeof(buffer), yyin)) current_line++;
+    while (current_line < loc.begin.line && fgets(buffer, sizeof(buffer), yyin))
+        current_line++;
 
     if (current_line == loc.begin.line && fgets(buffer, sizeof(buffer), yyin))
     {
         size_t len = strlen(buffer);
 
-        if (len > 0 && buffer[len-1] == '\n') buffer[len-1] = '\0';
-        
+        if (len > 0 && buffer[len - 1] == '\n')
+            buffer[len - 1] = '\0';
+
         std::cerr << loc.begin.line << " | " << buffer << std::endl;
 
         std::cerr << "  | ";
         int i = 1;
         for (; i < loc.begin.column; i++)
         {
-            if (i < (int)strlen(buffer) && buffer[i-1] == '\t')
+            if (i < (int)strlen(buffer) && buffer[i - 1] == '\t')
                 std::cerr << "~~~~";
             else
                 std::cerr << "~";
         }
         std::cerr << "^";
 
-        for (; i < (int)strlen(buffer); i++) std::cerr << "~";
+        for (; i < (int)strlen(buffer); i++)
+            std::cerr << "~";
 
         std::cerr << "\n";
     }
@@ -61,49 +67,42 @@ void show_error_context(const yy::location& loc)
     fseek(yyin, current_file_pos, SEEK_SET);
 }
 
-size_t levenshtein_distance(const std::string& s1, const std::string& s2)
+size_t levenshtein_distance(const std::string &s1, const std::string &s2)
 {
     const size_t len1 = s1.size(), len2 = s2.size();
     std::vector<std::vector<size_t>> dp(len1 + 1, std::vector<size_t>(len2 + 1));
 
-    for (size_t i = 1; i <= len1; ++i) dp[i][0] = i;
-    for (size_t j = 1; j <= len2; ++j) dp[0][j] = j;
-    
+    for (size_t i = 1; i <= len1; ++i)
+        dp[i][0] = i;
+    for (size_t j = 1; j <= len2; ++j)
+        dp[0][j] = j;
+
     for (size_t i = 1; i <= len1; ++i)
     {
         for (size_t j = 1; j <= len2; ++j)
         {
-            size_t cost = (s1[i-1] == s2[j-1]) ? 0 : 1;
-            dp[i][j] = std::min(
-            {
-                dp[i-1][j] + 1,
-                dp[i][j-1] + 1,
-                dp[i-1][j-1] + cost
-            });
+            size_t cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
+            dp[i][j] = std::min({dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost});
         }
     }
 
     return dp[len1][len2];
 }
 
-std::string find_possible_token(const char* unexpected) {
-    if (strlen(unexpected) == 0) 
+std::string find_possible_token(const char *unexpected)
+{
+    if (strlen(unexpected) == 0)
         return "";
 
     static const std::vector<std::string> known_tokens = {
-        "if", "else if", "else", "while", "print",
-        "&&", "||", "!",
-        "and", "or", "not",
-        "+", "-", "*", "/", "%",
-        "==", "!=", ">", ">=", "<", "<=",
-        "=", "+=", "-=", "*=", "/=", "%=",
-        "(", ")", "{", "}", ";", "?",
+        "if", "else if", "else", "while", "print", "&&", "||", "!",  "and", "or", "not", "+", "-", "*", "/", "%", "==",
+        "!=", ">",       ">=",   "<",     "<=",    "=",  "+=", "-=", "*=",  "/=", "%=",  "(", ")", "{", "}", ";", "?",
     };
 
     std::string best_match;
     size_t min_distance = std::numeric_limits<size_t>::max();
 
-    for (const auto& token : known_tokens)
+    for (const auto &token : known_tokens)
     {
         size_t distance = levenshtein_distance(unexpected, token);
         if (distance < min_distance && distance <= token.length())
@@ -116,7 +115,8 @@ std::string find_possible_token(const char* unexpected) {
     return best_match;
 }
 
-std::string extract_token_at_position(const yy::location& loc) {
+std::string extract_token_at_position(const yy::location &loc)
+{
     if (!yyin)
         return "";
 
@@ -128,52 +128,54 @@ std::string extract_token_at_position(const yy::location& loc) {
     int current_line = 1;
     std::string target_line;
 
-    while (current_line < loc.begin.line && fgets(buffer, sizeof(buffer), yyin)) {
+    while (current_line < loc.begin.line && fgets(buffer, sizeof(buffer), yyin))
+    {
         ++current_line;
     }
 
-    if (current_line == loc.begin.line && fgets(buffer, sizeof(buffer), yyin)) {
+    if (current_line == loc.begin.line && fgets(buffer, sizeof(buffer), yyin))
+    {
         target_line = buffer;
     }
 
     fseek(yyin, current_file_pos, SEEK_SET);
 
-    if (target_line.empty()) return "";
+    if (target_line.empty())
+        return "";
 
     // try to form token around the given position
     size_t pos = loc.begin.column - 1;
 
-    if (pos >= target_line.length()) return "";
+    if (pos >= target_line.length())
+        return "";
 
     // go left from problem pos
     size_t start = pos;
-    while (start > 0 && !isspace(target_line[start - 1])) {
+    while (start > 0 && !isspace(target_line[start - 1]))
+    {
         --start;
     }
 
     // find end of token (go right until space or end of line)
     size_t end = pos;
-    while (end < target_line.length() && !isspace(target_line[end]) && 
-           target_line[end] != '\0' && 
-           target_line[end] != '\n' && 
-           target_line[end] != '\r') {
+    while (end < target_line.length() && !isspace(target_line[end]) && target_line[end] != '\0' &&
+           target_line[end] != '\n' && target_line[end] != '\r')
+    {
         ++end;
     }
 
     std::string token = target_line.substr(start, end - start);
-    
-    while (!token.empty() && 
-           (token.front() == '(' || token.front() == ')' || 
-            token.front() == '{' || token.front() == '}' ||
-            token.front() == ';' || token.front() == ',')) {
+
+    while (!token.empty() && (token.front() == '(' || token.front() == ')' || token.front() == '{' ||
+                              token.front() == '}' || token.front() == ';' || token.front() == ','))
+    {
         token.erase(0, 1);
         ++start;
     }
 
-    while (!token.empty() && 
-           (token.back() == '(' || token.back() == ')' || 
-            token.back() == '{' || token.back() == '}' ||
-            token.back() == ';' || token.back() == ',')) {
+    while (!token.empty() && (token.back() == '(' || token.back() == ')' || token.back() == '{' ||
+                              token.back() == '}' || token.back() == ';' || token.back() == ','))
+    {
         token.pop_back();
         --end;
     }
@@ -183,15 +185,12 @@ std::string extract_token_at_position(const yy::location& loc) {
 
 } // namespace Detail
 
-void
-throwError(const yy::location& loc,
-                         const std::string& msg,
-                         const ErrorParseOptions& options)
+void throwError(const yy::location &loc, const std::string &msg, const ErrorParseOptions &options)
 {
-    std::cerr << current_file << ":"
-        << loc.begin.line << ":"
-        << loc.begin.column << ": paracl: error:"
-        " ---> " << msg << "\n";
+    std::cerr << current_file << ":" << loc.begin.line << ":" << loc.begin.column
+              << ": paracl: error:"
+                 " ---> "
+              << msg << "\n";
 
     std::string bad_token = ErrorHandler::Detail::extract_token_at_position(loc);
 
@@ -211,8 +210,8 @@ throwError(const yy::location& loc,
     {
         std::string possible_token = ErrorHandler::Detail::find_possible_token(bad_token.c_str());
         std::cerr << "\nPossible fix: ";
-        possible_token.empty() ? std::cerr << "no suggestions" :
-                                    std::cerr << "Did you mean: '" << possible_token << "'?";
+        possible_token.empty() ? std::cerr << "no suggestions"
+                               : std::cerr << "Did you mean: '" << possible_token << "'?";
         std::cerr << "\n";
     }
 }

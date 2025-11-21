@@ -49,10 +49,12 @@ enum class token_t
     ELSE,
     ELIF,
 
-    // number, variable, semicolon  tokens 
+    // number, variable, semicolon, comma tokens
     NUM,
     VAR,
+    STRING,
     SC,
+    COMMA,
 
     // end of translation token
     EOT

@@ -53,12 +53,14 @@ int  yylex            (yy::parser::semantic_type* yylval, yy::parser::location_t
 %token <std::string> VAR
 %token LCIB RCIB LCUB RCUB
 %token WH IN PRINT IF ELIF ELSE
-%token SC
+%token SC COMMA
+%token <std::string> STRING
 
 %type <std::vector<std::unique_ptr<ParaCL::Stmt>>> program statements
 %type <std::unique_ptr<ParaCL::BlockStmt>> block one_stmt_block
 %type <std::unique_ptr<ParaCL::Stmt>> statement assignment combined_assignment print_statement while_statement
-%type <std::unique_ptr<ParaCL::Expr>> expression assignment_expression logical_or_expression logical_and_expression equality_expression relational_expression additive_expression multiplicative_expression unary_expression factor
+%type <std::unique_ptr<ParaCL::Expr>> expression assignment_expression logical_or_expression logical_and_expression equality_expression relational_expression additive_expression multiplicative_expression unary_expression factor string_constant
+%type <std::vector<std::unique_ptr<ParaCL::Expr>>> print_args
 
 %type <std::unique_ptr<ParaCL::ConditionStatement>> condition_statement
 %type <std::unique_ptr<ParaCL::IfStatement>> if_statement
@@ -164,12 +166,34 @@ combined_assignment:
     ;
 
 print_statement:
-    PRINT expression {
+    PRINT print_args {
         $$ = std::make_unique<ParaCL::PrintStmt>(std::move($2));
     }
     | PRINT error {
-        ErrorHandler::throwError(@2, "expected expression after print");
+        ErrorHandler::throwError(@2, "expected expressions and string constants after print");
         YYABORT;
+    }
+    ;
+
+print_args:
+    %empty {
+        $$ = std::vector<std::unique_ptr<ParaCL::Expr>>();
+    }
+    | print_args expression {
+        $1.push_back(std::move($2));
+        $$ = std::move($1);
+    }
+    | print_args string_constant {
+        $1.push_back(std::move($2));
+        $$ = std::move($1);
+    }
+    | print_args COMMA expression {
+        $1.push_back(std::move($3));
+        $$ = std::move($1);
+    }
+    | print_args COMMA string_constant {
+        $1.push_back(std::move($3));
+        $$ = std::move($1);
     }
     ;
 
@@ -597,4 +621,11 @@ one_stmt_block:
         $$ = std::make_unique<ParaCL::BlockStmt>(std::move(body_stmts));
     }
     ;
+
+string_constant:
+    STRING {
+        $$ = std::make_unique<ParaCL::StringConstant>(std::move($1));
+    }
+    ;
+
 %%

@@ -4,4 +4,4 @@
 */
 fst = 131;
 snd = 1;
-print fst + snd;
+print "sum = ", fst + snd;

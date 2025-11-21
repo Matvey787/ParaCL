@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 #include "parser/parse_error.hpp"
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
@@ -65,6 +66,7 @@ TAB         [\t]
 CARRIEGE    [\r]
 NEWLINE     [\n]
 WHITESPACE  {SPACE}|{TAB}|{CARRIEGE}
+STRING      \"[^"]*\"
 
 %%
 
@@ -110,25 +112,59 @@ WHITESPACE  {SPACE}|{TAB}|{CARRIEGE}
 "else if" { return yy::parser::token::ELIF; }
 "else"    { return yy::parser::token::ELSE; }
 ";"       { return yy::parser::token::SC; }
+","       { return yy::parser::token::COMMA; }
 
+{STRING}    { 
+                std::ostringstream result;
 
-{DIGIT}+    { 
-                yylval->build<int>(atoi(yytext));
-                return yy::parser::token::NUM; 
+                for (size_t it = 1, ite = yyleng - 1; it < ite; ++it)
+                {
+                    const char c = *(yytext + it);
+                    const char next_c = *(yytext + it + 1);
+
+                    if (c != '\\' && next_c != '\0')
+                    {
+                        result << c;
+                        continue;
+                    }
+
+                    switch (next_c)
+                    {
+                        case 'n':  result << '\n'; break;
+                        case 't':  result << '\t'; break;
+                        case 'r':  result << '\r'; break;
+                        case '\\': result << '\\'; break;
+                        case '\"': result << '\"'; break;
+                        case '0':  result << '\0'; break;
+                        case 'a':  result << '\a'; break;
+                        case 'b':  result << '\b'; break;
+                        case 'v':  result << '\v'; break;
+                        case 'f':  result << '\f'; break;
+                        default:   result << c   ; continue;
+                    }
+                    ++it;
+                }
+                yylval->build<std::string>(std::move(result.str()));
+                return yy::parser::token::STRING;
             }
 
-{LETTER}({LETTER}|{DIGIT})* { 
-                yylval->build<std::string>(std::string(yytext));
-                return yy::parser::token::VAR; 
+{DIGIT}+    {
+                yylval->build<int>(atoi(yytext));
+                return yy::parser::token::NUM;
+            }
+
+{LETTER}({LETTER}|{DIGIT})* {
+                yylval->build<std::string>(yytext);
+                return yy::parser::token::VAR;
             }
 
 <<EOF>>     { return yy::parser::token::YYEOF; }
 
 .           { 
                 ErrorHandler::throwError(*yylloc,
-                                         "unexpected character '" + std::string(yytext) + "'", 
+                                         "unexpected character '" + std::string(yytext) + "'",
                                          {1, 1, 1});
-                return yy::parser::token::YYerror; 
+                return yy::parser::token::YYerror;
             }
 
 %%
