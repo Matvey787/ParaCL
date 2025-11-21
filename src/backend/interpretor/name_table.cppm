@@ -28,11 +28,10 @@ struct NameTable
 {
     std::vector<std::unordered_map<std::string, NameValue>> scopes;
 
-    public:
-        void enter();
-        void leave();
-        NameValue *lookup(const std::string &name);
-        void declare(const std::string &name, const int value);
+    void enter();
+    void leave();
+    NameValue *lookup(const std::string &name);
+    void declare(const std::string &name, const int value);
 };
 
 //---------------------------------------------------------------------------------------------------------------
