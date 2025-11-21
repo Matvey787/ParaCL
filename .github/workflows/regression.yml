@@ -1,0 +1,45 @@
+name: Regression Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            clang \
+            clang-tidy \
+            g++ \
+            make \
+            python3
+
+      - name: Configure with CMake
+        run: cmake -G Ninja -S . -B build -DCMAKE_CXX_COMPILER=clang++ -DBUILD_TESTING=ON
+
+      - name: Build project
+        run: cmake --build build --parallel
+
+      - name: Run regression tests
+        run: ctest --test-dir build -V || (echo "❌ Tests failed!" && exit 1)
+
+      - name: Upload test summary
+        if: always()
+        run: |
+          {
+            echo "### Regression summary ###"
+            echo "Build and tests finished at $(date)"
+            echo ""
+          } >> $GITHUB_STEP_SUMMARY

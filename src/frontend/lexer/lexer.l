@@ -1,36 +1,21 @@
 %{
-
 #if defined(LOGGER)
 #include "pineaplog.hpp"
 #endif /* defined(LOGGER) */
 
 #include <string>
 #include <cstdlib>
-#include <cassert>
 #include <cstring>
 #include <iostream>
-#include <vector>
-#include <memory>
-#include <cassert>
-#include <sstream>
-#include <source_location>
+#include "parser/parse_error.hpp"
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
-#include "parser.tab.hpp"
 #include "global/global.hpp"
-#include "global/custom_console_output.hpp"
 
 std::string current_file;
-int current_num_value;
-std::string current_var_value;
-int eof_reached = 0;
 
-void process_number  (const char* text);
-void process_variable(const char* text);
+#define YY_DECL int yylex(yy::parser::semantic_type* yylval, yy::parser::location_type* yylloc)
 
-extern void yyerror(YYLTYPE* loc, const char* msg);
-
-extern FILE* yyin;
 
 /* ну я так хочу да */
 ON_LOGGER(
@@ -40,31 +25,30 @@ static size_t tokens_counter = 0;
 ) /* ON_LOGGER */
 
 #define YY_USER_ACTION do {                      \
-    yylloc->first_line = yylloc->last_line;       \
-    yylloc->first_column = yylloc->last_column;    \
+    yylloc->begin.line = yylloc->end.line;        \
+    yylloc->begin.column = yylloc->end.column;     \
     char c = '\0';                                  \
     for (size_t i = 0; (c = yytext[i]) != '\0'; ++i) \
     {                                                 \
         if (c == '\n') {                               \
-            yylloc->last_line++;                        \
-            yylloc->last_column = 1;                     \
+            yylloc->end.line++;                         \
+            yylloc->end.column = 1;                      \
             continue;                                     \
         } else if (c == '\t') {                            \
-            yylloc->last_column += 4;                       \
+            yylloc->end.column += 4;                        \
             continue;                                        \
         } else if (c == '\r') {                               \
             continue;                                          \
         }                                                       \
-        yylloc->last_column++;                                   \
+        yylloc->end.column++;                                    \
     }                                                             \
     ON_LOGGER( \
         PineapLog::glog.logc(PineapLog::LogColor::White, "[", PineapLog::tokens_counter, "]"); \
         PineapLog::tokens_counter++; \
         PineapLog::LogColor color = (PineapLog::tokens_counter % 3 == 0) ? PineapLog::LogColor::Green : (PineapLog::tokens_counter % 3 == 1) ? PineapLog::LogColor::Yellow : PineapLog::LogColor::Red; \
-        PineapLog::glog.logc(color, "{", "\n\tfirst line: ", yylloc->first_line, "\n\tfirst col : ", yylloc->first_column, "\n\tlast line: ", yylloc->last_line, "\n\tlast col : ", yylloc->last_column, "\n\tword = '", yytext, "'\n}"); \
+        PineapLog::glog.logc(color, "{", "\n\tfirst line: ", yylloc->begin.line, "\n\tfirst col : ", yylloc->begin.column, "\n\tlast line: ", yylloc->end.line, "\n\tlast col : ", yylloc->end.column, "\n\tword = '", yytext, "'\n}"); \
     ) \
-} while (0); /* YY_USER_ACTION */
-
+} while (0);
 
 %}
 
@@ -72,8 +56,7 @@ static size_t tokens_counter = 0;
 %option nounput
 %option noinput
 %option yylineno
-%option bison-bridge
-%option bison-locations
+
 
 DIGIT       [0-9]
 LETTER      [a-zA-Z_]
@@ -82,10 +65,9 @@ TAB         [\t]
 CARRIEGE    [\r]
 NEWLINE     [\n]
 WHITESPACE  {SPACE}|{TAB}|{CARRIEGE}
+STRING      \"[^"]*\"
 
 %%
-
-SPACE          
 
 {SPACE}         { }
 {TAB}           { }
@@ -93,75 +75,70 @@ SPACE
 {WHITESPACE}+   { }
 {NEWLINE}       { }
 
-"#".*           { /* one-line comment */ }
-
+"//".*           { /* one-line comment */ }
 "/*"([^*]|"*"+[^*/])*"*"+"/" { /* multy-line comment */ }
 
-"and"     { return AND; }
-"&&"      { return AND; }
-"or"      { return OR; }
-"||"      { return OR; }
-"+"       { return ADD; }
-"-"       { return SUB; }
-"*"       { return MUL; }
-"/"       { return DIV; }
-"%"       { return REM; }
-">"       { return ISAB; }
-">="      { return ISABE; }
-"<"       { return ISLS; }
-"<="      { return ISLSE; }
-"=="      { return ISEQ; }
-"!="      { return ISNE; }
-"+="      { return ADDASGN; }
-"-="      { return SUBASGN; }
-"*="      { return MULASGN; }
-"/="      { return DIVASGN; }
-"("       { return LCIB; }
-")"       { return RCIB; }
-"{"       { return LCUB; }
-"}"       { return RCUB; }
-"while"   { return WH; }
-"?"       { return IN; }
-"="       { return AS; }
-"print"   { return PRINT; }
-"if"      { return IF; }
-"else if" { return ELIF; }
-"else"    { return ELSE; }
-";"       { return SC; }
+"and"     { return yy::parser::token::AND; }
+"&&"      { return yy::parser::token::AND; }
+"or"      { return yy::parser::token::OR; }
+"||"      { return yy::parser::token::OR; }
+"!"       { return yy::parser::token::NOT; }
+"not"     { return yy::parser::token::NOT; }
+"+"       { return yy::parser::token::ADD; }
+"-"       { return yy::parser::token::SUB; }
+"*"       { return yy::parser::token::MUL; }
+"/"       { return yy::parser::token::DIV; }
+"%"       { return yy::parser::token::REM; }
+">"       { return yy::parser::token::ISAB; }
+">="      { return yy::parser::token::ISABE; }
+"<"       { return yy::parser::token::ISLS; }
+"<="      { return yy::parser::token::ISLSE; }
+"=="      { return yy::parser::token::ISEQ; }
+"!="      { return yy::parser::token::ISNE; }
+"+="      { return yy::parser::token::ADDASGN; }
+"-="      { return yy::parser::token::SUBASGN; }
+"*="      { return yy::parser::token::MULASGN; }
+"/="      { return yy::parser::token::DIVASGN; }
+"("       { return yy::parser::token::LCIB; }
+")"       { return yy::parser::token::RCIB; }
+"{"       { return yy::parser::token::LCUB; }
+"}"       { return yy::parser::token::RCUB; }
+"while"   { return yy::parser::token::WH; }
+"?"       { return yy::parser::token::IN; }
+"="       { return yy::parser::token::AS; }
+"print"   { return yy::parser::token::PRINT; }
+"if"      { return yy::parser::token::IF; }
+"else if" { return yy::parser::token::ELIF; }
+"else"    { return yy::parser::token::ELSE; }
+";"       { return yy::parser::token::SC; }
+","       { return yy::parser::token::COMMA; }
 
-[+-]?{DIGIT}+    { 
-                process_number(yytext); 
-                yylval->num_value = current_num_value;
-                return NUM; 
+{STRING}    { 
+                std::string content(yytext + 1, yyleng - 2);
+                yylval->build<std::string>(std::move(content));
+                return yy::parser::token::STRING;
             }
 
-{LETTER}({LETTER}|{DIGIT})* { 
-                process_variable(yytext); 
-                yylval->str_value = new std::string(current_var_value);
-                return VAR; 
+{DIGIT}+    {
+                yylval->build<int>(atoi(yytext));
+                return yy::parser::token::NUM;
             }
 
-<<EOF>>     {
-                return EXIT_SUCCESS;
+{LETTER}({LETTER}|{DIGIT})* {
+                yylval->build<std::string>(yytext);
+                return yy::parser::token::VAR;
             }
 
-. {
-    std::ostringstream oss;
-    oss << "use of undeclared identifier '" << yytext << "'";
+<<EOF>>     { return yy::parser::token::YYEOF; }
 
-    yyerror(yylloc, oss.str().c_str());
-    return EXIT_FAILURE;
-}
+.           { 
+                ErrorHandler::throwError(*yylloc,
+                                         "unexpected character '" + std::string(yytext) + "'",
+                                         {1, 1, 1});
+                return yy::parser::token::YYerror;
+            }
 
 %%
-
-void process_number(const char* text) {
-    current_num_value = atoi(text);
-}
-
-void process_variable(const char* text) {
-    current_var_value = text;
-}
 
 void set_current_paracl_file(const std::string& file)
 {

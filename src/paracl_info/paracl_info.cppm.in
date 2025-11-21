@@ -1,0 +1,53 @@
+/*
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! DO NOT TRY TO EDIT THIS FILE                       !!!
+!!! AUTOMATIC GENERATE WITH: @CMAKE_CURRENT_LIST_FILE@ !!!
+!!! AT: @CURRENT_TIME@                                 !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+*/
+
+module;
+
+#include <string>
+#include <memory>
+
+export module paracl_info;
+
+namespace ParaCL
+{
+    export struct ParaCLInfo
+    {
+        std::string version     ;
+        std::string build_date  ;
+        std::string build_type  ;
+        std::string architecture;
+        std::string git_commit  ;
+        std::string compiler    ;
+    };
+
+    const std::string architecture =
+#if defined(__x86_64__) or defined(_M_X64)
+    "x86_64";
+#elif defined(__i386__) or defined(_M_IX86)
+    "x86";
+#elif defined(__aarch64__)
+    "ARM64";
+#elif defined(__arm__)
+    "ARM";
+#else
+    "Unknown architecture";
+#endif
+
+    /* @<...>@ data set with cmake */
+    export const inline ParaCLInfo paracl_info
+    {
+      .version       = "@PROJECT_VERSION@",
+      .build_date    = "@CURRENT_TIME@",
+      .build_type    = "@CMAKE_BUILD_TYPE@",
+      .architecture  = std::move(architecture),
+      .git_commit    = "@GIT_COMMIT_HASH@", /* to find hash of commit using 'git' command in cmake. so */
+      .compiler      = "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@: @CMAKE_CXX_COMPILER@",
+    };
+};
+
+

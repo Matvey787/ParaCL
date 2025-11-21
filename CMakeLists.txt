@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(paraCL
     LANGUAGES CXX
-    VERSION 1.1
+    VERSION 1.3
 )
 
 # =================================================================================================
@@ -25,6 +25,8 @@ endif()
 option(BUILD_TESTING "Build tests" OFF)
 option(LOGGER "logger" OFF)
 option(GRAPHVIZ "Enable graphviz visualization (graphviz)" OFF)
+
+string(TIMESTAMP CURRENT_TIME "%Y-%m-%d %H:%M:%S")
 
 # =================================================================================================
 
@@ -53,6 +55,44 @@ set(FRONTEND_SRC_DIR ${SRC_DIR}/frontend)
 set(FRONTEND_INC_DIR ${INC_DIR}/frontend)
 
 set(DEBUG_DIR ${PROJECT_SOURCE_DIR}/debug)
+
+# =================================================================================================
+# crete paracl info library
+set(PARACL_INFO_DIR ${SRC_DIR}/paracl_info)
+set(PARACL_INFO_SRC
+    ${PARACL_INFO_DIR}/paracl_info.cppm.in
+)
+
+set(PARACL_INFO_BUILD_DIR ${CMAKE_BINARY_DIR}/paracl_info)
+set(PARACL_INFO_BUILD_SRC ${PARACL_INFO_BUILD_DIR}/paracl_info.cppm)
+
+# get git commit hash
+execute_process(
+    COMMAND git log -1 --format=%h
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# create module with paracl info
+configure_file(
+    ${PARACL_INFO_SRC}
+    ${PARACL_INFO_BUILD_SRC}
+    @ONLY
+)
+
+set(PARACL_INFO_LIB paracl_info)
+add_library(${PARACL_INFO_LIB})
+
+target_sources(${PARACL_INFO_LIB}
+    PUBLIC
+        FILE_SET
+            CXX_MODULES
+        TYPE
+            CXX_MODULES
+        FILES
+            ${PARACL_INFO_BUILD_SRC}
+)
 
 # =================================================================================================
 # set some bison and flex variables
@@ -86,6 +126,8 @@ add_custom_command(
         ${BISON_SRC}
     COMMENT
         "Generate `${BISON_PARSER_CPP}' and `${BISON_PARSER_HPP}' with bison..."
+    COMMENT
+        "${BISON_EXECUTABLE} -o ${BISON_OUT_DIR}/${BISON_PARSER_CPP} ${BISON_SRC} -d"
 )
 
 set(PARSER_LIB parser)
@@ -94,6 +136,7 @@ add_library(${PARSER_LIB} STATIC)
 target_sources(${PARSER_LIB}
     PRIVATE
         ${BISON_PARSER_SRC_DIR}/${BISON_PARSER_CPP}
+        ${BISON_SRC_DIR}/parse_error.cpp
 )
 
 target_include_directories(${PARSER_LIB}
@@ -114,13 +157,15 @@ add_custom_command(
         ${LEXER_SRC_DIR}/${LEXER_CPP}
     COMMAND
         ${CMAKE_COMMAND} -E make_directory ${FLEX_OUT_DIR}
-    COMMAND
+    COMMAND 
         ${FLEX_EXECUTABLE} -o ${FLEX_OUT_DIR}/${LEXER_CPP} ${FLEX_SRC}
     DEPENDS
         ${FLEX_SRC}
         ${BISON_PARSER_SRC_DIR}/${BISON_PARSER_HPP}
     COMMENT
         "Generate ${LEXER_CPP} with flex..."
+    COMMENT
+        "${FLEX_EXECUTABLE} -o ${FLEX_OUT_DIR}/${LEXER_CPP} ${FLEX_SRC}"
 )
 
 set(LEXER_LIB lexer)
@@ -172,6 +217,7 @@ target_include_directories(${OPTIONS_PARSER_LIB}
 target_link_libraries(${OPTIONS_PARSER_LIB}
     PRIVATE
         ${PARACL_EXTENSION_LIB}
+        ${PARACL_INFO_LIB}
 )
 
 target_compile_definitions(${OPTIONS_PARSER_LIB}
@@ -192,7 +238,7 @@ set(RUN_PARACL_SRC_DIR ${BACKEND_SRC_DIR})
 set(RUN_PARACL_SRC
     ${RUN_PARACL_SRC_DIR}/interpreter.cppm
     ${RUN_PARACL_SRC_DIR}/run_paracl.cppm
-    ${RUN_PARACL_SRC_DIR}/parse_paracl_exit_code.cppm
+    ${RUN_PARACL_SRC_DIR}/parse_paracl_exceptions.cppm
 )
 
 if (GRAPHVIZ)
@@ -201,8 +247,6 @@ set(RUN_PARACL_SRC
     ${DEBUG_DIR}/ast/ast-graph-dump.cppm    
 )
 endif(GRAPHVIZ)
-
-message(${RUN_PARACL_SRC})
 
 target_sources(${RUN_PARACL_LIB}
     PUBLIC

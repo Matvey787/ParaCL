@@ -1,24 +1,11 @@
-
-#personally vscode settings
-.vscode/
-
-# binary files, generated with this project
+.venv
 build/
-
-# clangd automatic generated dir
-.cache
-
-# tmp files
-tmp/
-
-# tree command output dir
-project_struct/
-
-# Documentation
+.vscode/
+settings.json
+*.png
 Doxyfile
-
-# log out dir
+imgs/
 log/
-
-# dir for graphviz dump of paracl ast tree
+.cache
 ast-dump/
+tmp/

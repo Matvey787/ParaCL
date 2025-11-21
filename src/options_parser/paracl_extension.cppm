@@ -2,8 +2,8 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
-#include <string>
 #include <filesystem>
+#include <string>
 
 #if defined(LOGGER)
 #include "pineaplog.hpp"
@@ -23,7 +23,7 @@ const std::string paracl_extension = ".cl";
 
 //---------------------------------------------------------------------------------------------------------------
 
-bool is_paracl_file_name(const std::string& file)
+bool is_paracl_file_name(const std::string &file)
 {
     std::filesystem::path file_(file);
     return file_.extension().string() == paracl_extension;
@@ -39,7 +39,7 @@ bool is_paracl_file_name(std::string_view file)
 
 //---------------------------------------------------------------------------------------------------------------
 
-bool is_paracl_file_name(const char* file)
+bool is_paracl_file_name(const char *file)
 {
     std::filesystem::path file_(file);
     return file_.extension().string() == paracl_extension;
@@ -47,6 +47,6 @@ bool is_paracl_file_name(const char* file)
 
 //---------------------------------------------------------------------------------------------------------------
 
-}; /* export namespace ParaCLExtension */
+}; // namespace ParaCL
 
 //---------------------------------------------------------------------------------------------------------------

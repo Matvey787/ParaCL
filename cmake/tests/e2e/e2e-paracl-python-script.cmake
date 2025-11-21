@@ -23,8 +23,6 @@ set(PYTHON_RUN_TEST_SCRIPT ${DEBUG_RUN_TEST_DIR}/parse_result.py)
 
 set(OUTPUT_SCRIPT          ${PROJECT_BINARY_DIR}/rt)
 
-string(TIMESTAMP CURRENT_TIME "%Y-%m-%d %H:%M:%S")
-
 # give execute permission to python script
 file(CHMOD ${PYTHON_RUN_TEST_SCRIPT}
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE

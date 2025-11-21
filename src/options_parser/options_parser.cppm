@@ -6,18 +6,18 @@ module;
 #include "pineaplog.hpp"
 #endif /* defined(LOGGER) */
 
-#include <getopt.h>
-#include <unistd.h>
-#include <cstdlib>
 #include <cassert>
-#include <iostream>
 #include <cstdlib>
-#include <vector>
-#include <string>
+#include <filesystem>
+#include <getopt.h>
+#include <iostream>
 #include <stdexcept>
+#include <string>
+#include <unistd.h>
+#include <vector>
 
-#include "global/global.hpp"
 #include "global/custom_console_output.hpp"
+#include "global/global.hpp"
 
 //---------------------------------------------------------------------------------------------------------------
 
@@ -26,6 +26,7 @@ export module options_parser;
 //---------------------------------------------------------------------------------------------------------------
 
 import paracl_extension;
+import paracl_info;
 
 //---------------------------------------------------------------------------------------------------------------
 
@@ -33,15 +34,13 @@ void set_getopt_args_default_values();
 
 //---------------------------------------------------------------------------------------------------------------
 
-
 export namespace OptionsParsing
 {
 //---------------------------------------------------------------------------------------------------------------
 
 struct program_options_t
 {
-    std::string              program_name = "";
-    bool                     help : 1 = false;
+    std::string program_name = "";
     std::vector<std::string> sources;
 };
 
@@ -51,26 +50,26 @@ struct program_options_t
 
 class options_parser
 {
-    public:
-        OptionsParsing::program_options_t get_program_options() const;
+  public:
+    OptionsParsing::program_options_t get_program_options() const;
 
-        options_parser() = delete;
-        options_parser(int argc, char* argv[]);
+    options_parser() = delete;
+    options_parser(int argc, char *argv[]);
 
-    private:
-        OptionsParsing::program_options_t program_options_;
+  private:
+    OptionsParsing::program_options_t program_options_;
 
-        void set_program_name         (const char* argv0);
+    void set_program_name(const char *argv0);
 
-        [[noreturn]]        
-        void parse_flag_help          () const;
-        [[noreturn]]
-        void parse_flag_version       () const;
+    [[noreturn]]
+    void parse_flag_help() const;
+    [[noreturn]]
+    void parse_flag_version() const;
 
-        void parse_not_a_flag         (const char* argument);
+    void parse_not_a_flag(const char *argument);
 
-        [[noreturn]]
-        void undefined_option         (const char* argument) const;
+    [[noreturn]]
+    void undefined_option(const char *argument) const;
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -79,23 +78,19 @@ export namespace OptionsParsing
 {
 //---------------------------------------------------------------------------------------------------------------
 
-program_options_t parse_program_options(int argc, char* argv[])
+program_options_t parse_program_options(int argc, char *argv[])
 {
     options_parser result = options_parser(argc, argv);
     return options_parser(argc, argv).get_program_options();
 }
 
 //---------------------------------------------------------------------------------------------------------------
-} /* export namespace OptionsParsing */
+} // namespace OptionsParsing
 //---------------------------------------------------------------------------------------------------------------
 
-constexpr option long_options[] =
-{
-    {"help"   , no_argument, 0, 'h'},
-    {"version", no_argument, 0, 'v'},
-    {""       , 0          , 0,  0 }, /* just for safety */
+constexpr option long_options[] = {
+    {"help", no_argument, 0, 'h'}, {"version", no_argument, 0, 'v'}, {"", 0, 0, 0}, /* just for safety */
 };
-
 
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
@@ -106,8 +101,7 @@ constexpr option long_options[] =
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-options_parser::options_parser(int argc, char* argv[]) :
-program_options_()
+options_parser::options_parser(int argc, char *argv[]) : program_options_()
 {
     set_program_name(argv[0]);
 
@@ -116,13 +110,21 @@ program_options_()
     for (int options_iterator = 1; options_iterator < argc; options_iterator++)
     {
         int option = getopt_long(argc, argv, "hv", long_options, nullptr);
-    
+
         switch (option)
         {
-            case 'h'                 : parse_flag_help   ();                        continue;
-            case 'v'                 : parse_flag_version();                        continue;
-            case undefined_option_key: parse_not_a_flag  (argv[options_iterator]); continue;
-            default                  : undefined_option  (argv[options_iterator]); continue;
+        case 'h':
+            parse_flag_help();
+            continue;
+        case 'v':
+            parse_flag_version();
+            continue;
+        case undefined_option_key:
+            parse_not_a_flag(argv[options_iterator]);
+            continue;
+        default:
+            undefined_option(argv[options_iterator]);
+            continue;
         }
     }
 
@@ -141,7 +143,7 @@ OptionsParsing::program_options_t options_parser::get_program_options() const
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-void options_parser::set_program_name(const char* argv0)
+void options_parser::set_program_name(const char *argv0)
 {
     msg_assert(argv0, "argv[0] is nullptr? are you sure, that you give here arg[0]?");
     program_options_.program_name = std::string(argv0);
@@ -152,11 +154,7 @@ void options_parser::set_program_name(const char* argv0)
 [[noreturn]]
 void options_parser::parse_flag_help() const
 {
-    std::cout <<
-    BOLD
-    "There are all flags and parametrs:"
-    RESET_CONSOLE_OUT
-    << R"(
+    std::cout << BOLD "There are all flags and parametrs:" RESET_CONSOLE_OUT << R"(
     -h --help
     -v --version
 
@@ -171,7 +169,7 @@ void options_parser::parse_flag_help() const
     
     So, that was all, what I know about flags in this program.
     Good luck, I love you )"
-    << HEART << std::endl;
+              << HEART << std::endl;
 
     exit(EXIT_SUCCESS); // good exit :)
 }
@@ -181,29 +179,43 @@ void options_parser::parse_flag_help() const
 [[noreturn]]
 void options_parser::parse_flag_version() const
 {
-#if not defined(PARACL_VERSION)
-#error "ParaCL version is unknowed."
-#endif /* not defined(PARACL_VERSION) */
-    std::cout << "ParaCL " PARACL_VERSION << std::endl;
-
+    std::cout << "ParaCL\n"
+                 "Version     : "
+              << ParaCL::paracl_info.version
+              << "\n"
+                 "Build at    : "
+              << ParaCL::paracl_info.build_date
+              << "\n"
+                 "Build type  : "
+              << ParaCL::paracl_info.build_type
+              << "\n"
+                 "Build with  : "
+              << ParaCL::paracl_info.compiler
+              << "\n"
+                 "Commit hash : "
+              << ParaCL::paracl_info.git_commit
+              << "\n"
+                 "Architecture: "
+              << ParaCL::paracl_info.architecture << std::endl;
 
     exit(EXIT_SUCCESS); // good exit :)
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-void options_parser::parse_not_a_flag(const char* argument)
+void options_parser::parse_not_a_flag(const char *argument)
 {
     if (ParaCL::is_paracl_file_name(argument))
-        return program_options_.sources.push_back(std::string(argument));   
+        return program_options_.sources.push_back(std::string(argument));
 
-    throw std::invalid_argument("bad source file: unexpected extentsion: '" WHITE + std::string(argument) + RESET_CONSOLE_OUT "', expect " + ParaCL::paracl_extension);
+    throw std::invalid_argument("bad source file: unexpected extentsion: '" WHITE + std::string(argument) +
+                                RESET_CONSOLE_OUT "', expect " + ParaCL::paracl_extension);
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
 [[noreturn]]
-void options_parser::undefined_option(const char* argument) const
+void options_parser::undefined_option(const char *argument) const
 {
     assert(argument);
 
@@ -219,4 +231,3 @@ void set_getopt_args_default_values()
 }
 
 //---------------------------------------------------------------------------------------------------------------
-
