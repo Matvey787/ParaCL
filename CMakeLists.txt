@@ -121,7 +121,7 @@ add_custom_command(
     COMMAND
         ${CMAKE_COMMAND} -E make_directory ${BISON_OUT_DIR}
     COMMAND
-        ${BISON_EXECUTABLE} -Wcounterexamples -o ${BISON_OUT_DIR}/${BISON_PARSER_CPP} ${BISON_SRC} -d
+        ${BISON_EXECUTABLE} -o ${BISON_OUT_DIR}/${BISON_PARSER_CPP} ${BISON_SRC} -d
     DEPENDS
         ${BISON_SRC}
     COMMENT

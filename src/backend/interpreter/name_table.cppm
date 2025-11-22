@@ -2,9 +2,9 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
-#include <vector>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 //---------------------------------------------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ export namespace ParaCL
 
 struct NameValue
 {
-    int  value;
+    int value;
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -36,24 +36,21 @@ struct NameTable
 
 //---------------------------------------------------------------------------------------------------------------
 
-void
-NameTable::enter()
+void NameTable::enter()
 {
     scopes.emplace_back();
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-void
-NameTable::leave()
+void NameTable::leave()
 {
     scopes.pop_back();
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-NameValue*
-NameTable::lookup(const std::string &name)
+NameValue *NameTable::lookup(const std::string &name)
 {
     for (auto it = scopes.rbegin(), itend = scopes.rend(); it < itend; ++it)
     {
@@ -67,14 +64,13 @@ NameTable::lookup(const std::string &name)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void
-NameTable::declare(const std::string &name, const int value)
+void NameTable::declare(const std::string &name, const int value)
 {
     scopes.back()[name] = {value};
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-} /* export namespace ParaCL */
+} // namespace ParaCL
 
 //---------------------------------------------------------------------------------------------------------------

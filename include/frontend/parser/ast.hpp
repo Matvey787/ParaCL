@@ -1,9 +1,9 @@
 #pragma once
 
+#include "parser/token_types.hpp"
 #include <memory>
 #include <string>
 #include <vector>
-#include "parser/token_types.hpp"
 
 namespace ParaCL
 {
@@ -106,7 +106,9 @@ struct CombinedAssingStmt : Statement
 struct StringConstant : Expression
 {
     std::string value;
-    StringConstant(std::string str) : value(std::move(str)) {}
+    StringConstant(std::string str) : value(std::move(str))
+    {
+    }
 };
 
 struct PrintStmt : Statement
@@ -130,7 +132,8 @@ struct WhileStmt : Statement
 {
     std::unique_ptr<Expression> condition;
     std::unique_ptr<BlockStmt> body;
-    WhileStmt(std::unique_ptr<Expression> cond, std::unique_ptr<BlockStmt> b) : condition(std::move(cond)), body(std::move(b))
+    WhileStmt(std::unique_ptr<Expression> cond, std::unique_ptr<BlockStmt> b)
+        : condition(std::move(cond)), body(std::move(b))
     {
     }
 };
@@ -194,4 +197,3 @@ struct ProgramAST
 };
 
 }; /* namespace ParaCL */
-

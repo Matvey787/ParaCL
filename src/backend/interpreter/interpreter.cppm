@@ -18,30 +18,29 @@ namespace ParaCL
 {
 
 /* Statement execution functions */
-void execute_statement                 (const Statement         * stmt                      , NameTable &table);
-void execute_assign_statement          (const AssignStmt        * assign                    , NameTable& table);
-void execute_combined_assign_statement (const CombinedAssingStmt* combined_assign_statement , NameTable& table);
-void execute_print_statement           (const PrintStmt         * print_statement           , NameTable& table);
-void execute_while_statement           (const WhileStmt         * while_stmt                , NameTable& table);
-void execute_block_statement           (const BlockStmt         * block                     , NameTable& table);
-void execute_condition_statement       (const ConditionStatement* condition                 , NameTable& table);
+void execute_statement(const Statement *stmt, NameTable &table);
+void execute_assign_statement(const AssignStmt *assign, NameTable &table);
+void execute_combined_assign_statement(const CombinedAssingStmt *combined_assign_statement, NameTable &table);
+void execute_print_statement(const PrintStmt *print_statement, NameTable &table);
+void execute_while_statement(const WhileStmt *while_stmt, NameTable &table);
+void execute_block_statement(const BlockStmt *block, NameTable &table);
+void execute_condition_statement(const ConditionStatement *condition, NameTable &table);
 
 /* Expression execution functions */
-int   execute_expression               (                 const Expression        * expr                      ,                  NameTable &table);
-int execute_binary_expression          (                 const BinExpr           * bin                       ,                  NameTable& table);
-int execute_unary_expression           (                 const UnExpr            * un                        ,                  NameTable& table);
-int execute_number_expression          (                 const NumExpr           * num                       , [[maybe_unused]] NameTable& table);
-int execute_variable_expression        (                 const VarExpr           * var                       ,                  NameTable& table);
-int execute_input_expression           ([[maybe_unused]] const InputExpr         * in                        , [[maybe_unused]] NameTable& table);
-int execute_assign_expression          (                 const AssignExpr        * assignExpr                ,                  NameTable& table);
-int execute_combined_assign_expression (                 const CombinedAssingExpr* combinedAssingExpr        ,                  NameTable& table);
+int execute_expression(const Expression *expr, NameTable &table);
+int execute_binary_expression(const BinExpr *bin, NameTable &table);
+int execute_unary_expression(const UnExpr *un, NameTable &table);
+int execute_number_expression(const NumExpr *num, [[maybe_unused]] NameTable &table);
+int execute_variable_expression(const VarExpr *var, NameTable &table);
+int execute_input_expression([[maybe_unused]] const InputExpr *in, [[maybe_unused]] NameTable &table);
+int execute_assign_expression(const AssignExpr *assignExpr, NameTable &table);
+int execute_combined_assign_expression(const CombinedAssingExpr *combinedAssingExpr, NameTable &table);
 
+int execute_binary_operation(int lhs, int rhs, token_t binary_operator);
+void execute_combined_assign(int &rhs, int value, token_t combined_assign);
+int execute_unary_operation(int rhs, token_t unary_operator);
 
-int   execute_binary_operation         (int  lhs, int rhs  , token_t binary_operator);
-void  execute_combined_assign          (int& rhs, int value, token_t combined_assign);
-int   execute_unary_operation          (int  rhs           , token_t unary_operator );
-
-export void interpret(const ProgramAST& progAST)
+export void interpret(const ProgramAST &progAST)
 {
     NameTable table;
 
@@ -102,7 +101,7 @@ int execute_expression(const Expression *expr, NameTable &table)
     builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-void execute_while_statement(const WhileStmt* while_stmt, NameTable& table)
+void execute_while_statement(const WhileStmt *while_stmt, NameTable &table)
 {
     const std::vector<std::unique_ptr<Statement>> &bodyStmts = while_stmt->body->statements;
 
@@ -111,7 +110,7 @@ void execute_while_statement(const WhileStmt* while_stmt, NameTable& table)
             execute_statement(s.get(), table);
 }
 
-void execute_block_statement(const BlockStmt* block, NameTable& table)
+void execute_block_statement(const BlockStmt *block, NameTable &table)
 {
     const std::vector<std::unique_ptr<Statement>> &blockStmts = block->statements;
 
@@ -127,7 +126,7 @@ void execute_block_statement(const BlockStmt* block, NameTable& table)
         table.leave();
 }
 
-void execute_condition_statement(const ConditionStatement* condition, NameTable& table)
+void execute_condition_statement(const ConditionStatement *condition, NameTable &table)
 {
     auto if_stmt = condition->if_stmt.get();
     msg_assert(if_stmt, "in condition we always expect IF");
@@ -151,7 +150,7 @@ void execute_condition_statement(const ConditionStatement* condition, NameTable&
     return execute_statement(else_stmt->body.get(), table);
 }
 
-int execute_binary_expression(const BinExpr* bin, NameTable& table)
+int execute_binary_expression(const BinExpr *bin, NameTable &table)
 {
     auto leftExpr = dynamic_cast<const Expression *>(bin->left.get());
     auto rightExpr = dynamic_cast<const Expression *>(bin->right.get());
@@ -165,19 +164,19 @@ int execute_binary_expression(const BinExpr* bin, NameTable& table)
     return execute_binary_operation(leftResult, rightResult, bin->op);
 }
 
-int execute_unary_expression(const UnExpr* un, NameTable& table)
+int execute_unary_expression(const UnExpr *un, NameTable &table)
 {
     auto child_expr = dynamic_cast<const Expression *>(un->operand.get());
     int child_value = execute_expression(child_expr, table);
     return execute_unary_operation(child_value, un->op);
 }
 
-int execute_number_expression(const NumExpr* num, [[maybe_unused]] NameTable& table)
+int execute_number_expression(const NumExpr *num, [[maybe_unused]] NameTable &table)
 {
     return num->value;
 }
 
-int execute_variable_expression(const VarExpr* var, NameTable& table)
+int execute_variable_expression(const VarExpr *var, NameTable &table)
 {
     auto *varValue = table.lookup(var->name);
     if (not varValue)
@@ -186,14 +185,14 @@ int execute_variable_expression(const VarExpr* var, NameTable& table)
     return varValue->value;
 }
 
-int execute_input_expression([[maybe_unused]] const InputExpr* in, [[maybe_unused]] NameTable& table)
+int execute_input_expression([[maybe_unused]] const InputExpr *in, [[maybe_unused]] NameTable &table)
 {
     int value = 0;
     std::cin >> value;
     return value;
 }
 
-int execute_assign_expression(const AssignExpr* assignExpr, NameTable& table)
+int execute_assign_expression(const AssignExpr *assignExpr, NameTable &table)
 {
     auto e = dynamic_cast<const Expression *>(assignExpr->value.get());
     if (!e)
@@ -206,7 +205,7 @@ int execute_assign_expression(const AssignExpr* assignExpr, NameTable& table)
     return result;
 }
 
-int execute_combined_assign_expression(const CombinedAssingExpr* combinedAssingExpr, NameTable& table)
+int execute_combined_assign_expression(const CombinedAssingExpr *combinedAssingExpr, NameTable &table)
 {
     auto *varValue = table.lookup(combinedAssingExpr->name);
     if (!varValue)
@@ -305,7 +304,7 @@ void execute_combined_assign(int &rhs, int value, token_t combined_assign)
     builtin_unreachable_wrapper("we must return in switch");
 }
 
-void execute_assign_statement(const AssignStmt* assign, NameTable& table)
+void execute_assign_statement(const AssignStmt *assign, NameTable &table)
 {
     auto e = dynamic_cast<const Expression *>(assign->value.get());
     if (!e)
@@ -316,11 +315,12 @@ void execute_assign_statement(const AssignStmt* assign, NameTable& table)
     table.declare(assign->name, result);
 }
 
-void execute_combined_assign_statement(const CombinedAssingStmt* combined_assign_statement, NameTable& table)
+void execute_combined_assign_statement(const CombinedAssingStmt *combined_assign_statement, NameTable &table)
 {
     auto *varValue = table.lookup(combined_assign_statement->name);
     if (!varValue)
-        throw std::runtime_error("error: '" + combined_assign_statement->name + "' was not declared in this scope\n"
+        throw std::runtime_error("error: '" + combined_assign_statement->name +
+                                 "' was not declared in this scope\n"
                                  "paracl: failed with exit code 1");
 
     auto e = dynamic_cast<const Expression *>(combined_assign_statement->value.get());
@@ -332,7 +332,7 @@ void execute_combined_assign_statement(const CombinedAssingStmt* combined_assign
     execute_combined_assign(varValue->value, result, combined_assign_statement->op);
 }
 
-void execute_print_statement(const PrintStmt* print_statement, NameTable& table)
+void execute_print_statement(const PrintStmt *print_statement, NameTable &table)
 {
     for (auto &arg : print_statement->args)
     {

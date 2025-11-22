@@ -22,3 +22,8 @@ catch (const std::runtime_error &e)
     ParaCL::runtime_error(e);
     return EXIT_FAILURE;
 }
+catch (...)
+{
+    ParaCL::undefined_error();
+    return EXIT_FAILURE;
+}

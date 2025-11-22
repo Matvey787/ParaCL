@@ -24,9 +24,15 @@ export void runtime_error(const std::runtime_error &e)
     std::cerr << "runtime error: " << e.what() << "\n";
 }
 
+export void undefined_error()
+{
+    paracl_error_msg_begin();
+    std::cerr << "undefined error.\n";
+}
+
 void paracl_error_msg_begin()
 {
     std::cerr << WHITE BOLD "paracl: " RED "error: " RESET_CONSOLE_OUT;
 }
 
-} // namespace ParaCL
+} /* namespace ParaCL */
