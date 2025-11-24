@@ -85,6 +85,10 @@ statements:
         $1.push_back(std::move($2));
         $$ = std::move($1);
     }
+    | statements LCUB block RCUB {
+        $1.push_back(std::move($3));
+        $$ = std::move($1);
+    }
     ;
 
 statement:
