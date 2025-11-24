@@ -192,7 +192,7 @@ void dumpExpr(std::ostream &out, const Expression *expr)
     }
     else if (auto string = dynamic_cast<const StringConstant *>(expr))
     {
-        create_node(out, expr, "STRING: " + string->value);
+        create_node(out, expr, "STRING: \\\"" + string->value + "\\\"");
         return;
     }
 

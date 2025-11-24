@@ -37,7 +37,7 @@ int execute_assign_expression(const AssignExpr *assignExpr, NameTable &table);
 int execute_combined_assign_expression(const CombinedAssingExpr *combinedAssingExpr, NameTable &table);
 
 int execute_binary_operation(int lhs, int rhs, token_t binary_operator);
-void execute_combined_assign(int &rhs, int value, token_t combined_assign);
+int execute_combined_assign(int rhs, int value, token_t combined_assign);
 int execute_unary_operation(int rhs, token_t unary_operator);
 
 export void interpret(const ProgramAST &progAST)
@@ -116,13 +116,13 @@ void execute_block_statement(const BlockStmt *block, NameTable &table)
 
     bool blockIsEmpty = blockStmts.empty();
 
-    if (!blockIsEmpty)
+    if (not blockIsEmpty)
         table.enter();
 
     for (auto &s : block->statements)
         execute_statement(s.get(), table);
 
-    if (!blockIsEmpty)
+    if (not blockIsEmpty)
         table.leave();
 }
 
@@ -155,7 +155,7 @@ int execute_binary_expression(const BinExpr *bin, NameTable &table)
     auto leftExpr = dynamic_cast<const Expression *>(bin->left.get());
     auto rightExpr = dynamic_cast<const Expression *>(bin->right.get());
 
-    if (!leftExpr || !rightExpr)
+    if (not leftExpr || not rightExpr)
         throw std::runtime_error("BinExpr children are not Expression");
 
     int leftResult = execute_expression(leftExpr, table);
@@ -178,11 +178,11 @@ int execute_number_expression(const NumExpr *num, [[maybe_unused]] NameTable &ta
 
 int execute_variable_expression(const VarExpr *var, NameTable &table)
 {
-    auto *varValue = table.lookup(var->name);
-    if (not varValue)
+    std::optional<NameValue> varValue = table.get_variable_value(var->name);
+    if (not varValue.has_value())
         throw std::runtime_error("'" + var->name + "' was not declared in this scope\n");
 
-    return varValue->value;
+    return varValue.value().value;
 }
 
 int execute_input_expression([[maybe_unused]] const InputExpr *in, [[maybe_unused]] NameTable &table)
@@ -195,35 +195,35 @@ int execute_input_expression([[maybe_unused]] const InputExpr *in, [[maybe_unuse
 int execute_assign_expression(const AssignExpr *assignExpr, NameTable &table)
 {
     auto e = dynamic_cast<const Expression *>(assignExpr->value.get());
-    if (!e)
+    if (not e)
         throw std::runtime_error("BinExpr children are not Expression");
 
     auto result = execute_expression(e, table);
 
-    table.declare(assignExpr->name, result);
+    NameValue new_value{result};
+    table.set_value(assignExpr->name, new_value);
 
     return result;
 }
 
 int execute_combined_assign_expression(const CombinedAssingExpr *combinedAssingExpr, NameTable &table)
 {
-    auto *varValue = table.lookup(combinedAssingExpr->name);
-    if (!varValue)
-    {
-        std::cerr << "error: '" << combinedAssingExpr->name << "' was not declared in this scope\n"
-                  << "paracl: failed with exit code 1";
-        exit(EXIT_FAILURE);
-    }
+    std::optional<NameValue> varValue = table.get_variable_value(combinedAssingExpr->name);
+    int value = varValue.value().value;
+    if (not varValue.has_value())
+        throw std::runtime_error("error: '" + combinedAssingExpr->name + "' was not declared in this scope\n");
 
-    auto e = dynamic_cast<const Expression *>(combinedAssingExpr->value.get());
-    if (!e)
+    auto expr = dynamic_cast<const Expression *>(combinedAssingExpr->value.get());
+    if (not expr)
         throw std::runtime_error("BinExpr children are not Expression");
 
-    auto result = execute_expression(e, table);
+    auto result = execute_expression(expr, table);
 
-    execute_combined_assign(varValue->value, result, combinedAssingExpr->op);
+    value = execute_combined_assign(value, result, combinedAssingExpr->op);
+    NameValue new_value{value};
+    table.set_value(combinedAssingExpr->name, new_value);
 
-    return varValue->value;
+    return value;
 }
 
 // Existing functions (остаются без изменений)
@@ -272,64 +272,68 @@ int execute_unary_operation(int rhs, token_t unary_operator)
     case token_t::SUB:
         return -rhs;
     case token_t::NOT:
-        return !rhs;
+        return not rhs;
     default:
         builtin_unreachable_wrapper("here we parse only unary operation");
     }
     builtin_unreachable_wrapper("we must return in switch");
 }
 
-void execute_combined_assign(int &rhs, int value, token_t combined_assign)
+int execute_combined_assign(int rhs, int value, token_t combined_assign)
 {
     switch (combined_assign)
     {
     case token_t::ADDASGN:
         rhs += value;
-        return;
+        break;
     case token_t::SUBASGN:
         rhs -= value;
-        return;
+        break;;
     case token_t::MULASGN:
         rhs *= value;
-        return;
+        break;;
     case token_t::DIVASGN:
         rhs /= value;
-        return;
+        break;;
     case token_t::REMASGN:
         rhs %= value;
-        return;
+        break;;
     default:
         builtin_unreachable_wrapper("here we parse only combined assign operations");
     }
-    builtin_unreachable_wrapper("we must return in switch");
+    return rhs;
 }
 
 void execute_assign_statement(const AssignStmt *assign, NameTable &table)
 {
     auto e = dynamic_cast<const Expression *>(assign->value.get());
-    if (!e)
+    if (not e)
         throw std::runtime_error("BinExpr children are not Expression");
 
     auto result = execute_expression(e, table);
 
-    table.declare(assign->name, result);
+    table.set_value(assign->name, NameValue{result});
 }
 
 void execute_combined_assign_statement(const CombinedAssingStmt *combined_assign_statement, NameTable &table)
 {
-    auto *varValue = table.lookup(combined_assign_statement->name);
-    if (!varValue)
+    std::optional<NameValue> varValue = table.get_variable_value(combined_assign_statement->name);
+    int value = varValue.value().value;
+    if (not varValue.has_value())
         throw std::runtime_error("error: '" + combined_assign_statement->name +
                                  "' was not declared in this scope\n"
                                  "paracl: failed with exit code 1");
 
-    auto e = dynamic_cast<const Expression *>(combined_assign_statement->value.get());
-    if (!e)
+    auto expr = dynamic_cast<const Expression *>(combined_assign_statement->value.get());
+
+    if (not expr)
         throw std::runtime_error("BinExpr children are not Expression");
 
-    auto result = execute_expression(e, table);
+    auto result = execute_expression(expr, table);
 
-    execute_combined_assign(varValue->value, result, combined_assign_statement->op);
+    value = execute_combined_assign(value, result, combined_assign_statement->op);
+    NameValue new_value{value};
+    table.set_value(combined_assign_statement->name, new_value);
 }
 
 void execute_print_statement(const PrintStmt *print_statement, NameTable &table)
