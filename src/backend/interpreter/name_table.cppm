@@ -3,11 +3,11 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <optional>
-#include <stdexcept>
 
 #include "global/global.hpp"
 
@@ -31,24 +31,24 @@ struct NameValue
 
 //---------------------------------------------------------------------------------------------------------------
 
-NameValue::NameValue(int value) :
-value(value)
-{}
+NameValue::NameValue(int value) : value(value)
+{
+}
 
 //---------------------------------------------------------------------------------------------------------------
 
 class NameTable
 {
-private:
+  private:
     std::vector<std::unordered_map<std::string, NameValue>> scopes_;
-    NameValue* lookup(const std::string &name);
+    NameValue *lookup(const std::string &name);
     void declare(const std::string &name, int value);
 
-public:
+  public:
     void enter();
     void leave();
     std::optional<NameValue> get_variable_value(const std::string &name) const;
-    void set_value(const std::string &name, const NameValue& value);
+    void set_value(const std::string &name, const NameValue &value);
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -87,12 +87,12 @@ std::optional<NameValue> NameTable::get_variable_value(const std::string &name) 
 
 //---------------------------------------------------------------------------------------------------------------
 
-void NameTable::set_value(const std::string &name, const NameValue& value)
+void NameTable::set_value(const std::string &name, const NameValue &value)
 {
     if (scopes_.empty())
         throw std::runtime_error("cannot set_value variable: no active scopes");
 
-    NameValue* name_ptr = lookup(name);
+    NameValue *name_ptr = lookup(name);
 
     if (not name_ptr)
         return declare(name, value.value);
@@ -105,7 +105,7 @@ void NameTable::set_value(const std::string &name, const NameValue& value)
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-NameValue* NameTable::lookup(const std::string &name)
+NameValue *NameTable::lookup(const std::string &name)
 {
     for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
     {
@@ -132,6 +132,6 @@ void NameTable::declare(const std::string &name, int value)
 
 //---------------------------------------------------------------------------------------------------------------
 
-} /* export namespace ParaCL */
+} // namespace ParaCL
 
 //---------------------------------------------------------------------------------------------------------------

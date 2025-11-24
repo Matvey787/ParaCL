@@ -288,16 +288,20 @@ int execute_combined_assign(int rhs, int value, token_t combined_assign)
         break;
     case token_t::SUBASGN:
         rhs -= value;
-        break;;
+        break;
+        ;
     case token_t::MULASGN:
         rhs *= value;
-        break;;
+        break;
+        ;
     case token_t::DIVASGN:
         rhs /= value;
-        break;;
+        break;
+        ;
     case token_t::REMASGN:
         rhs %= value;
-        break;;
+        break;
+        ;
     default:
         builtin_unreachable_wrapper("here we parse only combined assign operations");
     }
