@@ -45,9 +45,7 @@ namespace ParaCL
       .build_date    = "@CURRENT_TIME@",
       .build_type    = "@CMAKE_BUILD_TYPE@",
       .architecture  = std::move(architecture),
-      .git_commit    = "@GIT_COMMIT_HASH@", /* to find hash of commit using 'git' command in cmake. so */
+      .git_commit    = "@GIT_COMMIT_HASH@", /* to find hash of commit using 'git' command in cmake */
       .compiler      = "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@: @CMAKE_CXX_COMPILER@",
     };
 };
-
-

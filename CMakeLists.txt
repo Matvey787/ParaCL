@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(paraCL
     LANGUAGES CXX
-    VERSION 1.3
+    VERSION 1.5
 )
 
 # =================================================================================================
@@ -29,6 +29,19 @@ option(GRAPHVIZ "Enable graphviz visualization (graphviz)" OFF)
 string(TIMESTAMP CURRENT_TIME "%Y-%m-%d %H:%M:%S")
 
 # =================================================================================================
+# set some global varibles
+
+set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(INC_DIR ${PROJECT_SOURCE_DIR}/include)
+
+set(BACKEND_SRC_DIR ${SRC_DIR}/backend)
+set(FRONTEND_SRC_DIR ${SRC_DIR}/frontend)
+
+set(FRONTEND_INC_DIR ${INC_DIR}/frontend)
+
+set(DEBUG_DIR ${PROJECT_SOURCE_DIR}/debug)
+
+# =================================================================================================
 
 set(CMAKE_SETTINGS_DIR ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -42,19 +55,6 @@ set(CMAKE_DEPS_DIR ${CMAKE_SETTINGS_DIR}/dep)
 
 include(${CMAKE_DEPS_DIR}/check-flex.cmake)
 include(${CMAKE_DEPS_DIR}/check-bison.cmake)
-
-# =================================================================================================
-# set some global varibles
-
-set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(INC_DIR ${PROJECT_SOURCE_DIR}/include)
-
-set(BACKEND_SRC_DIR ${SRC_DIR}/backend)
-set(FRONTEND_SRC_DIR ${SRC_DIR}/frontend)
-
-set(FRONTEND_INC_DIR ${INC_DIR}/frontend)
-
-set(DEBUG_DIR ${PROJECT_SOURCE_DIR}/debug)
 
 # =================================================================================================
 # crete paracl info library
@@ -190,7 +190,7 @@ target_add_logger(${LEXER_LIB})
 # =================================================================================================
 # add options parser library
 
-set(OPTIONS_PARSER_LIB options_parse)
+set(OPTIONS_PARSER_LIB options_parser)
 add_library(${OPTIONS_PARSER_LIB})
 
 set(OPTIONS_PARSER_SRC_DIR ${SRC_DIR}/options_parser)
@@ -229,6 +229,43 @@ add_target_debug_options(${OPTIONS_PARSER_LIB} hard)
 target_add_logger(${OPTIONS_PARSER_LIB})
 
 # =================================================================================================
+# paracl intepretor
+
+set(PARACL_INTERPRETOR_LIB interpreter)
+add_library(${PARACL_INTERPRETOR_LIB})
+
+set(PARACL_INTERPRETOR_SRC_DIR ${BACKEND_SRC_DIR}/interpreter)
+set(PARACL_INTERPRETOR_SRC
+    ${PARACL_INTERPRETOR_SRC_DIR}/interpreter.cppm
+    ${PARACL_INTERPRETOR_SRC_DIR}/name_table.cppm
+)
+
+target_sources(${PARACL_INTERPRETOR_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${PARACL_INTERPRETOR_SRC}
+    PRIVATE
+        
+)
+
+target_include_directories(${PARACL_INTERPRETOR_LIB}
+    PRIVATE
+        ${INC_DIR}
+        ${FRONTEND_INC_DIR}
+)
+
+# target_link_libraries(${PARACL_INTERPRETOR_LIB}
+#     PRIVATE
+#         ${PARSER_LIB}
+#         ${LEXER_LIB}
+# )
+
+add_target_debug_options(${PARACL_INTERPRETOR_LIB} hard)
+target_add_logger(${PARACL_INTERPRETOR_LIB})
+
+# =================================================================================================
 # run paracl library
 
 set(RUN_PARACL_LIB run_paracl)
@@ -236,7 +273,6 @@ add_library(${RUN_PARACL_LIB})
 
 set(RUN_PARACL_SRC_DIR ${BACKEND_SRC_DIR})
 set(RUN_PARACL_SRC
-    ${RUN_PARACL_SRC_DIR}/interpreter.cppm
     ${RUN_PARACL_SRC_DIR}/run_paracl.cppm
     ${RUN_PARACL_SRC_DIR}/parse_paracl_exceptions.cppm
 )
@@ -246,6 +282,7 @@ set(RUN_PARACL_SRC
     ${RUN_PARACL_SRC}
     ${DEBUG_DIR}/ast/ast-graph-dump.cppm    
 )
+target_compile_definitions(${RUN_PARACL_LIB} PRIVATE GRAPHVIZ)
 endif(GRAPHVIZ)
 
 target_sources(${RUN_PARACL_LIB}
@@ -269,14 +306,11 @@ target_include_directories(${RUN_PARACL_LIB}
 
 target_link_libraries(${RUN_PARACL_LIB}
     PRIVATE
+        ${PARACL_INTERPRETOR_LIB}
         ${OPTIONS_PARSER_LIB}
         ${PARSER_LIB}
         ${LEXER_LIB}
 )
-
-if(GRAPHVIZ)
-    target_compile_definitions(${RUN_PARACL_LIB} PRIVATE GRAPHVIZ)
-endif()
 
 add_target_debug_options(${RUN_PARACL_LIB} hard)
 target_add_logger(${RUN_PARACL_LIB})
@@ -296,6 +330,11 @@ target_link_libraries(${PARACL_EXE}
     PRIVATE
         ${OPTIONS_PARSER_LIB}
         ${RUN_PARACL_LIB}
+)
+
+target_include_directories(${PARACL_EXE}
+    PRIVATE
+        ${INC_DIR}
 )
 
 add_target_debug_options(${PARACL_EXE} hard)

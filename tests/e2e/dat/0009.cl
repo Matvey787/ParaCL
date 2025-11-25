@@ -9,4 +9,4 @@ while (i > 0)
     }
     i -= 1;
 }
-print j;
+print "j = ", j;

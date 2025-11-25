@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -euo pipefail
 
 # colors and fonts for console custom output

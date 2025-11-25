@@ -2,10 +2,6 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
-#if defined(LOGGER)
-#include "pineaplog.hpp"
-#endif /* defined(LOGGER) */
-
 #include <cassert>
 #include <cstdlib>
 #include <filesystem>
@@ -18,6 +14,8 @@ module;
 
 #include "global/custom_console_output.hpp"
 #include "global/global.hpp"
+
+#include "log/log_api.hpp"
 
 //---------------------------------------------------------------------------------------------------------------
 
@@ -103,6 +101,7 @@ constexpr option long_options[] = {
 
 options_parser::options_parser(int argc, char *argv[]) : program_options_()
 {
+    LOGINFO("paracl: options parser: begin parse options");
     set_program_name(argv[0]);
 
     static constexpr int undefined_option_key = -1;
@@ -129,6 +128,8 @@ options_parser::options_parser(int argc, char *argv[]) : program_options_()
     }
 
     set_getopt_args_default_values();
+
+    LOGINFO("paracl: options parser: parse options completed");
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -154,6 +155,8 @@ void options_parser::set_program_name(const char *argv0)
 [[noreturn]]
 void options_parser::parse_flag_help() const
 {
+    LOGINFO("paracl: options parser: find '--help' flag");
+
     std::cout << BOLD "There are all flags and parametrs:" RESET_CONSOLE_OUT << R"(
     -h --help
     -v --version
@@ -171,6 +174,7 @@ void options_parser::parse_flag_help() const
     Good luck, I love you )"
               << HEART << std::endl;
 
+    LOGINFO("paracl: exit success");
     exit(EXIT_SUCCESS); // good exit :)
 }
 
@@ -179,6 +183,8 @@ void options_parser::parse_flag_help() const
 [[noreturn]]
 void options_parser::parse_flag_version() const
 {
+    LOGINFO("paracl: options parser: find '--version' flag");
+
     std::cout << "ParaCL\n"
                  "Version     : "
               << ParaCL::paracl_info.version
@@ -198,6 +204,8 @@ void options_parser::parse_flag_version() const
                  "Architecture: "
               << ParaCL::paracl_info.architecture << std::endl;
 
+    LOGINFO("paracl: exit success");
+
     exit(EXIT_SUCCESS); // good exit :)
 }
 
@@ -205,11 +213,20 @@ void options_parser::parse_flag_version() const
 
 void options_parser::parse_not_a_flag(const char *argument)
 {
-    if (ParaCL::is_paracl_file_name(argument))
-        return program_options_.sources.push_back(std::string(argument));
+    msg_assert(argument, "nullptr s no expect here");
 
-    throw std::invalid_argument("bad source file: unexpected extentsion: '" WHITE + std::string(argument) +
-                                RESET_CONSOLE_OUT "', expect " + ParaCL::paracl_extension);
+    LOGINFO("paracl: options parser: parse not a flag: \"{}\"", argument);
+
+    if (not ParaCL::is_paracl_file_name(argument))
+    {
+        LOGERR("paracl: options parser: unexpected file: \"{}\"", argument);
+        throw std::invalid_argument("bad source file: unexpected extentsion: '" WHITE + std::string(argument) +
+                                    RESET_CONSOLE_OUT "', expect " + ParaCL::paracl_extension);
+    }
+
+    LOGINFO("paracl: options parser: find source file: \"{}\"", argument);
+
+    program_options_.sources.push_back(std::string(argument));
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -217,7 +234,8 @@ void options_parser::parse_not_a_flag(const char *argument)
 [[noreturn]]
 void options_parser::undefined_option(const char *argument) const
 {
-    assert(argument);
+    msg_assert(argument, "nullptr is no expect here");
+    LOGERR("paracl: options parser: undefined option \"{}\"", argument);
 
     throw std::invalid_argument("Undefined option: '" + std::string(argument) + "'");
 }
@@ -226,6 +244,8 @@ void options_parser::undefined_option(const char *argument) const
 
 void set_getopt_args_default_values()
 {
+    LOGINFO("paracl: options parser: set getopt arg default values");
+
     optarg = nullptr;
     optind = 1;
 }

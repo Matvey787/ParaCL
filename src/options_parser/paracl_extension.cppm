@@ -6,7 +6,7 @@ module;
 #include <string>
 
 #if defined(LOGGER)
-#include "pineaplog.hpp"
+import pineaplog;
 #endif /* defined(USE_LOGGER) */
 
 //---------------------------------------------------------------------------------------------------------------

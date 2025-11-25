@@ -6,4 +6,4 @@ while (b > 0)
     result += a;
     b -= 1;
 }
-print result;
+print "result = ", result;

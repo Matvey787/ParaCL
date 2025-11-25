@@ -15,14 +15,15 @@ export module ast_graph_dump;
 namespace ParaCL
 {
 
-void link_nodes(std::ostream &out, const void *lhs, const void *rhs);
-void condition_link_type(std::ostream &out, const void *lhs, const void *rhs);
-void body_link_type(std::ostream &out, const void *lhs, const void *rhs);
-void create_node(std::ostream &out, const void *node, const std::string &label, const std::string &more_settings = "");
-void dump_body(std::ostream &out, const void *node, const BlockStmt *body);
+void link_nodes(std::ostream &out, size_t ntab, const void *lhs, const void *rhs);
+void condition_link_type(std::ostream &out, size_t ntab, const void *lhs, const void *rhs);
+void body_link_type(std::ostream &out, size_t ntab, const void *lhs, const void *rhs);
+void create_node(std::ostream &out, size_t ntab, const void *node, const std::string &label,
+                 const std::string &more_settings = "");
+void dump_body(std::ostream &out, size_t ntab, const void *node, const BlockStmt *body);
 
-void dumpExpr(std::ostream &out, const ParaCL::Expression *expr);
-void dumpStmt(std::ostream &out, const ParaCL::Statement *stmt);
+void dumpExpr(std::ostream &out, size_t ntab, const ParaCL::Expression *expr);
+void dumpStmt(std::ostream &out, size_t ntab, const ParaCL::Statement *stmt);
 
 export void ast_dump(const ProgramAST &progAST, const std::string &filename = "dot-out/ast.dot")
 {
@@ -53,7 +54,7 @@ export void ast_dump(const ProgramAST &progAST, const std::string &filename = "d
     std::system(dot_cmd.c_str());
 }
 
-void dumpExpr(std::ostream &out, const Expression *expr)
+void dumpExpr(std::ostream &out, size_t ntab, const Expression *expr)
 {
     if (auto bin = dynamic_cast<const BinExpr *>(expr))
     {
@@ -199,7 +200,7 @@ void dumpExpr(std::ostream &out, const Expression *expr)
     builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-void dumpStmt(std::ostream &out, const Statement *stmt)
+void dumpStmt(std::ostream &out, size_t ntab, const Statement *stmt)
 {
     if (auto assign = dynamic_cast<const AssignStmt *>(stmt))
     {
@@ -310,12 +311,13 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
     builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-void link_nodes(std::ostream &out, const void *lhs, const void *rhs)
+void link_nodes(std::ostream &out, size_t ntab, const void *lhs, const void *rhs)
 {
     out << "  \"" << lhs << "\" -> \"" << rhs << "\";\n";
 }
 
-void create_node(std::ostream &out, const void *node, const std::string &label, const std::string &more_settings)
+void create_node(std::ostream &out, size_t ntab, const void *node, const std::string &label,
+                 const std::string &more_settings)
 {
     out << "  \"" << node << "\" [label=\"" << label << "\"";
 
@@ -328,17 +330,17 @@ void create_node(std::ostream &out, const void *node, const std::string &label, 
     out << ", " << more_settings << "];\n";
 }
 
-void condition_link_type(std::ostream &out, const void *lhs, const void *rhs)
+void condition_link_type(std::ostream &out, size_t ntab, const void *lhs, const void *rhs)
 {
     out << "  \"" << lhs << "\" -> \"" << rhs << "\" [label=\"cond\", fontcolor=\"gray50\"];\n";
 }
 
-void body_link_type(std::ostream &out, const void *lhs, const void *rhs)
+void body_link_type(std::ostream &out, size_t ntab, const void *lhs, const void *rhs)
 {
     out << "  \"" << lhs << "\" -> \"" << rhs << "\" [label=\"body\", fontcolor=\"gray50\"];\n";
 }
 
-void dump_body(std::ostream &out, const void *node, const BlockStmt *body)
+void dump_body(std::ostream &out, size_t ntab, const void *node, const BlockStmt *body)
 {
     for (auto &s : body->statements)
     {

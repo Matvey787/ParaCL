@@ -1,8 +1,4 @@
 %{
-#if defined(LOGGER)
-#include "pineaplog.hpp"
-#endif /* defined(LOGGER) */
-
 #include <string>
 #include <cstdlib>
 #include <cstring>
@@ -12,6 +8,8 @@
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "global/global.hpp"
+
+#include "log/log_api.hpp"
 
 std::string current_file;
 
@@ -43,12 +41,16 @@ static size_t tokens_counter = 0;
         }                                                       \
         yylloc->end.column++;                                    \
     }                                                             \
-    ON_LOGGER( \
-        PineapLog::glog.logc(PineapLog::LogColor::White, "[", PineapLog::tokens_counter, "]"); \
-        PineapLog::tokens_counter++; \
-        PineapLog::LogColor color = (PineapLog::tokens_counter % 3 == 0) ? PineapLog::LogColor::Green : (PineapLog::tokens_counter % 3 == 1) ? PineapLog::LogColor::Yellow : PineapLog::LogColor::Red; \
-        PineapLog::glog.logc(color, "{", "\n\tfirst line: ", yylloc->begin.line, "\n\tfirst col : ", yylloc->begin.column, "\n\tlast line: ", yylloc->end.line, "\n\tlast col : ", yylloc->end.column, "\n\tword = '", yytext, "'\n}"); \
-    ) \
+    LOGINFO("paracl: lexer: parse token: {}:{}:{}:\"{}\"", current_file, yylloc->begin.line, yylloc->begin.column, yytext); \
+    HTMLCOLLOG(PineapLog::LogColor::White, "[", PineapLog::tokens_counter++, "]"); \
+    HTMLCOLLOG((PineapLog::tokens_counter % 3 == 0) ? \
+                PineapLog::LogColor::Green : (PineapLog::tokens_counter % 3 == 1) ? \
+                PineapLog::LogColor::Yellow : PineapLog::LogColor::Red, \
+                "{", "\n\tfirst line: ", yylloc->begin.line, \
+                     "\n\tfirst col : ", yylloc->begin.column, \
+                     "\n\tlast line: ", yylloc->end.line, \
+                     "\n\tlast col : ", yylloc->end.column, \
+                     "\n\tword = '", yytext, "'\n}"); \
 } while (0);
 
 %}
@@ -117,7 +119,7 @@ STRING      \"[^"]*\"
 {STRING}    { 
                 std::ostringstream result;
 
-                for (size_t it = 1, ite = yyleng - 2; it < ite; ++it)
+                for (size_t it = 1, ite = yyleng - 1; it < ite; ++it)
                 {
                     const char c = *(yytext + it);
                     const char next_c = *(yytext + it + 1);
@@ -127,18 +129,19 @@ STRING      \"[^"]*\"
                         result << c;
                         continue;
                     }
+
                     switch (next_c)
                     {
-                        case 'n':  result << '\n'; continue;
-                        case 't':  result << '\t'; continue;
-                        case 'r':  result << '\r'; continue;
-                        case '\\': result << '\\'; continue;
-                        case '"':  result << '"';  continue;
-                        case '0':  result << '\0'; continue;
-                        case 'a':  result << '\a'; continue;
-                        case 'b':  result << '\b'; continue;
-                        case 'v':  result << '\v'; continue;
-                        case 'f':  result << '\f'; continue;
+                        case 'n':  result << '\n'; break;
+                        case 't':  result << '\t'; break;
+                        case 'r':  result << '\r'; break;
+                        case '\\': result << '\\'; break;
+                        case '\"': result << '\"'; break;
+                        case '0':  result << '\0'; break;
+                        case 'a':  result << '\a'; break;
+                        case 'b':  result << '\b'; break;
+                        case 'v':  result << '\v'; break;
+                        case 'f':  result << '\f'; break;
                         default:   result << c   ; continue;
                     }
                     ++it;

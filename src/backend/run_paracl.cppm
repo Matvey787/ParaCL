@@ -110,7 +110,7 @@ void one_source_action(const std::string &source)
     }
     catch (...)
     {
-        std::cerr << ERROR_MSG("graphviz ast dump failed!\n");
+        std::cerr << ERROR_MSG("graphviz ast dump failed with unknow exception!\n");
     }
 #endif /* defined(GRAPHVIZ) */
 
