@@ -24,6 +24,7 @@ void dump_body(std::ostream &out, const void *node, const BlockStmt *body);
 
 void dumpExpr(std::ostream &out, const ParaCL::Expression *expr);
 void dumpStmt(std::ostream &out, const ParaCL::Statement *stmt);
+void dumpBlock(std::ostream& out, const ParaCL::BlockStmt* block);
 
 export void ast_dump(const ProgramAST &progAST, const std::string &filename)
 {
@@ -266,15 +267,7 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
     }
     else if (auto block = dynamic_cast<const BlockStmt *>(stmt))
     {
-        std::string label = "Block";
-        create_node(out, stmt, label);
-
-        for (auto &s : block->statements)
-        {
-            dumpStmt(out, s.get());
-            link_nodes(out, stmt, s.get());
-        }
-        return;
+        return dumpBlock(out, block);
     }
     else if (auto condition = dynamic_cast<const ConditionStatement *>(stmt))
     {
@@ -310,6 +303,19 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
     builtin_unreachable_wrapper("we must return in some else-if");
 }
 
+void dumpBlock(std::ostream& out, const ParaCL::BlockStmt* block)
+{
+    std::string label = "Block";
+    create_node(out, block, label);
+
+    for (auto &s : block->statements)
+    {
+        dumpStmt(out, s.get());
+        link_nodes(out, block, s.get());
+    }
+}
+
+
 void link_nodes(std::ostream &out, const void *lhs, const void *rhs)
 {
     out << "  \"" << lhs << "\" -> \"" << rhs << "\";\n";
@@ -340,11 +346,9 @@ void body_link_type(std::ostream &out, const void *lhs, const void *rhs)
 
 void dump_body(std::ostream &out, const void *node, const BlockStmt *body)
 {
-    for (auto &s : body->statements)
-    {
-        dumpStmt(out, s.get());
-        body_link_type(out, node, s.get());
-    }
+
+    dumpBlock(out, body);
+    body_link_type(out, node, body);
 }
 
 } /* namespace ParaCL */
