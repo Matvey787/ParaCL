@@ -1,68 +1,21 @@
-digraph AST {
-  node [shape=box];
-  "0x5a0058aa23c0" [label="Program"];
-  "0x5a0060b5d1d0" [label="Block"];
-  "0x5a0060b57590" [label="Assign: a ", style=filled, fillcolor="lightblue"];
-  "0x5a0060b5c6e0" [label="Num: 10"];
-  "0x5a0060b57590" -> "0x5a0060b5c6e0";
-  "0x5a0060b5d1d0" -> "0x5a0060b57590";
-  "0x5a0060b5c820" [label="Print"];
-  "0x5a0060b5c7d0" [label="Var: a"];
-  "0x5a0060b5c820" -> "0x5a0060b5c7d0";
-  "0x5a0060b5d1d0" -> "0x5a0060b5c820";
-  "0x5a0060b5cac0" [label="Block"];
-  "0x5a0060b5c990" [label="Print"];
-  "0x5a0060b5c960" [label="Var: a"];
-  "0x5a0060b5c990" -> "0x5a0060b5c960";
-  "0x5a0060b5cac0" -> "0x5a0060b5c990";
-  "0x5a0060b5ca00" [label="a += :", style=filled, fillcolor="lightblue"];
-  "0x5a0060b5c9e0" [label="Num: 15"];
-  "0x5a0060b5ca00" -> "0x5a0060b5c9e0";
-  "0x5a0060b5cac0" -> "0x5a0060b5ca00";
-  "0x5a0060b5ca90" [label="Print"];
-  "0x5a0060b5ca60" [label="Var: a"];
-  "0x5a0060b5ca90" -> "0x5a0060b5ca60";
-  "0x5a0060b5cac0" -> "0x5a0060b5ca90";
-  "0x5a0060b5cf50" [label="Block"];
-  "0x5a0060b5cb50" [label="Assign: a ", style=filled, fillcolor="lightblue"];
-  "0x5a0060b5cb20" [label="+", style=filled, fillcolor="lightyellow"];
-  "0x5a0060b5caf0" [label="Var: a"];
-  "0x5a0060b5cb20" -> "0x5a0060b5caf0";
-  "0x5a0060b5ca40" [label="Num: 1"];
-  "0x5a0060b5cb20" -> "0x5a0060b5ca40";
-  "0x5a0060b5cb50" -> "0x5a0060b5cb20";
-  "0x5a0060b5cf50" -> "0x5a0060b5cb50";
-  "0x5a0060b5cc00" [label="Print"];
-  "0x5a0060b5cbb0" [label="Var: a"];
-  "0x5a0060b5cc00" -> "0x5a0060b5cbb0";
-  "0x5a0060b5cf50" -> "0x5a0060b5cc00";
-  "0x5a0060b5cf20" [label="Block"];
-  "0x5a0060b5ce20" [label="Assign: a ", style=filled, fillcolor="lightblue"];
-  "0x5a0060b5cb90" [label="Num: 0"];
-  "0x5a0060b5ce20" -> "0x5a0060b5cb90";
-  "0x5a0060b5cf20" -> "0x5a0060b5ce20";
-  "0x5a0060b5ced0" [label="Print"];
-  "0x5a0060b5ce80" [label="Var: a"];
-  "0x5a0060b5ced0" -> "0x5a0060b5ce80";
-  "0x5a0060b5cf20" -> "0x5a0060b5ced0";
-  "0x5a0060b5cf50" -> "0x5a0060b5cf20";
-  "0x5a0060b5cfb0" [label="Print"];
-  "0x5a0060b5cf80" [label="Var: a"];
-  "0x5a0060b5cfb0" -> "0x5a0060b5cf80";
-  "0x5a0060b5cf50" -> "0x5a0060b5cfb0";
-  "0x5a0060b5cfe0" [label="Assign: a ", style=filled, fillcolor="lightblue"];
-  "0x5a0060b5ce60" [label="Num: 10"];
-  "0x5a0060b5cfe0" -> "0x5a0060b5ce60";
-  "0x5a0060b5cf50" -> "0x5a0060b5cfe0";
-  "0x5a0060b5cac0" -> "0x5a0060b5cf50";
-  "0x5a0060b5d0c0" [label="Print"];
-  "0x5a0060b5d070" [label="Var: a"];
-  "0x5a0060b5d0c0" -> "0x5a0060b5d070";
-  "0x5a0060b5cac0" -> "0x5a0060b5d0c0";
-  "0x5a0060b5d1d0" -> "0x5a0060b5cac0";
-  "0x5a0060b5d1a0" [label="Print"];
-  "0x5a0060b5d170" [label="Var: a"];
-  "0x5a0060b5d1a0" -> "0x5a0060b5d170";
-  "0x5a0060b5d1d0" -> "0x5a0060b5d1a0";
-  "0x5a0058aa23c0" -> "0x5a0060b5d1d0";
+{
+    a = 10;
+    print a; // expect 10
+    {
+        print a; // expect 10
+        a += 15;
+        print a; // expect 25
+        {
+            a = a + 1;
+            print a; // expect 26
+            {
+                a = 0;
+                print a; // expect 0;
+            }
+            print a; // expect 0
+            a = 10;
+        }
+        print a; // expect 10
+    }
+    print a; // expect 10
 }
