@@ -9,3 +9,4 @@ logs/
 .cache
 ast-dump/
 tmp/
+*.dot

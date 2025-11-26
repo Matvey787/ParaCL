@@ -1,4 +1,0 @@
-digraph AST {
-  node [shape=box];
-  "0x623b219b15e0" [label="Program"];
-}
