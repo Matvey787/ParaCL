@@ -37,16 +37,18 @@ catch (const std::runtime_error &e)
     ParaCL::runtime_error(e);
     return EXIT_FAILURE;
 }
+/* FIXME: add throw for ErrorHandler::parse_grammar_error */
 catch (const ErrorHandler::parse_grammar_error& e)
 {
-    ParaCL::parse_grammar_error(e);
     LOGERR("paracl: exit failure: parse grammar error");
+    ParaCL::parse_grammar_error(e);
     return EXIT_FAILURE;
 }
+/* FIXME: add throw for ErrorHandler::undeclareted_variale_error */
 catch (const ErrorHandler::undeclarated_variable_error& e)
 {
-    ParaCL::undeclarated_variable_error(e);
     LOGERR("paracl: exit failure: parse grammar error");
+    ParaCL::undeclarated_variable_error(e);
     return EXIT_FAILURE;
 }
 catch (...)
