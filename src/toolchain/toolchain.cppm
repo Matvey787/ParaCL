@@ -14,7 +14,6 @@ extern void set_current_paracl_file(const std::string &);
 extern FILE *yyin;
 extern ParaCL::ProgramAST program;
 
-
 #if defined(GRAPHVIZ)
 #include <iostream>
 #endif /* defined(GRAPHVIZ) */
@@ -32,8 +31,8 @@ namespace ParaCL
 
 export class Toolchain
 {
-private:
-    const Options::program_options_t& program_options_;
+  private:
+    const Options::program_options_t &program_options_;
     mutable ProgramAST ast_;
 
     void read_ast(size_t source_num) const;
@@ -43,29 +42,22 @@ private:
     void create_objects_files() const;
     void link_objects_to_executable() const;
 
-    ON_GRAPHVIZ(
-    void ast_dump() const;
-    )
+    ON_GRAPHVIZ(void ast_dump() const;)
 
-public:
-    Toolchain(const Options::program_options_t& program_options);
+  public:
+    Toolchain(const Options::program_options_t &program_options);
     void run_paracl() const;
-
 };
 
-Toolchain::Toolchain(const Options::program_options_t& program_options) :
-program_options_(program_options)
-{}
+Toolchain::Toolchain(const Options::program_options_t &program_options) : program_options_(program_options)
+{
+}
 
 void Toolchain::run_paracl() const
 {
-    ON_GRAPHVIZ(
-    if (program_options_.ast_dump)
-        ast_dump();
-    ) /* ON_GRAPHVIZ */
+    ON_GRAPHVIZ(if (program_options_.ast_dump) ast_dump();) /* ON_GRAPHVIZ */
 
-    (program_options_.compile) ?
-        compile() : interpret();
+    (program_options_.compile) ? compile() : interpret();
 }
 
 void Toolchain::interpret() const
@@ -123,17 +115,20 @@ void Toolchain::read_ast(size_t source_num) const
     ast_ = std::move(program);
 }
 
-ON_GRAPHVIZ(
-void Toolchain::ast_dump() const
-{   
-    if (program_options_.ast_dump) try {
-        ::ParaCL::ast_dump(ast_, program_options_.dot_file.string());
-    } catch (const std::runtime_error &e) {
-        std::cerr << ERROR_MSG("graphviz ast dump failed:\n") << e.what() << "\n";
-    } catch (...) {
-        std::cerr << ERROR_MSG("graphviz ast dump failed with unknow exception.\n");
-    }
-}
-) /* ON_GRAPHVIZ */
+ON_GRAPHVIZ(void Toolchain::ast_dump() const {
+    if (program_options_.ast_dump)
+        try
+        {
+            ::ParaCL::ast_dump(ast_, program_options_.dot_file.string());
+        }
+        catch (const std::runtime_error &e)
+        {
+            std::cerr << ERROR_MSG("graphviz ast dump failed:\n") << e.what() << "\n";
+        }
+        catch (...)
+        {
+            std::cerr << ERROR_MSG("graphviz ast dump failed with unknow exception.\n");
+        }
+}) /* ON_GRAPHVIZ */
 
 } /* namespace ParaCL */

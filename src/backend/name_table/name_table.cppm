@@ -24,12 +24,16 @@ export namespace ParaCL
 
 struct NameValue
 {
-    private:
+  private:
     int value_;
-    public:
+
+  public:
     NameValue() = default;
     explicit NameValue(int value);
-    int value() const { return value_; }
+    int value() const
+    {
+        return value_;
+    }
 };
 
 //---------------------------------------------------------------------------------------------------------------

@@ -21,8 +21,8 @@ namespace ParaCL
 
 export class Interpreter
 {
-private:
-    const ProgramAST& ast_;
+  private:
+    const ProgramAST &ast_;
     NameTable nametable_;
 
     /* Statement execution functions */
@@ -48,23 +48,19 @@ private:
     int execute_combined_assign(int rhs, int value, token_t combined_assign);
     int execute_unary_operation(int rhs, token_t unary_operator);
 
-public:
+  public:
+    Interpreter(const ProgramAST &ast);
+    ~Interpreter();
 
-    Interpreter(const ProgramAST& ast);
-   ~Interpreter();
-
-    Interpreter(const Interpreter&) = delete; 
-    Interpreter& operator = (const Interpreter&) = delete; 
-    Interpreter(Interpreter&&) = delete; 
-    Interpreter& operator = (Interpreter&&) = delete; 
+    Interpreter(const Interpreter &) = delete;
+    Interpreter &operator=(const Interpreter &) = delete;
+    Interpreter(Interpreter &&) = delete;
+    Interpreter &operator=(Interpreter &&) = delete;
 
     void interpret();
-
 };
 
-Interpreter::Interpreter(const ProgramAST& ast) :
-ast_(ast),
-nametable_()
+Interpreter::Interpreter(const ProgramAST &ast) : ast_(ast), nametable_()
 {
     LOGINFO("paracl: interpreter: ctor");
 

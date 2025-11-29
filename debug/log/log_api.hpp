@@ -11,8 +11,8 @@
 //---------------------------------------------------------------------------------------------------------------
 
 import pineaplog;
-#include "spdlog/spdlog.h"
 #include "global/global.hpp"
+#include "spdlog/spdlog.h"
 
 //---------------------------------------------------------------------------------------------------------------
 
@@ -21,9 +21,18 @@ import pineaplog;
 
 #define LOGFLUSH (spdlog::get("global"))->flush();
 
-#define LOGINFO(...) do { SPDLOG_INFO(__VA_ARGS__); ON_DEBUG(LOGFLUSH); } while(0)
-#define LOGERR(...) do { SPDLOG_ERROR(__VA_ARGS__); ON_DEBUG(LOGFLUSH); } while(0)
-
+#define LOGINFO(...)                                                                                                   \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        SPDLOG_INFO(__VA_ARGS__);                                                                                      \
+        ON_DEBUG(LOGFLUSH);                                                                                            \
+    } while (0)
+#define LOGERR(...)                                                                                                    \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        SPDLOG_ERROR(__VA_ARGS__);                                                                                     \
+        ON_DEBUG(LOGFLUSH);                                                                                            \
+    } while (0)
 
 //---------------------------------------------------------------------------------------------------------------
 

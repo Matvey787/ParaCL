@@ -48,46 +48,43 @@ export class LLVMIRBuilder
     std::filesystem::path ir_file_;
     std::filesystem::path object_file_;
 
-    void generate_main(const ProgramAST& ast);
-    void generate_statements(const ProgramAST& ast);
-    void generate_statement(const Statement* stmt);
-    
-    void generate_print(const PrintStmt* );
-    void generate_assign(const AssignStmt* );
-    void generate_combined_assign(const CombinedAssingStmt* );
-    void generate_while(const WhileStmt* );
-    void generate_block(const BlockStmt* );
-    void generate_condition(const ConditionStatement* );
+    void generate_main(const ProgramAST &ast);
+    void generate_statements(const ProgramAST &ast);
+    void generate_statement(const Statement *stmt);
 
-    void generate_expression(const Expression* expr);
-    void generate_input_expression(const InputExpr*);
-    void generate_binary_op_expression(const BinExpr*);
-    void generate_unary_op_expression(const UnExpr*);
-    void generate_number_expression(const NumExpr*);
-    void generate_variable_expression(const VarExpr*);
-    void generate_assign_expression(const AssignExpr*);
-    void generate_combined_assign_expression(const CombinedAssingExpr*);
+    void generate_print(const PrintStmt *);
+    void generate_assign(const AssignStmt *);
+    void generate_combined_assign(const CombinedAssingStmt *);
+    void generate_while(const WhileStmt *);
+    void generate_block(const BlockStmt *);
+    void generate_condition(const ConditionStatement *);
+
+    void generate_expression(const Expression *expr);
+    void generate_input_expression(const InputExpr *);
+    void generate_binary_op_expression(const BinExpr *);
+    void generate_unary_op_expression(const UnExpr *);
+    void generate_number_expression(const NumExpr *);
+    void generate_variable_expression(const VarExpr *);
+    void generate_assign_expression(const AssignExpr *);
+    void generate_combined_assign_expression(const CombinedAssingExpr *);
 
     void generate_int32_return(uint64_t ret_val);
 
     void write_ir_in_file();
 
-    public:
-        LLVMIRBuilder(const Options::program_options_t& program_options, size_t current_source_number);
+  public:
+    LLVMIRBuilder(const Options::program_options_t &program_options, size_t current_source_number);
 
-        void generate_ir(const ProgramAST& ast);
-        void compile_ir() const;
+    void generate_ir(const ProgramAST &ast);
+    void compile_ir() const;
 };
 
 //---------------------------------------------------------------------------------------------------------------
 
-LLVMIRBuilder::LLVMIRBuilder(const Options::program_options_t& program_options, size_t current_source_number) :
-context_(),
-module_(program_options.sources[current_source_number].string(), context_),
-builder_(context_),
-nametable_(),
-ir_file_(program_options.llvm_ir_files[current_source_number]),
-object_file_(program_options.object_files[current_source_number])
+LLVMIRBuilder::LLVMIRBuilder(const Options::program_options_t &program_options, size_t current_source_number)
+    : context_(), module_(program_options.sources[current_source_number].string(), context_), builder_(context_),
+      nametable_(), ir_file_(program_options.llvm_ir_files[current_source_number]),
+      object_file_(program_options.object_files[current_source_number])
 {
     LOGINFO("paracl: ir translator: ctor");
 }
@@ -100,14 +97,15 @@ void LLVMIRBuilder::compile_ir() const
 
     const int sys_result = std::system(command.c_str());
 
-    if (sys_result == EXIT_SUCCESS) return;
+    if (sys_result == EXIT_SUCCESS)
+        return;
 
     throw std::runtime_error("failed create " + object_file_.string() + " from " + ir_file_.string());
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_ir(const ProgramAST& ast)
+void LLVMIRBuilder::generate_ir(const ProgramAST &ast)
 {
     generate_main(ast);
 
@@ -122,12 +120,12 @@ void LLVMIRBuilder::generate_ir(const ProgramAST& ast)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_main(const ProgramAST& ast)
+void LLVMIRBuilder::generate_main(const ProgramAST &ast)
 {
-    llvm::FunctionType* main_type = llvm::FunctionType::get(builder_.getInt32Ty(), false);
-    llvm::Function* main_function = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", module_);
+    llvm::FunctionType *main_type = llvm::FunctionType::get(builder_.getInt32Ty(), false);
+    llvm::Function *main_function = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", module_);
 
-    llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(context_, "entry", main_function);
+    llvm::BasicBlock *entry_block = llvm::BasicBlock::Create(context_, "entry", main_function);
 
     builder_.SetInsertPoint(entry_block);
 
@@ -259,13 +257,12 @@ void LLVMIRBuilder::generate_main(const ProgramAST& ast)
 
 // //---------------------------------------------------------------------------------------------------------------
 
-
 //---------------------------------------------------------------------------------------------------------------
 
 void LLVMIRBuilder::generate_int32_return(uint64_t ret_val)
 {
     llvm::APInt return_value{32, ret_val};
-    llvm::Value* ret = llvm::ConstantInt::get(context_, return_value);
+    llvm::Value *ret = llvm::ConstantInt::get(context_, return_value);
     builder_.CreateRet(ret);
 }
 
@@ -280,8 +277,7 @@ void LLVMIRBuilder::write_ir_in_file()
 
     if (ec)
     {
-        llvm::errs() << "failed open: '" << ir_file_.string() 
-                     << "': " << ec.message() << "\n";
+        llvm::errs() << "failed open: '" << ir_file_.string() << "': " << ec.message() << "\n";
         return;
     }
 
