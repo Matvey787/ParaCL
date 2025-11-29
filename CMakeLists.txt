@@ -231,6 +231,7 @@ target_compile_definitions(${OPTIONS_PARSER_LIB}
 
 target_hard_debug_options(${OPTIONS_PARSER_LIB})
 target_add_logger(${OPTIONS_PARSER_LIB})
+target_compile_definitions(${OPTIONS_PARSER_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
 
 # =================================================================================================
 # paracl intepretor
@@ -301,6 +302,7 @@ target_link_libraries(${PARACL_LLVM_TRANSLATOR_LIB}
     PUBLIC
         ${OPTIONS_PARSER_LIB}
     PRIVATE
+        LLVM
         ${PARACL_LLVM_TRAN}
 )
 
@@ -335,7 +337,6 @@ target_include_directories(${PARACL_LINKER_LIB}
 
 target_link_libraries(${PARACL_LINKER_LIB}
     PUBLIC
-        LLVM
         ${OPTIONS_PARSER_LIB}
 )
 
@@ -346,14 +347,18 @@ target_hard_debug_sanitizers(${PARACL_LINKER_LIB})
 # =================================================================================================
 # toolchain lib
 
-
 set(PARACL_TOOLCHAIN_LIB toolchain)
 add_library(${PARACL_TOOLCHAIN_LIB})
 
-set(PARACL_TOOLCHAIN_LIB_SRC_DIR ${COMPILER_SRC_DIR})
+set(PARACL_TOOLCHAIN_LIB_SRC_DIR ${SRC_DIR}/toolchain)
 set(PARACL_TOOLCHAIN_LIB_SRC
     ${PARACL_TOOLCHAIN_LIB_SRC_DIR}/toolchain.cppm
+    ${PARACL_TOOLCHAIN_LIB_SRC_DIR}/parse_paracl_exceptions.cppm
+    $<$<BOOL:${GRAPHVIZ}>:${DEBUG_DIR}/ast/ast-graph-dump.cppm>
+    
 )
+
+target_compile_definitions(${PARACL_TOOLCHAIN_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
 
 target_sources(${PARACL_TOOLCHAIN_LIB}
     PUBLIC
@@ -365,9 +370,11 @@ target_sources(${PARACL_TOOLCHAIN_LIB}
 
 target_include_directories(${PARACL_TOOLCHAIN_LIB}
     PRIVATE
-        ${INC_DIR}
         ${DEBUG_DIR}
-    PUBLIC
+        ${INC_DIR}
+        ${FRONTEND_DIR}
+        ${LEXER_SRC_DIR}
+        ${BISON_OUT_DIR}
         ${FRONTEND_INC_DIR}
 )
 
@@ -376,66 +383,15 @@ target_link_libraries(${PARACL_TOOLCHAIN_LIB}
         ${OPTIONS_PARSER_LIB}
 
     PRIVATE
+        ${PARACL_INTERPRETOR_LIB}
         ${PARACL_LLVM_TRANSLATOR_LIB}
         ${PARACL_LINKER_LIB}
-)
-
-target_add_logger(${PARACL_TOOLCHAIN_LIB})
-target_debug_definitions(${PARACL_TOOLCHAIN_LIB})
-target_hard_debug_sanitizers(${PARACL_TOOLCHAIN_LIB})
-
-# =================================================================================================
-# run paracl library
-
-set(RUN_PARACL_LIB run_paracl)
-add_library(${RUN_PARACL_LIB})
-
-set(RUN_PARACL_SRC_DIR ${BACKEND_SRC_DIR})
-set(RUN_PARACL_SRC
-    ${RUN_PARACL_SRC_DIR}/run_paracl.cppm
-    ${RUN_PARACL_SRC_DIR}/parse_paracl_exceptions.cppm
-)
-
-if (GRAPHVIZ)
-set(RUN_PARACL_SRC
-    ${RUN_PARACL_SRC}
-    ${DEBUG_DIR}/ast/ast-graph-dump.cppm    
-)
-target_compile_definitions(${RUN_PARACL_LIB} PRIVATE GRAPHVIZ)
-target_compile_definitions(${OPTIONS_PARSER_LIB} PRIVATE GRAPHVIZ)
-
-endif(GRAPHVIZ)
-
-target_sources(${RUN_PARACL_LIB}
-    PUBLIC
-        FILE_SET CXX_MODULES
-        TYPE CXX_MODULES
-        FILES
-            ${RUN_PARACL_SRC}
-    PRIVATE
-        
-)
-
-target_include_directories(${RUN_PARACL_LIB}
-    PRIVATE
-        ${FRONTEND_DIR}
-        ${INC_DIR}
-        ${LEXER_SRC_DIR}
-        ${BISON_OUT_DIR}
-        ${FRONTEND_INC_DIR}
-)
-
-target_link_libraries(${RUN_PARACL_LIB}
-    PRIVATE
-        ${PARACL_INTERPRETOR_LIB}
-        ${PARACL_TOOLCHAIN_LIB}
-        ${OPTIONS_PARSER_LIB}
         ${PARSER_LIB}
         ${LEXER_LIB}
 )
 
-target_hard_debug_options(${RUN_PARACL_LIB})
-target_add_logger(${RUN_PARACL_LIB})
+target_add_logger(${PARACL_TOOLCHAIN_LIB})
+target_hard_debug_options(${PARACL_TOOLCHAIN_LIB})
 
 # =================================================================================================
 
@@ -451,7 +407,7 @@ target_sources(${PARACL_EXE}
 target_link_libraries(${PARACL_EXE}
     PRIVATE
         ${OPTIONS_PARSER_LIB}
-        ${RUN_PARACL_LIB}
+        ${PARACL_TOOLCHAIN_LIB}
 )
 
 target_include_directories(${PARACL_EXE}

@@ -32,11 +32,11 @@ void set_getopt_args_default_values();
 
 //---------------------------------------------------------------------------------------------------------------
 
-export namespace OptionsParsing
+namespace Options
 {
 //---------------------------------------------------------------------------------------------------------------
 
-struct program_options_t
+export struct program_options_t
 {
     std::string program_name;
     std::vector<std::filesystem::path> sources;
@@ -56,19 +56,17 @@ struct program_options_t
 };
 
 //---------------------------------------------------------------------------------------------------------------
-} /* namespace OptionsParsing */
-//---------------------------------------------------------------------------------------------------------------
 
-class options_parser
+export class OptionsParser
 {
   public:
-    OptionsParsing::program_options_t get_program_options() const;
+    Options::program_options_t get_program_options() const;
 
-    options_parser() = delete;
-    options_parser(int argc, char *argv[]);
+    OptionsParser() = delete;
+    OptionsParser(int argc, char *argv[]);
 
   private:
-    OptionsParsing::program_options_t program_options_;
+    Options::program_options_t program_options_;
 
     void set_program_name(const char *argv0);
 
@@ -92,19 +90,6 @@ class options_parser
 
 //---------------------------------------------------------------------------------------------------------------
 
-export namespace OptionsParsing
-{
-//---------------------------------------------------------------------------------------------------------------
-
-program_options_t parse_program_options(int argc, char *argv[])
-{
-    return options_parser(argc, argv).get_program_options();
-}
-
-//---------------------------------------------------------------------------------------------------------------
-} /* namespace OptionsParsing */
-//---------------------------------------------------------------------------------------------------------------
-
 enum flag_key
 {
     help = 'h',
@@ -120,10 +105,11 @@ enum flag_key
 
 constexpr option long_options[] = {
     {"help", no_argument, 0, help},
-    {"version", no_argument, 0, version} ON_GRAPHVIZ(, {"ast-dump", required_argument, 0, ast_dump}),
+    {"version", no_argument, 0, version},
+    ON_GRAPHVIZ( {"ast-dump", required_argument, 0, ast_dump},)
     {"compile", no_argument, 0, compile},
     {"output", required_argument, 0, output},
-    {0, 0, 0, 0}  // Важно: завершающий элемент
+    {0, 0, 0, 0}
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -135,7 +121,7 @@ constexpr option long_options[] = {
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-options_parser::options_parser(int argc, char *argv[]) : program_options_()
+OptionsParser::OptionsParser(int argc, char *argv[]) : program_options_()
 {
     LOGINFO("paracl: options parser: begin parse options");
 
@@ -146,7 +132,7 @@ options_parser::options_parser(int argc, char *argv[]) : program_options_()
     {
         LOGINFO("paracl: options parser: processing option '{}', optarg = '{}'", 
                 static_cast<char>(option), optarg ? optarg : "NULL");
-    
+
         switch (option)
         {
         case help:
@@ -161,9 +147,11 @@ options_parser::options_parser(int argc, char *argv[]) : program_options_()
         case output:
             parse_flag_output();
             break;
-        ON_GRAPHVIZ(case ast_dump:
+        ON_GRAPHVIZ(
+        case ast_dump:
             parse_flag_ast_dump();
-            break;)
+            break;
+        ) /* ON_GRAPHVIZ */
         case undefined_option_key:
             throw std::invalid_argument("invalid option");
         default:
@@ -185,7 +173,7 @@ options_parser::options_parser(int argc, char *argv[]) : program_options_()
 
 //---------------------------------------------------------------------------------------------------------------
 
-OptionsParsing::program_options_t options_parser::get_program_options() const
+Options::program_options_t OptionsParser::get_program_options() const
 {
     return program_options_;
 }
@@ -195,7 +183,7 @@ OptionsParsing::program_options_t options_parser::get_program_options() const
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-void options_parser::set_program_name(const char *argv0)
+void OptionsParser::set_program_name(const char *argv0)
 {
     msg_assert(argv0, "argv[0] is nullptr? are you sure, that you give here arg[0]?");
     program_options_.program_name = std::string(argv0);
@@ -204,7 +192,7 @@ void options_parser::set_program_name(const char *argv0)
 //---------------------------------------------------------------------------------------------------------------
 
 [[noreturn]]
-void options_parser::parse_flag_help() const
+void OptionsParser::parse_flag_help() const
 {
     LOGINFO("paracl: options parser: find '--help' flag");
 
@@ -246,7 +234,7 @@ void options_parser::parse_flag_help() const
 //---------------------------------------------------------------------------------------------------------------
 
 [[noreturn]]
-void options_parser::parse_flag_version() const
+void OptionsParser::parse_flag_version() const
 {
     LOGINFO("paracl: options parser: find '--version' flag");
 
@@ -276,7 +264,7 @@ void options_parser::parse_flag_version() const
 //---------------------------------------------------------------------------------------------------------------
 
 ON_GRAPHVIZ(
-void options_parser::parse_flag_ast_dump() {
+void OptionsParser::parse_flag_ast_dump() {
     LOGINFO("paracl: options parser: --ast-dump={}", optarg);
     msg_assert(optarg, "Expected filename for --ast-dump");
     program_options_.ast_dump = true;
@@ -285,7 +273,7 @@ void options_parser::parse_flag_ast_dump() {
 
 //---------------------------------------------------------------------------------------------------------------
 
-void options_parser::parse_flag_compile()
+void OptionsParser::parse_flag_compile()
 {
     LOGINFO("paracl: options parser: --compile");
     program_options_.compile = true;
@@ -293,7 +281,7 @@ void options_parser::parse_flag_compile()
 
 //---------------------------------------------------------------------------------------------------------------
 
-void options_parser::parse_flag_output()
+void OptionsParser::parse_flag_output()
 {
     msg_assert(optarg, "Expected filename for --output");
     LOGINFO("paracl: options parser: --output={}", optarg);
@@ -302,7 +290,7 @@ void options_parser::parse_flag_output()
 
 //---------------------------------------------------------------------------------------------------------------
 
-void options_parser::parse_not_a_flag(const char* arg)
+void OptionsParser::parse_not_a_flag(const char* arg)
 {
     LOGINFO("paracl: options parser: parse not a flag: \"{}\"", arg);
 
@@ -331,7 +319,7 @@ void options_parser::parse_not_a_flag(const char* arg)
 //---------------------------------------------------------------------------------------------------------------
 
 [[noreturn]]
-void options_parser::undefined_option(const char* option) const
+void OptionsParser::undefined_option(const char* option) const
 {
     LOGERR("paracl: options parser: undefined option \"{}\"", option);
     throw std::invalid_argument("Undefined option: '" + std::string(option) + "'");
@@ -339,7 +327,7 @@ void options_parser::undefined_option(const char* option) const
 
 //---------------------------------------------------------------------------------------------------------------
 
-void options_parser::set_out_files()
+void OptionsParser::set_out_files()
 {
     LOGINFO("paracl: options parser: set llvm ir and obj files correct value");
 
@@ -373,5 +361,9 @@ void options_parser::set_out_files()
         llvm_ir_file.replace_extension(".ll");
     }
 }
+
+//---------------------------------------------------------------------------------------------------------------
+
+} /* namespace Options */
 
 //---------------------------------------------------------------------------------------------------------------

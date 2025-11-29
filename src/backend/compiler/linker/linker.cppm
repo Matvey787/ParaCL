@@ -19,12 +19,12 @@ export class Linker
         std::ostringstream link_command_;
 
     public:
-        Linker(const OptionsParsing::program_options_t& program_options);
+        Linker(const Options::program_options_t& program_options);
         void link_objects_to_executable() const;
 
 };
 
-Linker::Linker(const OptionsParsing::program_options_t& program_options)
+Linker::Linker(const Options::program_options_t& program_options)
 {
     link_command_ << "clang ";
 

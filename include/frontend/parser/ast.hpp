@@ -124,7 +124,7 @@ struct BlockStmt : Statement
     std::vector<std::unique_ptr<Statement>> statements;
     BlockStmt() = default;
     BlockStmt(std::vector<std::unique_ptr<Statement>> stmts) : statements(std::move(stmts))
-    {StringConstant
+    {
     }
 };
 
