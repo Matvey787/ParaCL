@@ -10,3 +10,4 @@ logs/
 ast-dump/
 tmp/
 *.dot
+paracl_build/

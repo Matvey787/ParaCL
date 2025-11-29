@@ -215,7 +215,7 @@ function(add_target_debug_options target type)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-        if (type STREQUAL "hard")
+        if (type STREQUAL hard)
             target_hard_debug_options(${target})
         else()
             target_debug_options(${target})

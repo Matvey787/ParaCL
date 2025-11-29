@@ -80,7 +80,7 @@ STRING      \"[^"]*\"
 
 "//".*           { /* one-line comment */ }
 "/*"([^*]|"*"+[^*/])*"*"+"/" { /* multy-line comment */ }
-
+"#!".* { /* shebang */ }
 "and"     { return yy::parser::token::AND; }
 "&&"      { return yy::parser::token::AND; }
 "or"      { return yy::parser::token::OR; }
@@ -115,7 +115,6 @@ STRING      \"[^"]*\"
 "else"    { return yy::parser::token::ELSE; }
 ";"       { return yy::parser::token::SC; }
 ","       { return yy::parser::token::COMMA; }
-
 {STRING}    { 
                 std::ostringstream result;
 

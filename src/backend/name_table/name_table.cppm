@@ -24,14 +24,17 @@ export namespace ParaCL
 
 struct NameValue
 {
-    int value;
+    private:
+    int value_;
+    public:
     NameValue() = default;
     explicit NameValue(int value);
+    int value() const { return value_; }
 };
 
 //---------------------------------------------------------------------------------------------------------------
 
-NameValue::NameValue(int value) : value(value)
+NameValue::NameValue(int value) : value_(value)
 {
 }
 
@@ -45,15 +48,15 @@ class NameTable
     void declare(const std::string &name, int value);
 
   public:
-    void enter();
-    void leave();
+    void new_scope();
+    void leave_scope();
     std::optional<NameValue> get_variable_value(const std::string &name) const;
     void set_value(const std::string &name, const NameValue &value);
 };
 
 //---------------------------------------------------------------------------------------------------------------
 
-void NameTable::enter()
+void NameTable::new_scope()
 {
     LOGINFO("paracl: interpreter: nametable: create next scope");
     scopes_.emplace_back();
@@ -61,7 +64,7 @@ void NameTable::enter()
 
 //---------------------------------------------------------------------------------------------------------------
 
-void NameTable::leave()
+void NameTable::leave_scope()
 {
     LOGINFO("paracl: interpreter: nametable: exiting scope");
 
@@ -84,7 +87,7 @@ std::optional<NameValue> NameTable::get_variable_value(const std::string &name) 
         if (found == it->end())
             continue;
 
-        LOGINFO("paracl: interpreter: nametable: variable found: \"{}\" = {}", name, found->second.value);
+        LOGINFO("paracl: interpreter: nametable: variable found: \"{}\" = {}", name, found->second.value());
         return found->second;
     }
 
@@ -96,7 +99,7 @@ std::optional<NameValue> NameTable::get_variable_value(const std::string &name) 
 
 void NameTable::set_value(const std::string &name, const NameValue &value)
 {
-    LOGINFO("paracl: interpreter: nametable: set {} to \"{}\"", value.value, name);
+    LOGINFO("paracl: interpreter: nametable: set {} to \"{}\"", value.value(), name);
 
     if (scopes_.empty())
         throw std::runtime_error("cannot set_value variable: no active scopes");
@@ -104,10 +107,10 @@ void NameTable::set_value(const std::string &name, const NameValue &value)
     NameValue *name_ptr = lookup(name);
 
     if (not name_ptr)
-        return declare(name, value.value);
+        return declare(name, value.value());
 
-    LOGINFO("paracl: interpreter: nametable: set {} to \"{}\"", value.value, name);
-    name_ptr->value = value.value;
+    LOGINFO("paracl: interpreter: nametable: set {} to \"{}\"", value.value(), name);
+    *name_ptr = value;
 }
 
 // private

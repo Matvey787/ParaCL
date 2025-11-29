@@ -1,3 +1,5 @@
+#!/home/ananasik/projects/C++/vlados/5/ParaCL/1_version/build/paracl
+
 /* второй тест!
 помимо прочего,
     тестируем многострочные комментарии 

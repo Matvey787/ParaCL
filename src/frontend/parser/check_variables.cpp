@@ -13,11 +13,11 @@ void NameTable::new_scope()
 
 void NameTable::leave_scope()
 {
-    LOGINFO("paracl: parser: nametable: leave current scope");
+    LOGINFO("paracl: parser: nametable: leave_scope current scope");
 
     if (scopes_.empty())
     {
-        LOGERR("paracl: parser: nametable: warning: try to leave from no-existence scope");
+        LOGERR("paracl: parser: nametable: warning: try to leave_scope from no-existence scope");
         return;
     }
 

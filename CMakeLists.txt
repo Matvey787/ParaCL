@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(paraCL
-    LANGUAGES CXX
+    LANGUAGES C CXX
     VERSION 1.6
 )
 
@@ -94,6 +94,8 @@ target_sources(${PARACL_INFO_LIB}
             ${PARACL_INFO_BUILD_SRC}
 )
 
+target_hard_debug_options(${PARACL_INFO_LIB})
+
 # =================================================================================================
 # set some bison and flex variables
 
@@ -149,6 +151,7 @@ target_include_directories(${PARSER_LIB}
 )
 
 target_debug_definitions(${PARSER_LIB})
+target_hard_debug_sanitizers(${PARSER_LIB})
 target_add_logger(${PARSER_LIB})
 
 # =================================================================================================
@@ -186,7 +189,7 @@ target_include_directories(${LEXER_LIB}
 )
 
 target_debug_definitions(${LEXER_LIB})
-
+target_hard_debug_sanitizers(${LEXER_LIB})
 target_add_logger(${LEXER_LIB})
 
 # =================================================================================================
@@ -198,7 +201,6 @@ add_library(${OPTIONS_PARSER_LIB})
 set(OPTIONS_PARSER_SRC_DIR ${SRC_DIR}/options_parser)
 set(OPTIONS_PARSER_SRC
     ${OPTIONS_PARSER_SRC_DIR}/options_parser.cppm
-    ${OPTIONS_PARSER_SRC_DIR}/paracl_extension.cppm
 )
 
 target_sources(${OPTIONS_PARSER_LIB}
@@ -227,8 +229,9 @@ target_compile_definitions(${OPTIONS_PARSER_LIB}
         PARACL_VERSION="${PROJECT_VERSION}"
 )
 
-add_target_debug_options(${OPTIONS_PARSER_LIB} hard)
+target_hard_debug_options(${OPTIONS_PARSER_LIB})
 target_add_logger(${OPTIONS_PARSER_LIB})
+target_compile_definitions(${OPTIONS_PARSER_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
 
 # =================================================================================================
 # paracl intepretor
@@ -239,7 +242,7 @@ add_library(${PARACL_INTERPRETOR_LIB})
 set(PARACL_INTERPRETOR_SRC_DIR ${BACKEND_SRC_DIR}/interpreter)
 set(PARACL_INTERPRETOR_SRC
     ${PARACL_INTERPRETOR_SRC_DIR}/interpreter.cppm
-    ${PARACL_INTERPRETOR_SRC_DIR}/name_table.cppm
+    ${BACKEND_SRC_DIR}/name_table/name_table.cppm
 )
 
 target_sources(${PARACL_INTERPRETOR_LIB}
@@ -248,8 +251,6 @@ target_sources(${PARACL_INTERPRETOR_LIB}
         TYPE CXX_MODULES
         FILES
             ${PARACL_INTERPRETOR_SRC}
-    PRIVATE
-        
 )
 
 target_include_directories(${PARACL_INTERPRETOR_LIB}
@@ -258,60 +259,139 @@ target_include_directories(${PARACL_INTERPRETOR_LIB}
         ${FRONTEND_INC_DIR}
 )
 
-add_target_debug_options(${PARACL_INTERPRETOR_LIB} hard)
+target_hard_debug_options(${PARACL_INTERPRETOR_LIB})
 target_add_logger(${PARACL_INTERPRETOR_LIB})
 
 # =================================================================================================
-# run paracl library
+# set come compiler lib vairbles
 
-set(RUN_PARACL_LIB run_paracl)
-add_library(${RUN_PARACL_LIB})
+set(COMPILER_SRC_DIR ${BACKEND_SRC_DIR}/compiler)
 
-set(RUN_PARACL_SRC_DIR ${BACKEND_SRC_DIR})
-set(RUN_PARACL_SRC
-    ${RUN_PARACL_SRC_DIR}/run_paracl.cppm
-    ${RUN_PARACL_SRC_DIR}/parse_paracl_exceptions.cppm
+# =================================================================================================
+
+# paracl llvm ir translator
+
+find_package(LLVM REQUIRED CONFIG)
+
+set(PARACL_LLVM_TRANSLATOR_LIB llvm_ir_translator)
+add_library(${PARACL_LLVM_TRANSLATOR_LIB})
+
+set(PARACL_LLVM_TRANSLATOR_SRC_DIR ${COMPILER_SRC_DIR}/llvm_ir_translator)
+set(PARACL_LLVM_TRANSLATOR_SRC
+    ${PARACL_LLVM_TRANSLATOR_SRC_DIR}/translate_to_llvm_ir.cppm
+    ${BACKEND_SRC_DIR}/name_table/name_table.cppm
 )
 
-if (GRAPHVIZ)
-set(RUN_PARACL_SRC
-    ${RUN_PARACL_SRC}
-    ${DEBUG_DIR}/ast/ast-graph-dump.cppm    
-)
-target_compile_definitions(${RUN_PARACL_LIB} PRIVATE GRAPHVIZ)
-target_compile_definitions(${OPTIONS_PARSER_LIB} PRIVATE GRAPHVIZ)
-
-endif(GRAPHVIZ)
-
-target_sources(${RUN_PARACL_LIB}
+target_sources(${PARACL_LLVM_TRANSLATOR_LIB}
     PUBLIC
         FILE_SET CXX_MODULES
         TYPE CXX_MODULES
         FILES
-            ${RUN_PARACL_SRC}
-    PRIVATE
-        
+            ${PARACL_LLVM_TRANSLATOR_SRC}
 )
 
-target_include_directories(${RUN_PARACL_LIB}
+target_include_directories(${PARACL_LLVM_TRANSLATOR_LIB}
     PRIVATE
-        ${FRONTEND_DIR}
+        ${LLVM_INCLUDE_DIRS}
         ${INC_DIR}
+        ${FRONTEND_INC_DIR}
+        ${DEBUG_DIR}
+)
+
+target_link_libraries(${PARACL_LLVM_TRANSLATOR_LIB}
+    PUBLIC
+        ${OPTIONS_PARSER_LIB}
+    PRIVATE
+        LLVM
+        ${PARACL_LLVM_TRAN}
+)
+
+target_add_logger(${PARACL_LLVM_TRANSLATOR_LIB})
+target_debug_definitions(${PARACL_LLVM_TRANSLATOR_LIB})
+target_hard_debug_sanitizers(${PARACL_LLVM_TRANSLATOR_LIB})
+
+# =================================================================================================
+# linker lib
+
+set(PARACL_LINKER_LIB linker)
+add_library(${PARACL_LINKER_LIB})
+
+set(PARACL_LINKER_LIB_SRC_DIR ${COMPILER_SRC_DIR}/linker)
+set(PARACL_LINKER_LIB_SRC
+    ${PARACL_LINKER_LIB_SRC_DIR}/linker.cppm
+)
+
+target_sources(${PARACL_LINKER_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${PARACL_LINKER_LIB_SRC}
+)
+
+target_include_directories(${PARACL_LINKER_LIB}
+    PRIVATE
+        ${INC_DIR}
+        ${DEBUG_DIR}
+)
+
+target_link_libraries(${PARACL_LINKER_LIB}
+    PUBLIC
+        ${OPTIONS_PARSER_LIB}
+)
+
+target_add_logger(${PARACL_LINKER_LIB})
+target_debug_definitions(${PARACL_LINKER_LIB})
+target_hard_debug_sanitizers(${PARACL_LINKER_LIB})
+
+# =================================================================================================
+# toolchain lib
+
+set(PARACL_TOOLCHAIN_LIB toolchain)
+add_library(${PARACL_TOOLCHAIN_LIB})
+
+set(PARACL_TOOLCHAIN_LIB_SRC_DIR ${SRC_DIR}/toolchain)
+set(PARACL_TOOLCHAIN_LIB_SRC
+    ${PARACL_TOOLCHAIN_LIB_SRC_DIR}/toolchain.cppm
+    ${PARACL_TOOLCHAIN_LIB_SRC_DIR}/parse_paracl_exceptions.cppm
+    $<$<BOOL:${GRAPHVIZ}>:${DEBUG_DIR}/ast/ast-graph-dump.cppm>
+    
+)
+
+target_compile_definitions(${PARACL_TOOLCHAIN_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
+
+target_sources(${PARACL_TOOLCHAIN_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${PARACL_TOOLCHAIN_LIB_SRC}
+)
+
+target_include_directories(${PARACL_TOOLCHAIN_LIB}
+    PRIVATE
+        ${DEBUG_DIR}
+        ${INC_DIR}
+        ${FRONTEND_DIR}
         ${LEXER_SRC_DIR}
         ${BISON_OUT_DIR}
         ${FRONTEND_INC_DIR}
 )
 
-target_link_libraries(${RUN_PARACL_LIB}
+target_link_libraries(${PARACL_TOOLCHAIN_LIB}
+    PUBLIC
+        ${OPTIONS_PARSER_LIB}
+
     PRIVATE
         ${PARACL_INTERPRETOR_LIB}
-        ${OPTIONS_PARSER_LIB}
+        ${PARACL_LLVM_TRANSLATOR_LIB}
+        ${PARACL_LINKER_LIB}
         ${PARSER_LIB}
         ${LEXER_LIB}
 )
 
-add_target_debug_options(${RUN_PARACL_LIB} hard)
-target_add_logger(${RUN_PARACL_LIB})
+target_add_logger(${PARACL_TOOLCHAIN_LIB})
+target_hard_debug_options(${PARACL_TOOLCHAIN_LIB})
 
 # =================================================================================================
 
@@ -327,7 +407,7 @@ target_sources(${PARACL_EXE}
 target_link_libraries(${PARACL_EXE}
     PRIVATE
         ${OPTIONS_PARSER_LIB}
-        ${RUN_PARACL_LIB}
+        ${PARACL_TOOLCHAIN_LIB}
 )
 
 target_include_directories(${PARACL_EXE}
@@ -337,7 +417,7 @@ target_include_directories(${PARACL_EXE}
         ${BACKEND_INC_DIR}
 )
 
-add_target_debug_options(${PARACL_EXE} hard)
+target_hard_debug_options(${PARACL_EXE})
 target_add_logger(${PARACL_EXE})
 
 # =================================================================================================
