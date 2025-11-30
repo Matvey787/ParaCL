@@ -55,6 +55,8 @@ function find_option
     return 1
 }
 
+
+
 function need_test
 {
     find_option "test" "$@"

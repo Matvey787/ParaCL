@@ -9,11 +9,13 @@ module;
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/ToolOutputFile.h>
 
-#include "parser/parser.hpp"
+#include <cstdlib>
 #include <filesystem>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#include "parser/parser.hpp"
 
 #include "global/global.hpp"
 #include "log/log_api.hpp"
@@ -126,7 +128,7 @@ void LLVMIRBuilder::generate_ir(const ProgramAST &ast)
 
     generate_main(ast);
 
-    if (llvm::verifyModule(module_, &llvm::errs()))
+    if (llvm::verifyModule(module_, &llvm::errs()) == EXIT_FAILURE)
     {
         LOGERR("paracl: ir translator: generated module is invalid");
         throw std::runtime_error("ir translator: failed generate module");
@@ -153,14 +155,13 @@ void LLVMIRBuilder::generate_main(const ProgramAST &ast)
 
     generate_int32_return(0);
 
-    if (llvm::verifyFunction(*main_function, &llvm::errs()))
+    if (llvm::verifyFunction(*main_function, &llvm::errs()) == EXIT_FAILURE)
     {
         LOGERR("paracl: ir translator: main function verification failed");
+        throw std::runtime_error("ir translator: main function verification failed");
     }
-    else
-    {
-        LOGINFO("paracl: ir translator: main function verified successfully");
-    }
+
+    LOGINFO("paracl: ir translator: main function verified successfully");
 }
 
 //---------------------------------------------------------------------------------------------------------------
@@ -293,7 +294,7 @@ void LLVMIRBuilder::generate_condition(const ConditionStatement *condition)
 
     llvm::BasicBlock *if_block = llvm::BasicBlock::Create(context_, "if", current_block);
 
-    const size_t elifs_quant = condition->elif_stmts.size(); 
+    const size_t elifs_quant = condition->elif_stmts.size();
 
     std::vector<llvm::BasicBlock *> elif_blocks;
     std::vector<llvm::BasicBlock *> elif_body_blocks;
@@ -320,13 +321,12 @@ void LLVMIRBuilder::generate_condition(const ConditionStatement *condition)
     generate_body(condition->if_stmt->body.get());
     builder_.CreateBr(condition_end);
 
-    for (size_t it = 0, ite =  elifs_quant; it < ite; ++it)
+    for (size_t it = 0, ite = elifs_quant; it < ite; ++it)
     {
         builder_.SetInsertPoint(elif_blocks[it]);
         llvm::Value *elif_cond = generate_bool_expression(condition->elif_stmts[it]->condition.get());
 
-        llvm::BasicBlock *next_block =
-            (it + 1 < ite) ? elif_blocks[it + 1] : (else_block ? else_block : condition_end);
+        llvm::BasicBlock *next_block = (it + 1 < ite) ? elif_blocks[it + 1] : (else_block ? else_block : condition_end);
 
         LOGINFO("paracl: ir translator: creating elif #{} condition branch", it + 1);
         builder_.CreateCondBr(elif_cond, elif_body_blocks[it], next_block);

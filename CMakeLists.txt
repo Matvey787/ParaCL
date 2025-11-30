@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(paraCL
     LANGUAGES C CXX
-    VERSION 2.0
+    VERSION 2.0.1
 )
 
 # =================================================================================================
@@ -24,7 +24,7 @@ endif()
 
 option(BUILD_TESTING "Build tests" OFF)
 option(LOGGER "logger" OFF)
-option(GRAPHVIZ "Enable graphviz visualization (graphviz)" OFF)
+option(GRAPHVIZ "Enable graphviz visualization" OFF)
 
 string(TIMESTAMP CURRENT_TIME "%Y-%m-%d %H:%M:%S")
 

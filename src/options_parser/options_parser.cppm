@@ -324,24 +324,18 @@ void OptionsParser::set_out_files()
         throw std::invalid_argument("there are more llvm ir files, then sources files");
 
     program_options_.object_files.resize(sources_size);
-
-    for (size_t it = 0, ite = sources_size; it < ite; ++it)
-    {
-        std::filesystem::path &object_file = program_options_.object_files[it];
-
-        if (object_file.string() != "")
-            continue;
-
-        object_file = program_options_.sources[it];
-        object_file.replace_extension(".o");
-    }
-
     program_options_.llvm_ir_files.resize(sources_size);
 
     for (size_t it = 0, ite = sources_size; it < ite; ++it)
     {
+        std::filesystem::path &object_file = program_options_.object_files[it];
         std::filesystem::path &llvm_ir_file = program_options_.llvm_ir_files[it];
-        const std::filesystem::path &object_file = program_options_.object_files[it];
+
+        if (object_file.string() == "")
+        {
+            object_file = program_options_.sources[it];
+            object_file.replace_extension(".o");
+        }
 
         llvm_ir_file = object_file;
         llvm_ir_file.replace_extension(".ll");
