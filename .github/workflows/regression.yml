@@ -21,10 +21,10 @@ jobs:
             cmake \
             ninja-build \
             clang \
+            clang++ \
             clang-tidy \
-            g++ \
-            make \
-            python3
+            python3 \
+            llvm
 
       - name: Install
         run: bash start.sh test
