@@ -11,11 +11,9 @@ module;
 
 #include "parser/parser.hpp"
 #include <filesystem>
-#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 
 #include "global/global.hpp"
 #include "log/log_api.hpp"

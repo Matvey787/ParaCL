@@ -1,11 +1,7 @@
 module;
 
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
-#include <llvm/IR/Verifier.h>
-#include <llvm/Support/FileSystem.h>
-#include <llvm/Support/ToolOutputFile.h>
 
 export module libc_standart_functions;
 
@@ -32,8 +28,8 @@ export struct LibcStandartFunctions
 
 LibcStandartFunctions::LibcStandartFunctions(llvm::Module &module, llvm::IRBuilder<> &builder)
     : module_(module), builder_(builder),
-      libc_printf_ty_(llvm::FunctionType::get(builder_.getInt32Ty(), {builder_.getInt8PtrTy()}, true)),
-      libc_scanf_ty_(llvm::FunctionType::get(builder_.getInt32Ty(), {builder_.getInt8PtrTy()}, true)),
+      libc_printf_ty_(llvm::FunctionType::get(builder_.getInt32Ty(), {builder_.getInt8Ty()->getPointerTo()}, true)),
+      libc_scanf_ty_(llvm::FunctionType::get(builder_.getInt32Ty(), {builder_.getInt8Ty()->getPointerTo()}, true)),
       libc_printf_(llvm::Function::Create(libc_printf_ty_, llvm::Function::ExternalLinkage, "printf", module_)),
       libc_scanf_(llvm::Function::Create(libc_scanf_ty_, llvm::Function::ExternalLinkage, "scanf", module_))
 {

@@ -23,8 +23,7 @@ jobs:
             clang \
             clang++ \
             clang-tidy \
-            python3 \
-            llvm
+            python3
 
       - name: Install
         run: bash start.sh test
@@ -40,4 +39,3 @@ jobs:
             echo "Build and tests finished at $(date)"
             echo ""
           } >> $GITHUB_STEP_SUMMARY
-
