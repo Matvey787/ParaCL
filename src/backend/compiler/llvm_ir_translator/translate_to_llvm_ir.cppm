@@ -58,8 +58,7 @@ export class LLVMIRBuilder
     void generate_assign(const AssignStmt *);
     void generate_combined_assign(const CombinedAssingStmt *);
     void generate_while(const WhileStmt *);
-    void generate_block(const BlockStmt *, const std::string &block_name = "",
-                        const std::string &after_block_name = "");
+    void generate_block(const BlockStmt *);
     void generate_condition(const ConditionStatement *);
     void generate_body(const BlockStmt *);
 
@@ -196,7 +195,7 @@ void LLVMIRBuilder::generate_print(const PrintStmt *print)
 
     fmt << "\n";
 
-    printf_args[0] = builder_.CreateGlobalStringPtr(fmt.str(), "printf_format");
+    printf_args[0] = builder_.CreateGlobalStringPtr(fmt.str(), "__printfFormat");
 
     builder_.CreateCall(libc_standart_functions_.libc_printf(), printf_args);
     LOGINFO("paracl: ir translator: print call generated");
@@ -373,7 +372,7 @@ void LLVMIRBuilder::generate_assign(const AssignStmt *asgn)
         var = nametable_.get_variable(asgn->name);
     }
 
-    llvm::Value *fmt = builder_.CreateGlobalStringPtr("%d", "scanf_format");
+    llvm::Value *fmt = builder_.CreateGlobalStringPtr("%d", "__scanfFormat");
     std::vector<llvm::Value *> scanf_args = {fmt, var};
 
     LOGINFO("paracl: ir translator: generating scanf call for variable: '{}'", asgn->name);
@@ -382,27 +381,23 @@ void LLVMIRBuilder::generate_assign(const AssignStmt *asgn)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_block(const BlockStmt *block, const std::string &block_name,
-                                   const std::string &after_block_name)
+void LLVMIRBuilder::generate_block(const BlockStmt *block)
 {
     LOGINFO("paracl: ir translator: generating block");
 
     llvm::Function *current_block = builder_.GetInsertBlock()->getParent();
 
-    std::string actual_block_name = block_name.empty() ? "block" : block_name;
-    std::string actual_after_name = after_block_name.empty() ? "after_block" : after_block_name;
+    llvm::BasicBlock *scope_block = llvm::BasicBlock::Create(context_, "new_scope");
 
-    llvm::BasicBlock *scope_block = llvm::BasicBlock::Create(context_, actual_block_name, current_block);
+    llvm::BasicBlock *after_scope = llvm::BasicBlock::Create(context_, "end_scope");
 
-    llvm::BasicBlock *after_scope = llvm::BasicBlock::Create(context_, actual_after_name, current_block);
-
-    LOGINFO("paracl: ir translator: creating branch to block: '{}'", actual_block_name);
+    LOGINFO("paracl: ir translator: creating branch to block: '{}'", "new_scope");
     builder_.CreateBr(scope_block);
     builder_.SetInsertPoint(scope_block);
 
     generate_body(block);
 
-    LOGINFO("paracl: ir translator: creating branch to after block: '{}'", actual_after_name);
+    LOGINFO("paracl: ir translator: creating branch to after block: '{}'", "end_scope");
     builder_.CreateBr(after_scope);
     builder_.SetInsertPoint(after_scope);
 }
@@ -420,19 +415,19 @@ void LLVMIRBuilder::generate_combined_assign(const CombinedAssingStmt *asgn)
     switch (asgn->op)
     {
     case token_t::ADDASGN:
-        expr = builder_.CreateAdd(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateAdd(nametable_.get_variable_value(asgn->name), expr, "__add_asgn_result");
         break;
     case token_t::SUBASGN:
-        expr = builder_.CreateSub(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateSub(nametable_.get_variable_value(asgn->name), expr, "__sub_asgn_result");
         break;
     case token_t::MULASGN:
-        expr = builder_.CreateMul(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateMul(nametable_.get_variable_value(asgn->name), expr, "__mul_asgn_result");
         break;
     case token_t::DIVASGN:
-        expr = builder_.CreateSDiv(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateSDiv(nametable_.get_variable_value(asgn->name), expr, "__div_asgn_result");
         break;
     case token_t::REMASGN:
-        expr = builder_.CreateSRem(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateSRem(nametable_.get_variable_value(asgn->name), expr, "__rem_asgn_result");
         break;
     default:
         builtin_unreachable_wrapper("he parsing only combined assign operation");
@@ -464,7 +459,6 @@ void LLVMIRBuilder::generate_body(const BlockStmt *body)
 llvm::Value *LLVMIRBuilder::generate_assign_expression(const AssignExpr *asgn)
 {
     LOGINFO("paracl: ir translator: generating assignment expression for variable: '{}'", asgn->name);
-
     if (not dynamic_cast<const InputExpr *>(asgn->value.get()))
     {
         LOGINFO("paracl: ir translator: assignment expression with regular value");
@@ -484,7 +478,7 @@ llvm::Value *LLVMIRBuilder::generate_assign_expression(const AssignExpr *asgn)
         var = nametable_.get_variable(asgn->name);
     }
 
-    llvm::Value *fmt = builder_.CreateGlobalStringPtr("%d", "scanf_format");
+    llvm::Value *fmt = builder_.CreateGlobalStringPtr("%d", "__scanfFormat");
     std::vector<llvm::Value *> scanf_args = {fmt, var};
 
     LOGINFO("paracl: ir translator: generating scanf call in assignment expression");
@@ -506,19 +500,19 @@ llvm::Value *LLVMIRBuilder::generate_combined_assign_expression(const CombinedAs
     switch (asgn->op)
     {
     case token_t::ADDASGN:
-        expr = builder_.CreateAdd(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateAdd(nametable_.get_variable_value(asgn->name), expr, "__addAsgnResult");
         break;
     case token_t::SUBASGN:
-        expr = builder_.CreateSub(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateSub(nametable_.get_variable_value(asgn->name), expr, "__subAsgnResult");
         break;
     case token_t::MULASGN:
-        expr = builder_.CreateMul(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateMul(nametable_.get_variable_value(asgn->name), expr, "__mulAsgnResult");
         break;
     case token_t::DIVASGN:
-        expr = builder_.CreateSDiv(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateSDiv(nametable_.get_variable_value(asgn->name), expr, "__divAsgnResult");
         break;
     case token_t::REMASGN:
-        expr = builder_.CreateSRem(nametable_.get_variable_value(asgn->name), expr);
+        expr = builder_.CreateSRem(nametable_.get_variable_value(asgn->name), expr, "__remAsgnResult");
         break;
     default:
         builtin_unreachable_wrapper("he parsing only combined assign operation");
@@ -587,14 +581,14 @@ llvm::Value *LLVMIRBuilder::generate_input_expression(const InputExpr *input)
 {
     LOGINFO("paracl: ir translator: generating input expression");
 
-    llvm::AllocaInst *temp_var = builder_.CreateAlloca(builder_.getInt32Ty(), nullptr, "input_temp");
-    llvm::Value *fmt = builder_.CreateGlobalStringPtr("%d", "scanf_format");
+    llvm::AllocaInst *temp_var = builder_.CreateAlloca(builder_.getInt32Ty(), nullptr, "__scanf_tmp_var");
+    llvm::Value *fmt = builder_.CreateGlobalStringPtr("%d", "__scanfFormat");
     std::vector<llvm::Value *> scanf_args = {fmt, temp_var};
 
     LOGINFO("paracl: ir translator: generating scanf call for input expression");
     builder_.CreateCall(libc_standart_functions_.libc_scanf(), scanf_args);
 
-    llvm::Value *result = builder_.CreateLoad(builder_.getInt32Ty(), temp_var, "input_value");
+    llvm::Value *result = builder_.CreateLoad(builder_.getInt32Ty(), temp_var, "__scanf_result");
     LOGINFO("paracl: ir translator: input expression completed");
     return result;
 }
@@ -611,19 +605,19 @@ llvm::Value *LLVMIRBuilder::generate_binary_op_expression(const BinExpr *bin)
     switch (bin->op)
     {
     case token_t::ADD:
-        return builder_.CreateAdd(lhs, rhs);
+        return builder_.CreateAdd(lhs, rhs, "__addResult");
     case token_t::SUB:
-        return builder_.CreateSub(lhs, rhs);
+        return builder_.CreateSub(lhs, rhs, "__subResult");
     case token_t::MUL:
-        return builder_.CreateMul(lhs, rhs);
+        return builder_.CreateMul(lhs, rhs, "__mulResult");
     case token_t::DIV:
-        return builder_.CreateSDiv(lhs, rhs);
+        return builder_.CreateSDiv(lhs, rhs, "__divResult");
     case token_t::REM:
-        return builder_.CreateSRem(lhs, rhs);
+        return builder_.CreateSRem(lhs, rhs, "__remResult");
     case token_t::AND:
-        return builder_.CreateAnd(lhs, rhs);
+        return builder_.CreateAnd(lhs, rhs, "__andResult");
     case token_t::OR:
-        return builder_.CreateOr(lhs, rhs);
+        return builder_.CreateOr(lhs, rhs, "__orResult");
     case token_t::ISAB:
     case token_t::ISABE:
     case token_t::ISLS:
@@ -635,27 +629,27 @@ llvm::Value *LLVMIRBuilder::generate_binary_op_expression(const BinExpr *bin)
         switch (bin->op)
         {
         case token_t::ISAB:
-            cmp_result = builder_.CreateICmpSGT(lhs, rhs);
+            cmp_result = builder_.CreateICmpSGT(lhs, rhs, "__isAbResult");
             break;
         case token_t::ISABE:
-            cmp_result = builder_.CreateICmpSGE(lhs, rhs);
+            cmp_result = builder_.CreateICmpSGE(lhs, rhs, "__isAbeResult");
             break;
         case token_t::ISLS:
-            cmp_result = builder_.CreateICmpSLT(lhs, rhs);
+            cmp_result = builder_.CreateICmpSLT(lhs, rhs, "__isLsResult");
             break;
         case token_t::ISLSE:
-            cmp_result = builder_.CreateICmpSLE(lhs, rhs);
+            cmp_result = builder_.CreateICmpSLE(lhs, rhs, "__isLseResult");
             break;
         case token_t::ISEQ:
-            cmp_result = builder_.CreateICmpEQ(lhs, rhs);
+            cmp_result = builder_.CreateICmpEQ(lhs, rhs, "__isEqResult");
             break;
         case token_t::ISNE:
-            cmp_result = builder_.CreateICmpNE(lhs, rhs);
+            cmp_result = builder_.CreateICmpNE(lhs, rhs, "__isNeResult");
             break;
         default:
             builtin_unreachable_wrapper("here parsing >= type operations");
         }
-        return builder_.CreateZExt(cmp_result, builder_.getInt32Ty(), "cmp_result");
+        return builder_.CreateZExt(cmp_result, builder_.getInt32Ty(), "__cmpResult");
     }
 
     default:
@@ -679,12 +673,12 @@ llvm::Value *LLVMIRBuilder::generate_unary_op_expression(const UnExpr *un)
         LOGINFO("paracl: ir translator: generating logical NOT operation");
         llvm::Value *zero = llvm::ConstantInt::get(builder_.getInt32Ty(), 0);
         llvm::Value *cmp_result = builder_.CreateICmpEQ(val, zero);
-        return builder_.CreateZExt(cmp_result, builder_.getInt32Ty(), "not_result");
+        return builder_.CreateZExt(cmp_result, builder_.getInt32Ty(), "__notResult");
     }
     case token_t::SUB: {
         LOGINFO("paracl: ir translator: generating unary minus operation");
         llvm::Value *zero = llvm::ConstantInt::get(builder_.getInt32Ty(), 0);
-        return builder_.CreateSub(zero, val);
+        return builder_.CreateSub(zero, val, "__unminusResult");
     }
 
     default:
@@ -716,7 +710,7 @@ llvm::Value *LLVMIRBuilder::convert_to_i1(llvm::Value *value)
     LOGINFO("paracl: ir translator: converting value to i1 type");
     llvm::Type *value_type = value->getType();
     llvm::Value *zero = llvm::ConstantInt::get(value_type, 0);
-    return builder_.CreateICmpNE(value, zero);
+    return builder_.CreateICmpNE(value, zero, "__convertToI1Result");
 }
 
 //---------------------------------------------------------------------------------------------------------------

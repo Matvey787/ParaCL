@@ -154,6 +154,7 @@ void CompilerNameTable::declare(const std::string &name, llvm::Value *value)
 
     if (not value)
         return;
+
     builder_.CreateStore(value, var);
 }
 
