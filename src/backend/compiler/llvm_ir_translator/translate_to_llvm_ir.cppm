@@ -171,7 +171,7 @@ void LLVMIRBuilder::generate_print(const PrintStmt *print)
 
     std::ostringstream fmt;
 
-    std::vector<llvm::Value *> printf_args = {nullptr};
+    std::vector<llvm::Value *> printf_args(1);
 
     for (const std::unique_ptr<Expression> &arg : print->args)
     {
@@ -387,9 +387,8 @@ void LLVMIRBuilder::generate_block(const BlockStmt *block)
 
     llvm::Function *current_block = builder_.GetInsertBlock()->getParent();
 
-    llvm::BasicBlock *scope_block = llvm::BasicBlock::Create(context_, "new_scope");
-
-    llvm::BasicBlock *after_scope = llvm::BasicBlock::Create(context_, "end_scope");
+    llvm::BasicBlock *scope_block = llvm::BasicBlock::Create(context_, "new_scope", current_block);
+    llvm::BasicBlock *after_scope = llvm::BasicBlock::Create(context_, "end_scope", current_block);
 
     LOGINFO("paracl: ir translator: creating branch to block: '{}'", "new_scope");
     builder_.CreateBr(scope_block);
