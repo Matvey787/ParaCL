@@ -33,8 +33,7 @@ TEST(options_paser, find_sources)
 
     CREATE_OP(const_cast<char *>("1.cl"), const_cast<char *>("-c"), const_cast<char *>("2.cl"),
               const_cast<char *>("3.cl"), const_cast<char *>("--compile"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("-d"),
-              const_cast<char *>("ast.dot"), const_cast<char *>("second.o"));
+              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("second.o"));
 
     EXPECT_EQ(po.sources.size(), 5);
     EXPECT_EQ(po.sources[0].string(), "1.cl");
@@ -58,8 +57,7 @@ TEST(options_paser, find_objects)
     EXPECT_EQ(po.object_files[0].string(), "some.o");
 
     CREATE_OP(const_cast<char *>("--compile"), const_cast<char *>("1.cl"), const_cast<char *>("2.cl"),
-              const_cast<char *>("3.cl"), const_cast<char *>("--ast-dump=lol"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"));
+              const_cast<char *>("3.cl"), const_cast<char *>("4.cl"), const_cast<char *>("5.cl"));
 
     EXPECT_EQ(po.object_files.size(), 5);
     EXPECT_EQ(po.object_files[0].string(), "1.o");
@@ -70,8 +68,7 @@ TEST(options_paser, find_objects)
 
     CREATE_OP(const_cast<char *>("1.cl"), const_cast<char *>("-c"), const_cast<char *>("2.cl"),
               const_cast<char *>("3.cl"), const_cast<char *>("--compile"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("-d"),
-              const_cast<char *>("ast.dot"), const_cast<char *>("second.o"));
+              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("second.o"));
 
     EXPECT_EQ(po.object_files.size(), 5);
     EXPECT_EQ(po.object_files[0].string(), "first.obj");
@@ -95,8 +92,7 @@ TEST(options_paser, find_ir)
     EXPECT_EQ(po.llvm_ir_files[0].string(), "some.ll");
 
     CREATE_OP(const_cast<char *>("--compile"), const_cast<char *>("1.cl"), const_cast<char *>("2.cl"),
-              const_cast<char *>("3.cl"), const_cast<char *>("--ast-dump=lol"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"));
+              const_cast<char *>("3.cl"), const_cast<char *>("4.cl"), const_cast<char *>("5.cl"));
 
     EXPECT_EQ(po.llvm_ir_files.size(), 5);
     EXPECT_EQ(po.llvm_ir_files[0].string(), "1.ll");
@@ -107,8 +103,7 @@ TEST(options_paser, find_ir)
 
     CREATE_OP(const_cast<char *>("1.cl"), const_cast<char *>("-c"), const_cast<char *>("2.cl"),
               const_cast<char *>("3.cl"), const_cast<char *>("--compile"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("-d"),
-              const_cast<char *>("ast.dot"), const_cast<char *>("second.o"));
+              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("second.o"));
 
     EXPECT_EQ(po.llvm_ir_files.size(), 5);
     EXPECT_EQ(po.llvm_ir_files[0].string(), "first.ll");
@@ -130,14 +125,12 @@ TEST(options_paser, find_progam_name)
     EXPECT_EQ(po.program_name, "exe");
 
     CREATE_OP(const_cast<char *>("--compile"), const_cast<char *>("1.cl"), const_cast<char *>("2.cl"),
-              const_cast<char *>("3.cl"), const_cast<char *>("--ast-dump=lol"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"));
+              const_cast<char *>("3.cl"), const_cast<char *>("4.cl"), const_cast<char *>("5.cl"));
     EXPECT_EQ(po.program_name, "exe");
 
     CREATE_OP(const_cast<char *>("1.cl"), const_cast<char *>("-c"), const_cast<char *>("2.cl"),
               const_cast<char *>("3.cl"), const_cast<char *>("--compile"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("-d"),
-              const_cast<char *>("ast.dot"), const_cast<char *>("second.o"));
+              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("second.o"));
     EXPECT_EQ(po.program_name, "exe");
 }
 
@@ -153,22 +146,19 @@ TEST(options_paser, find_executable_name)
     EXPECT_EQ(po.executable_file, "a.out");
 
     CREATE_OP(const_cast<char *>("--compile"), const_cast<char *>("1.cl"), const_cast<char *>("2.cl"),
-              const_cast<char *>("3.cl"), const_cast<char *>("--ast-dump=lol"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"));
+              const_cast<char *>("3.cl"), const_cast<char *>("4.cl"), const_cast<char *>("5.cl"));
     EXPECT_EQ(po.executable_file, "a.out");
 
     CREATE_OP(const_cast<char *>("1.cl"), const_cast<char *>("-o"), const_cast<char *>("govno"),
               const_cast<char *>("-c"), const_cast<char *>("2.cl"), const_cast<char *>("3.cl"),
               const_cast<char *>("--compile"), const_cast<char *>("4.cl"), const_cast<char *>("5.cl"),
-              const_cast<char *>("first.obj"), const_cast<char *>("-d"), const_cast<char *>("ast.dot"),
-              const_cast<char *>("second.o"));
+              const_cast<char *>("first.obj"), const_cast<char *>("second.o"));
     EXPECT_EQ(po.executable_file, "govno");
 
     CREATE_OP(const_cast<char *>("1.cl"), const_cast<char *>("-o"), const_cast<char *>("govno"),
               const_cast<char *>("-c"), const_cast<char *>("2.cl"), const_cast<char *>("3.cl"),
               const_cast<char *>("--compile"), const_cast<char *>("4.cl"), const_cast<char *>("--output=fuck"),
-              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("-d"),
-              const_cast<char *>("ast.dot"), const_cast<char *>("second.o"));
+              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("second.o"));
     EXPECT_EQ(po.executable_file, "fuck");
 }
 
