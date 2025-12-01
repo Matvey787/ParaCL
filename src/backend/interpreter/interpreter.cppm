@@ -179,7 +179,8 @@ void Interpreter::execute(const ConditionStatement *condition)
 
     LOGINFO("paracl: interpreter: no ELSE in condition");
 
-    auto else_stmt = condition->else_stmt.get();
+    auto *else_stmt = condition->else_stmt.get();
+
     if (not else_stmt)
         return; /* no ELSE */
 
@@ -222,13 +223,13 @@ int Interpreter::execute(const NumExpr *num)
 
 int Interpreter::execute(const VarExpr *var)
 {
-    std::optional<NameValue> varValue = nametable_.get_variable_value(var->name);
+    std::optional<int> varValue = nametable_.get_variable_value(var->name);
     if (not varValue.has_value())
         throw std::runtime_error("'" + var->name + "' was not declared in this scope\n");
 
-    LOGINFO("paracl: interpreter: get variable value: \"{}\" = {}", var->name, varValue.value().value());
+    LOGINFO("paracl: interpreter: get variable value: \"{}\" = {}", var->name, varValue.value());
 
-    return varValue.value().value();
+    return varValue.value();
 }
 
 int Interpreter::execute([[maybe_unused]] const InputExpr *in)
@@ -243,10 +244,9 @@ int Interpreter::execute(const AssignExpr *assignExpr)
     auto e = dynamic_cast<const Expression *>(assignExpr->value.get());
     msg_assert(e, "BinExpr children are not Expression");
 
-    auto result = execute(e);
+    int result = execute(e);
 
-    NameValue new_value{result};
-    nametable_.set_value(assignExpr->name, new_value);
+    nametable_.set_value(assignExpr->name, result);
 
     LOGINFO("paracl: interpreter: execute assign expression: \"{}\" = {}", assignExpr->name, result);
 
@@ -255,19 +255,18 @@ int Interpreter::execute(const AssignExpr *assignExpr)
 
 int Interpreter::execute(const CombinedAssingExpr *combinedAssingExpr)
 {
-    std::optional<NameValue> varValue = nametable_.get_variable_value(combinedAssingExpr->name);
-    int value = varValue.value().value();
+    std::optional<int> varValue = nametable_.get_variable_value(combinedAssingExpr->name);
+    int value = varValue.value();
     if (not varValue.has_value())
         throw std::runtime_error("error: '" + combinedAssingExpr->name + "' was not declared in this scope\n");
 
     auto expr = dynamic_cast<const Expression *>(combinedAssingExpr->value.get());
     msg_assert(expr, "BinExpr children are not Expression");
 
-    auto result = execute(expr);
+    int result = execute(expr);
 
     value = execute(value, result, combinedAssingExpr->op());
-    NameValue new_value{value};
-    nametable_.set_value(combinedAssingExpr->name, new_value);
+    nametable_.set_value(combinedAssingExpr->name, value);
 
     LOGINFO("paracl: interpreter: execute combined assign expression: \"{}\" = {}", combinedAssingExpr->name, value);
 
@@ -357,15 +356,15 @@ void Interpreter::execute(const AssignStmt *assign)
     msg_assert(e, "BinExpr children are not Expression");
 
     int result = execute(e);
-    nametable_.set_value(assign->name, NameValue{result});
+    nametable_.set_value(assign->name, result);
 
     LOGINFO("paracl: interpreter: execute assign statement: \"{}\" = {}", assign->name, result);
 }
 
 void Interpreter::execute(const CombinedAssingStmt *combined_assign_statement)
 {
-    std::optional<NameValue> varValue = nametable_.get_variable_value(combined_assign_statement->name);
-    int value = varValue.value().value();
+    std::optional<int> varValue = nametable_.get_variable_value(combined_assign_statement->name);
+    int value = varValue.value();
     if (not varValue.has_value())
         throw std::runtime_error("error: '" + combined_assign_statement->name +
                                  "' was not declared in this scope\n"
@@ -374,11 +373,10 @@ void Interpreter::execute(const CombinedAssingStmt *combined_assign_statement)
     auto expr = dynamic_cast<const Expression *>(combined_assign_statement->value.get());
     msg_assert(expr, "BinExpr children are not Expression");
 
-    auto result = execute(expr);
+    int result = execute(expr);
 
     value = execute(value, result, combined_assign_statement->op());
-    NameValue new_value{value};
-    nametable_.set_value(combined_assign_statement->name, new_value);
+    nametable_.set_value(combined_assign_statement->name, value);
 
     LOGINFO("paracl: interpreter: execute combined assign statement: \"{}\" = {}", combined_assign_statement->name,
             value);
@@ -397,7 +395,7 @@ void Interpreter::execute(const PrintStmt *print_statement)
         }
         if (auto expr = dynamic_cast<const Expression *>(arg.get()))
         {
-            auto result = execute(expr);
+            int result = execute(expr);
             std::cout << result << std::flush;
             continue;
         }
