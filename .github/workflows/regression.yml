@@ -16,7 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y cmake clang ninja-build python3 clang llvm
+          sudo apt-get install -y cmake clang ninja-build python3 clang llvm libgtest-dev
 
       - name: Install
         run: bash start.sh test

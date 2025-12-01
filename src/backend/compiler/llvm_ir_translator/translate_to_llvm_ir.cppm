@@ -50,14 +50,14 @@ export class LLVMIRBuilder
     std::filesystem::path ir_file_;
     std::filesystem::path object_file_;
 
-    void generate_main(const ProgramAST &ast);
-    void generate_statements(const ProgramAST &ast);
-    void generate_statement(const Statement *stmt);
+    void generate(const ProgramAST &ast);
+    void generate(const ProgramAST &ast);
+    void generate(const Statement *stmt);
 
-    void generate_print(const PrintStmt *);
-    void generate_assign(const AssignStmt *);
-    void generate_combined_assign(const CombinedAssingStmt *);
-    void generate_while(const WhileStmt *);
+    void generate(const PrintStmt *);
+    void generate(const AssignStmt *);
+    void generate(const CombinedAssingStmt *);
+    void generate(const WhileStmt *);
     void generate_block(const BlockStmt *);
     void generate_condition(const ConditionStatement *);
     void generate_body(const BlockStmt *);
@@ -68,8 +68,8 @@ export class LLVMIRBuilder
     llvm::Value *generate_unary_op_expression(const UnExpr *);
     llvm::Value *generate_number_expression(const NumExpr *);
     llvm::Value *generate_variable_expression(const VarExpr *);
-    llvm::Value *generate_assign_expression(const AssignExpr *);
-    llvm::Value *generate_combined_assign_expression(const CombinedAssingExpr *);
+    llvm::Value *generate_expression(const AssignExpr *);
+    llvm::Value *generate_expression(const CombinedAssingExpr *);
 
     llvm::Value *generate_bool_expression(const Expression *);
 
@@ -125,7 +125,7 @@ void LLVMIRBuilder::generate_ir(const ProgramAST &ast)
 {
     LOGINFO("paracl: ir translator: starting IR generation");
 
-    generate_main(ast);
+    generate(ast);
 
     if (llvm::verifyModule(module_, &llvm::errs()) == EXIT_FAILURE)
     {
@@ -139,7 +139,7 @@ void LLVMIRBuilder::generate_ir(const ProgramAST &ast)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_main(const ProgramAST &ast)
+void LLVMIRBuilder::generate(const ProgramAST &ast)
 {
     LOGINFO("paracl: ir translator: generating main function");
 
@@ -150,7 +150,7 @@ void LLVMIRBuilder::generate_main(const ProgramAST &ast)
 
     builder_.SetInsertPoint(entry_block);
 
-    generate_statements(ast);
+    generate(ast);
 
     generate_int32_return(0);
 
@@ -165,7 +165,7 @@ void LLVMIRBuilder::generate_main(const ProgramAST &ast)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_print(const PrintStmt *print)
+void LLVMIRBuilder::generate(const PrintStmt *print)
 {
     LOGINFO("paracl: ir translator: generating print statement");
 
@@ -203,42 +203,42 @@ void LLVMIRBuilder::generate_print(const PrintStmt *print)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_statements(const ProgramAST &ast)
+void LLVMIRBuilder::generate(const ProgramAST &ast)
 {
     LOGINFO("paracl: ir translator: generating {} statements", ast.statements.size());
 
     for (const std::unique_ptr<Statement> &stmt : ast.statements)
-        generate_statement(stmt.get());
+        generate(stmt.get());
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_statement(const Statement *stmt)
+void LLVMIRBuilder::generate(const Statement *stmt)
 {
     LOGINFO("paracl: ir translator: generating statement");
 
     if (auto assign = dynamic_cast<const AssignStmt *>(stmt))
     {
         LOGINFO("paracl: ir translator: statement type: assignment");
-        return generate_assign(assign);
+        return generate(assign);
     }
 
     if (auto combined_assign_statement = dynamic_cast<const CombinedAssingStmt *>(stmt))
     {
         LOGINFO("paracl: ir translator: statement type: combined assignment");
-        return generate_combined_assign(combined_assign_statement);
+        return generate(combined_assign_statement);
     }
 
     if (auto print_statement = dynamic_cast<const PrintStmt *>(stmt))
     {
         LOGINFO("paracl: ir translator: statement type: print");
-        return generate_print(print_statement);
+        return generate(print_statement);
     }
 
     if (auto while_stmt = dynamic_cast<const WhileStmt *>(stmt))
     {
         LOGINFO("paracl: ir translator: statement type: while loop");
-        return generate_while(while_stmt);
+        return generate(while_stmt);
     }
 
     if (auto block = dynamic_cast<const BlockStmt *>(stmt))
@@ -259,7 +259,7 @@ void LLVMIRBuilder::generate_statement(const Statement *stmt)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_while(const WhileStmt *while_stmt)
+void LLVMIRBuilder::generate(const WhileStmt *while_stmt)
 {
     LOGINFO("paracl: ir translator: generating while loop");
 
@@ -350,7 +350,7 @@ void LLVMIRBuilder::generate_condition(const ConditionStatement *condition)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_assign(const AssignStmt *asgn)
+void LLVMIRBuilder::generate(const AssignStmt *asgn)
 {
     LOGINFO("paracl: ir translator: generating assignment for variable: '{}'", asgn->name);
 
@@ -403,7 +403,7 @@ void LLVMIRBuilder::generate_block(const BlockStmt *block)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void LLVMIRBuilder::generate_combined_assign(const CombinedAssingStmt *asgn)
+void LLVMIRBuilder::generate(const CombinedAssingStmt *asgn)
 {
     LOGINFO("paracl: ir translator: generating combined assignment for variable: '{}'", asgn->name);
 
@@ -446,7 +446,7 @@ void LLVMIRBuilder::generate_body(const BlockStmt *body)
     nametable_.new_scope();
 
     for (auto &stmt : body->statements)
-        generate_statement(stmt.get());
+        generate(stmt.get());
 
     nametable_.leave_scope();
 
@@ -455,7 +455,7 @@ void LLVMIRBuilder::generate_body(const BlockStmt *body)
 
 //---------------------------------------------------------------------------------------------------------------
 
-llvm::Value *LLVMIRBuilder::generate_assign_expression(const AssignExpr *asgn)
+llvm::Value *LLVMIRBuilder::generate_expression(const AssignExpr *asgn)
 {
     LOGINFO("paracl: ir translator: generating assignment expression for variable: '{}'", asgn->name);
     if (not dynamic_cast<const InputExpr *>(asgn->value.get()))
@@ -488,7 +488,7 @@ llvm::Value *LLVMIRBuilder::generate_assign_expression(const AssignExpr *asgn)
 
 //---------------------------------------------------------------------------------------------------------------
 
-llvm::Value *LLVMIRBuilder::generate_combined_assign_expression(const CombinedAssingExpr *asgn)
+llvm::Value *LLVMIRBuilder::generate_expression(const CombinedAssingExpr *asgn)
 {
     LOGINFO("paracl: ir translator: generating combined assignment expression for variable: '{}'", asgn->name);
 
@@ -561,13 +561,13 @@ llvm::Value *LLVMIRBuilder::generate_expression(const Expression *expr)
     if (auto assignExpr = dynamic_cast<const AssignExpr *>(expr))
     {
         LOGINFO("paracl: ir translator: expression type: assignment");
-        return generate_assign_expression(assignExpr);
+        return generate_expression(assignExpr);
     }
 
     if (auto combinedAssingExpr = dynamic_cast<const CombinedAssingExpr *>(expr))
     {
         LOGINFO("paracl: ir translator: expression type: combined assignment");
-        return generate_combined_assign_expression(combinedAssingExpr);
+        return generate_expression(combinedAssingExpr);
     }
 
     LOGERR("paracl: ir translator: unknown expression type");
