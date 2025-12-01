@@ -115,58 +115,34 @@ STRING      \"[^"]*\"
 "else"    { return yy::parser::token::ELSE; }
 ";"       { return yy::parser::token::SC; }
 ","       { return yy::parser::token::COMMA; }
-{STRING}    { 
-                std::ostringstream result;
+{STRING} {
+    /* need to skip " with own hands,
+    because it`s in yytext with this rule */
 
-                for (size_t it = 1, ite = yyleng - 1; it < ite; ++it)
-                {
-                    const char c = *(yytext + it);
-                    const char next_c = *(yytext + it + 1);
+    yytext[yyleng - 1] = '\0';
+    yylval->build<std::string>(yytext + 1);
+    return yy::parser::token::STRING;
+}
 
-                    if (c != '\\' && next_c != '\0')
-                    {
-                        result << c;
-                        continue;
-                    }
-
-                    switch (next_c)
-                    {
-                        case 'n':  result << '\n'; break;
-                        case 't':  result << '\t'; break;
-                        case 'r':  result << '\r'; break;
-                        case '\\': result << '\\'; break;
-                        case '\"': result << '\"'; break;
-                        case '0':  result << '\0'; break;
-                        case 'a':  result << '\a'; break;
-                        case 'b':  result << '\b'; break;
-                        case 'v':  result << '\v'; break;
-                        case 'f':  result << '\f'; break;
-                        default:   result << c   ; continue;
-                    }
-                    ++it;
-                }
-                yylval->build<std::string>(std::move(result.str()));
-                return yy::parser::token::STRING;
-            }
-
-{DIGIT}+    {
-                yylval->build<int>(atoi(yytext));
-                return yy::parser::token::NUM;
-            }
+{DIGIT}+ {
+    yylval->build<int>(atoi(yytext));
+    return yy::parser::token::NUM;
+}
 
 {LETTER}({LETTER}|{DIGIT})* {
-                yylval->build<std::string>(yytext);
-                return yy::parser::token::VAR;
-            }
+    yylval->build<std::string>(yytext);
+    return yy::parser::token::VAR;
+}
 
-<<EOF>>     { return yy::parser::token::YYEOF; }
+<<EOF>> { return yy::parser::token::YYEOF; }
 
-.           { 
-                ErrorHandler::throwError(*yylloc,
-                                         "unexpected character '" + std::string(yytext) + "'",
-                                         {1, 1, 1});
-                return yy::parser::token::YYerror;
-            }
+. { 
+    ErrorHandler::throwError(*yylloc,
+                            "unexpected character '" + std::string(yytext) + "'",
+                            {1, 1, 1});
+                        
+    return yy::parser::token::YYerror;
+}
 
 %%
 

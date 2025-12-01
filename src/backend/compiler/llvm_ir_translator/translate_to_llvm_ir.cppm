@@ -273,7 +273,7 @@ void LLVMIRBuilder::generate(const WhileStmt *while_stmt)
 
     builder_.SetInsertPoint(while_block);
     LOGINFO("paracl: ir translator: generating while loop body");
-    generate(while_stmt->body.get());
+    generate_body(while_stmt->body.get());
 
     LOGINFO("paracl: ir translator: creating while loop back branch");
     builder_.CreateCondBr(convert_to_I1(while_stmt->condition.get()), while_block, after_while_block);
@@ -394,7 +394,7 @@ void LLVMIRBuilder::generate(const BlockStmt *block)
     builder_.CreateBr(scope_block);
     builder_.SetInsertPoint(scope_block);
 
-    generate(block);
+    generate_body(block);
 
     LOGINFO("paracl: ir translator: creating branch to after block: '{}'", "end_scope");
     builder_.CreateBr(after_scope);
