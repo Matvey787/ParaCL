@@ -3,6 +3,7 @@ module;
 //---------------------------------------------------------------------------------------------------------------
 
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -62,11 +63,12 @@ std::optional<int> InterpreterNameTable::get_variable_value(std::string_view nam
 {
     LOGINFO("paracl: interpreter: nametable: searching variable: \"{}\"", name);
 
-    for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
+    for (const auto &scopes_it : scopes_ | std::views::reverse)
+    // for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
     {
-        auto found = it->find(name);
+        auto found = scopes_it.find(name);
 
-        if (found == it->end())
+        if (found == scopes_it.end())
             continue;
 
         LOGINFO("paracl: interpreter: nametable: variable found: \"{}\" = {}", name, found->second);
@@ -102,11 +104,11 @@ void InterpreterNameTable::set_value(std::string_view name, int value)
 
 int *InterpreterNameTable::lookup(std::string_view name)
 {
-    for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
+    for (auto &scopes_it : scopes_ | std::views::reverse)
     {
-        auto found = it->find(name);
+        auto found = scopes_it.find(name);
 
-        if (found == it->end())
+        if (found == scopes_it.end())
             continue;
 
         return &(found->second);

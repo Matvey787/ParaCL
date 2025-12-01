@@ -202,7 +202,78 @@ endwhile8:                                        ; preds = %while7, %while1
 
 # По учебной части:
 
+## 9.
+**Вопрос преподователя:**
++// seems like const method
+NameValue *lookup(const std::string &name);
+
+**Ответ:**
+```text
+/home/ananasik/projects/C++/vlados/5/ParaCL/1_version/src/backend/interpreter/name_table.cppm:112:16: error: cannot initialize return object of type 'int *' with an rvalue of type 'const int *'
+  112 |         return &(found->second);
+      |                ^~~~~~~~~~~~~~~~
+```
+
+Здесь мы используем указатель, чтобы получить доступ к значению переменной и одновременно с этим использовать `nullptr` чтобы сигнализировать об отсуствии запрашиваемой переменной:
+
+```cpp
+    int *name_ptr = lookup(name);
+
+    if (not name_ptr)
+        return declare(name, value);
+
+    LOGINFO("paracl: interpreter: nametable: set {} to \"{}\"", value, name);
+    *name_ptr = value;
+```
+
+Так как мы после `lookup` мы делаем еще присваивание по указателю мы не можем сделать `name_ptr` как `const int*`, поэтому и вернуть из `lookup` `const int*` мы не можем. Но если метод аннотирован как `const`, то так как мы внутри `lookup` итерируемся по `scopes_` (приватное поле в `NameTable`), то вернуть на его внутреннее состояние не `const` указатель мы не можем. Поэтому этот метод не `const`.
+
+Так же мы его используем для того чтобы найти значение переменной, которое мы хотим поменять, поэтому `lookup` даже идейно не `const`.
+
+## 14
+**Вопрос преподователя:**
+What the difference between AssignExpr, CombinedAssingExpr, AssignStmt and CombinedAssingStmt.
+They are the same structures.
+Please, describe with examples.
+
+
+**Ответ:**
 Мотивация для создания и `AssignStmt`, и `AssignExpr` (и подобных штук):
 
 Возвращать значение, когда его у тебя не просят, немного странно: зачем делать лишний return, если его можно не делать. Мы можем на уровне парсинга грамматики определить, должно ли выражение `a = 0` иметь возвращаемое значение. Поэтому, мы сделали разделение на statement и expression.\
 Пока это писал, пришла в голову мысль что возможно мы больше времени потеряем на лишнем dynamic_cast. Надо бы это попробовать забенчмарать (\*здесь появится сообщение о результатах, когда *(если)* я это сделаю). Но это для интепретатора, а для компилятора это кажется тем более бессмлысленно, потому что на llvm ir все соптимизируется. Но мы пока не будет это менять, нам интересно сделать бенчмарк и почитать, что Вы об этом думаете.
+
+Примеры:
+
+## 15
+**Вопрос преподователя:**
+What is the StringConstant? Please, describe with examples.
+
+**Ответ:**
+
+```cpp
+struct StringConstant : public Expression;
+```
+
+Это структура неследуемая от Expression. Нужна для единственной цели - сделать вывод `print` более информативным. То есть строку можно использовать только как аргумент оператора `print`. Примеры использования:
+
+Код:
+```cl
+print "Hello, string!";
+```
+Вывод:
+```text
+Hello, string!
+```
+
+Код:
+```cl
+int a = 5;
+int b = 6;
+print "sum of 'a' and 'b' is ", a + b;
+```
+
+Вывод:
+```text
+sum of 'a' and 'b' is 11
+```

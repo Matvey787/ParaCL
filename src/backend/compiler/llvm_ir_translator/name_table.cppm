@@ -5,6 +5,7 @@ module;
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
 
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -76,11 +77,11 @@ llvm::AllocaInst *CompilerNameTable::get_variable(std::string_view name)
 {
     LOGINFO("paracl: compiler: nametable: searching variable: \"{}\"", name);
 
-    for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
+    for (auto &scopes_it : scopes_ | std::views::reverse)
     {
-        auto found = it->find(std::string(name));
+        auto found = scopes_it.find(std::string(name));
 
-        if (found == it->end())
+        if (found == scopes_it.end())
             continue;
 
         LOGINFO("paracl: compiler: nametable: variable found: \"{}\"", name);
@@ -128,11 +129,11 @@ void CompilerNameTable::set_value(std::string_view name, llvm::Value *value)
 
 llvm::AllocaInst *CompilerNameTable::lookup(std::string_view name)
 {
-    for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
+    for (auto &scopes_it : scopes_ | std::views::reverse)
     {
-        auto found = it->find(std::string(name));
+        auto found = scopes_it.find(std::string(name));
 
-        if (found == it->end())
+        if (found == scopes_it.end())
             continue;
 
         return found->second;
