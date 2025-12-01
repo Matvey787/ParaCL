@@ -18,14 +18,14 @@ namespace ParaCL
 void link_nodes(std::ostream &out, size_t ntab, const void *lhs, const void *rhs);
 void condition_link_type(std::ostream &out, size_t ntab, const void *lhs, const void *rhs);
 void body_link_type(std::ostream &out, size_t ntab, const void *lhs, const void *rhs);
-void create_node(std::ostream &out, size_t ntab, const void *node, const std::string &label,
-                 const std::string &more_settings = "");
+void create_node(std::ostream &out, size_t ntab, const void *node, std::string_view label,
+                 std::string_view more_settings = "");
 void dump_body(std::ostream &out, size_t ntab, const void *node, const BlockStmt *body);
 
 void dumpExpr(std::ostream &out, size_t ntab, const ParaCL::Expression *expr);
 void dumpStmt(std::ostream &out, size_t ntab, const ParaCL::Statement *stmt);
 
-export void ast_dump(const ProgramAST &progAST, const std::string &filename = "dot-out/ast.dot")
+export void ast_dump(const ProgramAST &progAST, std::string_view filename = "dot-out/ast.dot")
 {
     std::filesystem::create_directories("dot-out");
     std::ofstream out(filename);
@@ -316,8 +316,8 @@ void link_nodes(std::ostream &out, size_t ntab, const void *lhs, const void *rhs
     out << "  \"" << lhs << "\" -> \"" << rhs << "\";\n";
 }
 
-void create_node(std::ostream &out, size_t ntab, const void *node, const std::string &label,
-                 const std::string &more_settings)
+void create_node(std::ostream &out, size_t ntab, const void *node, std::string_view label,
+                 std::string_view more_settings)
 {
     out << "  \"" << node << "\" [label=\"" << label << "\"";
 

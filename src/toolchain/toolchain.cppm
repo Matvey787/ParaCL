@@ -10,7 +10,7 @@ module;
 #include "global/custom_console_output.hpp"
 #include "global/global.hpp"
 
-extern void set_current_paracl_file(const std::string &);
+extern void set_current_paracl_file(std::string_view );
 
 extern FILE *yyin;
 extern ParaCL::ProgramAST program;

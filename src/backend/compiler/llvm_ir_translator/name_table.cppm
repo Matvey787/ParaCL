@@ -30,17 +30,17 @@ class CompilerNameTable
     llvm::IRBuilder<> &builder_;
 
     std::vector<std::unordered_map<std::string, llvm::AllocaInst *>> scopes_;
-    llvm::AllocaInst *lookup(const std::string &name);
-    void declare(const std::string &name, llvm::Value * = nullptr);
+    llvm::AllocaInst *lookup(std::string_view name);
+    void declare(std::string_view name, llvm::Value * = nullptr);
 
   public:
     CompilerNameTable(llvm::Module &module, llvm::IRBuilder<> &builder);
     void new_scope();
     void leave_scope();
-    llvm::AllocaInst *get_variable(const std::string &name);
-    llvm::Value *get_variable_value(const std::string &name);
+    llvm::AllocaInst *get_variable(std::string_view name);
+    llvm::Value *get_variable_value(std::string_view name);
 
-    void set_value(const std::string &name, llvm::Value *value);
+    void set_value(std::string_view name, llvm::Value *value);
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -72,13 +72,13 @@ void CompilerNameTable::leave_scope()
 
 //---------------------------------------------------------------------------------------------------------------
 
-llvm::AllocaInst *CompilerNameTable::get_variable(const std::string &name)
+llvm::AllocaInst *CompilerNameTable::get_variable(std::string_view name)
 {
     LOGINFO("paracl: compiler: nametable: searching variable: \"{}\"", name);
 
     for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
     {
-        auto found = it->find(name);
+        auto found = it->find(std::string(name));
 
         if (found == it->end())
             continue;
@@ -93,18 +93,19 @@ llvm::AllocaInst *CompilerNameTable::get_variable(const std::string &name)
 
 //---------------------------------------------------------------------------------------------------------------
 
-llvm::Value *CompilerNameTable::get_variable_value(const std::string &name)
+llvm::Value *CompilerNameTable::get_variable_value(std::string_view name)
 {
     llvm::AllocaInst *var = get_variable(name);
+
     if (not var)
         return nullptr;
 
-    return builder_.CreateLoad(builder_.getInt32Ty(), var, name);
+    return builder_.CreateLoad(builder_.getInt32Ty(), var, std::string(name) + "_load");
 }
 
 //---------------------------------------------------------------------------------------------------------------
 
-void CompilerNameTable::set_value(const std::string &name, llvm::Value *value)
+void CompilerNameTable::set_value(std::string_view name, llvm::Value *value)
 {
     LOGINFO("paracl: compiler: nametable: set \"{}\"", name);
 
@@ -125,11 +126,11 @@ void CompilerNameTable::set_value(const std::string &name, llvm::Value *value)
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-llvm::AllocaInst *CompilerNameTable::lookup(const std::string &name)
+llvm::AllocaInst *CompilerNameTable::lookup(std::string_view name)
 {
     for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
     {
-        auto found = it->find(name);
+        auto found = it->find(std::string(name));
 
         if (found == it->end())
             continue;
@@ -142,14 +143,14 @@ llvm::AllocaInst *CompilerNameTable::lookup(const std::string &name)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void CompilerNameTable::declare(const std::string &name, llvm::Value *value)
+void CompilerNameTable::declare(std::string_view name, llvm::Value *value)
 {
     LOGINFO("paracl: compiler: nametable: declare \"{}\"", name);
 
     if (scopes_.empty())
         throw std::runtime_error("cannot declare variable: no active scopes");
 
-    llvm::AllocaInst *&var = scopes_.back()[name];
+    llvm::AllocaInst *&var = scopes_.back()[std::string(name)];
     var = builder_.CreateAlloca(builder_.getInt32Ty(), nullptr, name);
 
     if (not value)

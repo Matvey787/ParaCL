@@ -19,26 +19,27 @@ namespace ParaCL
 void link_nodes(std::ostream &out, const void *lhs, const void *rhs);
 void condition_link_type(std::ostream &out, const void *lhs, const void *rhs);
 void body_link_type(std::ostream &out, const void *lhs, const void *rhs);
-void create_node(std::ostream &out, const void *node, const std::string &label, const std::string &more_settings = "");
+void create_node(std::ostream &out, const void *node, std::string_view label, std::string_view more_settings = "");
 void dump_body(std::ostream &out, const void *node, const BlockStmt *body);
 
 void dumpExpr(std::ostream &out, const ParaCL::Expression *expr);
 void dumpStmt(std::ostream &out, const ParaCL::Statement *stmt);
 void dumpBlock(std::ostream &out, const ParaCL::BlockStmt *block);
 
-export void ast_dump(const ProgramAST &progAST, const std::string &filename)
+export void ast_dump(const ProgramAST &progAST, std::string_view filename)
 {
-    std::ofstream out(filename);
+    const std::string file(filename);
+
+    std::ofstream out(file);
     if (out.fail())
-        throw std::runtime_error("failed open " + filename);
+        throw std::runtime_error("failed open " + file);
 
     out << "digraph AST {\n";
     out << "  node [shape=box];\n";
 
     const void *rootId = (void *)&progAST; /* just for same code style */
 
-    std::string label = "Program";
-    create_node(out, rootId, label);
+    create_node(out, rootId, "Program");
 
     for (auto &stmt : progAST.statements)
     {
@@ -50,7 +51,7 @@ export void ast_dump(const ProgramAST &progAST, const std::string &filename)
     out.close();
 
     std::filesystem::create_directories("../ast-dump");
-    std::string dot_cmd = "dot -Tsvg " + filename + " -o ../ast-dump/ast.svg";
+    std::string dot_cmd = "dot -Tsvg " + file + " -o ../ast-dump/ast.svg";
     std::system(dot_cmd.c_str());
 }
 
@@ -320,7 +321,7 @@ void link_nodes(std::ostream &out, const void *lhs, const void *rhs)
     out << "  \"" << lhs << "\" -> \"" << rhs << "\";\n";
 }
 
-void create_node(std::ostream &out, const void *node, const std::string &label, const std::string &more_settings)
+void create_node(std::ostream &out, const void *node, std::string_view label, std::string_view more_settings)
 {
     out << "  \"" << node << "\" [label=\"" << label << "\"";
 

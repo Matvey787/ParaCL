@@ -48,14 +48,14 @@ class InterpreterNameTable
 {
   private:
     std::vector<std::unordered_map<std::string, NameValue>> scopes_;
-    NameValue *lookup(const std::string &name);
-    void declare(const std::string &name, int value);
+    NameValue *lookup(std::string_view name);
+    void declare(std::string_view name, int value);
 
   public:
     void new_scope();
     void leave_scope();
-    std::optional<NameValue> get_variable_value(const std::string &name) const;
-    void set_value(const std::string &name, const NameValue &value);
+    std::optional<NameValue> get_variable_value(std::string_view name) const;
+    void set_value(std::string_view name, const NameValue &value);
 };
 
 //---------------------------------------------------------------------------------------------------------------
@@ -80,13 +80,13 @@ void InterpreterNameTable::leave_scope()
 
 //---------------------------------------------------------------------------------------------------------------
 
-std::optional<NameValue> InterpreterNameTable::get_variable_value(const std::string &name) const
+std::optional<NameValue> InterpreterNameTable::get_variable_value(std::string_view name) const
 {
     LOGINFO("paracl: interpreter: nametable: searching variable: \"{}\"", name);
 
     for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
     {
-        auto found = it->find(name);
+        auto found = it->find(std::string(name));
 
         if (found == it->end())
             continue;
@@ -101,7 +101,7 @@ std::optional<NameValue> InterpreterNameTable::get_variable_value(const std::str
 
 //---------------------------------------------------------------------------------------------------------------
 
-void InterpreterNameTable::set_value(const std::string &name, const NameValue &value)
+void InterpreterNameTable::set_value(std::string_view name, const NameValue &value)
 {
     LOGINFO("paracl: interpreter: nametable: set {} to \"{}\"", value.value(), name);
 
@@ -122,11 +122,11 @@ void InterpreterNameTable::set_value(const std::string &name, const NameValue &v
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-NameValue *InterpreterNameTable::lookup(const std::string &name)
+NameValue *InterpreterNameTable::lookup(std::string_view name)
 {
     for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
     {
-        auto found = it->find(name);
+        auto found = it->find(std::string(name));
 
         if (found == it->end())
             continue;
@@ -139,14 +139,14 @@ NameValue *InterpreterNameTable::lookup(const std::string &name)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void InterpreterNameTable::declare(const std::string &name, int value)
+void InterpreterNameTable::declare(std::string_view name, int value)
 {
     LOGINFO("paracl: interpreter: nametable: declate {} = \"{}\"", name, value);
 
     if (scopes_.empty())
         throw std::runtime_error("cannot declare variable: no active scopes");
 
-    scopes_.back()[name] = NameValue{value};
+    scopes_.back()[std::string(name)] = NameValue{value};
 }
 
 //---------------------------------------------------------------------------------------------------------------

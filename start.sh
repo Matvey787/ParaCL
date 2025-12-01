@@ -137,8 +137,9 @@ skip_line_in_console
 
 # building projects
 custom_echo "${CONSOLE_COLOR_GREEN}" "${CONSOLE_BIND_FONT}" "Building project..."
-custom_echo "${CONSOLE_COLOR_WHITE}" "" "cmake --build ${build_dir}/"
-cmake --build "${build_dir}/"
+build_command="cmake --build ${build_dir}/ --parallel $(nproc)"
+custom_echo "${CONSOLE_COLOR_WHITE}" "" "${build_command}"
+eval ${build_command}
 
 custom_echo "${CONSOLE_COLOR_GREEN}" "${CONSOLE_BIND_FONT}" "Building project completed successfully."
 skip_line_in_console

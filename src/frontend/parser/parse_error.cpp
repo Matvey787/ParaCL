@@ -11,7 +11,7 @@
 
 extern FILE *yyin;
 
-void yy::parser::error(const location &loc, const std::string &msg)
+void yy::parser::error(const location &loc, const std::string& msg)
 {
     ErrorHandler::throwError(loc, msg, {false, true, false});
 }
@@ -23,13 +23,13 @@ namespace Detail
 {
 
 void show_error_context(const yy::location &loc);
-size_t levenshtein_distance(const std::string &s1, const std::string &s2);
+size_t levenshtein_distance(std::string_view s1, std::string_view s2);
 std::string find_possible_token(const char *unexpected);
 std::string extract_token_at_position(const yy::location &loc);
 
 } /* namespace Detail */
 
-void throwError(const yy::location &loc, const std::string &msg, const ErrorParseOptions &options)
+void throwError(const yy::location &loc, std::string_view msg, const ErrorParseOptions &options)
 {
     std::cerr << current_file << ":" << loc.begin.line << ":" << loc.begin.column
               << ": paracl: error:"
@@ -109,7 +109,7 @@ void show_error_context(const yy::location &loc)
     fseek(yyin, current_file_pos, SEEK_SET);
 }
 
-size_t levenshtein_distance(const std::string &s1, const std::string &s2)
+size_t levenshtein_distance(std::string_view s1, std::string_view s2)
 {
     const size_t len1 = s1.size(), len2 = s2.size();
     std::vector<std::vector<size_t>> dp(len1 + 1, std::vector<size_t>(len2 + 1));

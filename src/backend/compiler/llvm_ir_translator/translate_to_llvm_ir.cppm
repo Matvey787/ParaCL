@@ -414,19 +414,19 @@ void LLVMIRBuilder::generate_combined_assign(const CombinedAssingStmt *asgn)
     switch (asgn->op)
     {
     case token_t::ADDASGN:
-        expr = builder_.CreateAdd(nametable_.get_variable_value(asgn->name), expr, "__add_asgn_result");
+        expr = builder_.CreateAdd(nametable_.get_variable_value(asgn->name), expr, "__addAsgnResult");
         break;
     case token_t::SUBASGN:
-        expr = builder_.CreateSub(nametable_.get_variable_value(asgn->name), expr, "__sub_asgn_result");
+        expr = builder_.CreateSub(nametable_.get_variable_value(asgn->name), expr, "__subAsgnResult");
         break;
     case token_t::MULASGN:
-        expr = builder_.CreateMul(nametable_.get_variable_value(asgn->name), expr, "__mul_asgn_result");
+        expr = builder_.CreateMul(nametable_.get_variable_value(asgn->name), expr, "__mulAsgnResult");
         break;
     case token_t::DIVASGN:
-        expr = builder_.CreateSDiv(nametable_.get_variable_value(asgn->name), expr, "__div_asgn_result");
+        expr = builder_.CreateSDiv(nametable_.get_variable_value(asgn->name), expr, "__divAsgnResult");
         break;
     case token_t::REMASGN:
-        expr = builder_.CreateSRem(nametable_.get_variable_value(asgn->name), expr, "__rem_asgn_result");
+        expr = builder_.CreateSRem(nametable_.get_variable_value(asgn->name), expr, "__remAsgnResult");
         break;
     default:
         builtin_unreachable_wrapper("he parsing only combined assign operation");

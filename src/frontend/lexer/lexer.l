@@ -170,7 +170,7 @@ STRING      \"[^"]*\"
 
 %%
 
-void set_current_paracl_file(const std::string& file)
+void set_current_paracl_file(std::string_view file)
 {
-    current_file = file;
+    current_file = std::string(file);
 }
