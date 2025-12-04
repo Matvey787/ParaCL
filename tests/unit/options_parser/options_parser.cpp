@@ -113,27 +113,6 @@ TEST(options_paser, find_ir)
     EXPECT_EQ(po.llvm_ir_files[4].string(), "5.ll");
 }
 
-TEST(options_paser, find_progam_name)
-{
-#if defined(LOGGER)
-    spdlog::init_spdlogger();
-#endif /* defined(LOGGER) */
-
-    program_options_t po;
-
-    CREATE_OP(const_cast<char *>("some.cl"));
-    EXPECT_EQ(po.program_name, "exe");
-
-    CREATE_OP(const_cast<char *>("--compile"), const_cast<char *>("1.cl"), const_cast<char *>("2.cl"),
-              const_cast<char *>("3.cl"), const_cast<char *>("4.cl"), const_cast<char *>("5.cl"));
-    EXPECT_EQ(po.program_name, "exe");
-
-    CREATE_OP(const_cast<char *>("1.cl"), const_cast<char *>("-c"), const_cast<char *>("2.cl"),
-              const_cast<char *>("3.cl"), const_cast<char *>("--compile"), const_cast<char *>("4.cl"),
-              const_cast<char *>("5.cl"), const_cast<char *>("first.obj"), const_cast<char *>("second.o"));
-    EXPECT_EQ(po.program_name, "exe");
-}
-
 TEST(options_paser, find_executable_name)
 {
 #if defined(LOGGER)

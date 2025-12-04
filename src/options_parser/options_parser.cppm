@@ -23,6 +23,9 @@ module;
 
 #include "log/log_api.hpp"
 
+// не бейте, я просто развлекаюсь
+extern const char *__progname;
+
 //---------------------------------------------------------------------------------------------------------------
 
 export module options_parser;
@@ -68,7 +71,7 @@ export class OptionsParser
   private:
     Options::program_options_t program_options_;
 
-    void set_program_name(const char *argv0);
+    void set_program_name();
 
     [[noreturn]]
     void parse_flag_help() const;
@@ -126,7 +129,7 @@ OptionsParser::OptionsParser(int argc, char *argv[]) : program_options_()
     for (int i = 0; i < argc; ++i)
         LOGINFO("argv[{}] = \"{}\"", i, argv[i] ? argv[i] : "NULL");
 
-    set_program_name(argv[0]);
+    set_program_name();
 
     int option;
     while ((option = getopt_long(argc, argv, "hvd:co:", long_options, nullptr)) != end_of_parsing)
@@ -182,11 +185,11 @@ Options::program_options_t OptionsParser::get_program_options() const
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-void OptionsParser::set_program_name(const char *argv0)
+void OptionsParser::set_program_name()
 {
-    msg_assert(argv0, "argv[0] is nullptr? are you sure, that you give here arg[0]?");
-    LOGINFO("set current file name: \"{}\"", argv0);
-    program_options_.program_name = std::string(argv0);
+    msg_assert(__progname, "__progname is nullptr? are you sure, that you give here arg[0]?");
+    LOGINFO("set current program name: \"{}\"", __progname);
+    program_options_.program_name = std::string(__progname);
 }
 
 //---------------------------------------------------------------------------------------------------------------
