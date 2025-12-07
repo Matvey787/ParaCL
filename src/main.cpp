@@ -1,8 +1,9 @@
 #include <cstdlib>
 #include <stdexcept>
 
-#include "log/log_api.hpp"
 #include "parser/parser_exceptions.hpp"
+
+#include "log/log_api.hpp"
 
 import options_parser;
 import paracl_toolchain;
@@ -10,13 +11,13 @@ import parse_paracl_exceptions;
 
 #if defined(LOGGER)
 import spdlog_init;
-#endif /* defined(LOGGER)*/
-#include <iostream>
+#endif /* defined(LOGGER) */
 
 int main(int argc, char *argv[])
 try
-{    
+{
     ON_LOGGER(spdlog::init_spdlogger();)
+
     LOGINFO("paracl: start");
 
     const Options::program_options_t program_options = Options::OptionsParser(argc, argv).get_program_options();

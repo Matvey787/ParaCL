@@ -36,6 +36,16 @@ try
     spdlog::set_default_logger(logger);
     spdlog::set_level(spdlog::level::debug);
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] [%s:%#] %v");
+
+    /*
+        я в душен не чаю зачем нужна следующая строчка кода есть spdlog::set_default_logger(logger); в 36 строке
+        мне ее сказал дипсик и я вставил ее
+        почему тыо без нее в main даже после вызывова иницилизатора LOGINFO херачит в консоль.
+        причем только в main и только в релизной версии. я хз короче, нейросети рулят.
+        (c) Себелев Максим
+    */
+
+    spdlog::details::registry::instance().set_default_logger(logger);
 }
 catch (const spdlog::spdlog_ex &ex)
 {
@@ -44,7 +54,6 @@ catch (const spdlog::spdlog_ex &ex)
 catch (...)
 {
     std::cerr << "spdlog unknown exception\n";
-    throw;
 }
 
 //---------------------------------------------------------------------------------------------------------------

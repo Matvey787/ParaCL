@@ -4,7 +4,7 @@
 namespace ErrorHandler
 {
 
-parse_grammar_error::parse_grammar_error(const std::string &msg) : msg_(msg)
+parse_grammar_error::parse_grammar_error(std::string_view msg) : msg_(msg)
 {
 }
 
@@ -13,7 +13,7 @@ const char *parse_grammar_error::what() const noexcept
     return msg_.c_str();
 }
 
-undeclarated_variable_error::undeclarated_variable_error(const std::string &msg) : msg_(msg)
+undeclarated_variable_error::undeclarated_variable_error(std::string_view msg) : msg_(msg)
 {
 }
 

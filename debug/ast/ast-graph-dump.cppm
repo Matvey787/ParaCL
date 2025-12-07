@@ -19,30 +19,31 @@ namespace ParaCL
 void link_nodes(std::ostream &out, const void *lhs, const void *rhs);
 void condition_link_type(std::ostream &out, const void *lhs, const void *rhs);
 void body_link_type(std::ostream &out, const void *lhs, const void *rhs);
-void create_node(std::ostream &out, const void *node, const std::string &label, const std::string &more_settings = "");
+void create_node(std::ostream &out, const void *node, std::string_view label, std::string_view more_settings = "");
 void dump_body(std::ostream &out, const void *node, const BlockStmt *body);
 
-void dumpExpr(std::ostream &out, const ParaCL::Expression *expr);
-void dumpStmt(std::ostream &out, const ParaCL::Statement *stmt);
-void dumpBlock(std::ostream &out, const ParaCL::BlockStmt *block);
+void dump(std::ostream &out, const ParaCL::Expression *expr);
+void dump(std::ostream &out, const ParaCL::Statement *stmt);
+void dump(std::ostream &out, const ParaCL::BlockStmt *block);
 
-export void ast_dump(const ProgramAST &progAST, const std::string &filename)
+export void ast_dump(const ProgramAST &progAST, std::string_view filename)
 {
-    std::ofstream out(filename);
+    const std::string file(filename);
+
+    std::ofstream out(file);
     if (out.fail())
-        throw std::runtime_error("failed open " + filename);
+        throw std::runtime_error("failed open " + file);
 
     out << "digraph AST {\n";
     out << "  node [shape=box];\n";
 
     const void *rootId = (void *)&progAST; /* just for same code style */
 
-    std::string label = "Program";
-    create_node(out, rootId, label);
+    create_node(out, rootId, "Program");
 
     for (auto &stmt : progAST.statements)
     {
-        dumpStmt(out, stmt.get());
+        dump(out, stmt.get());
         link_nodes(out, rootId, stmt.get());
     }
 
@@ -50,54 +51,54 @@ export void ast_dump(const ProgramAST &progAST, const std::string &filename)
     out.close();
 
     std::filesystem::create_directories("../ast-dump");
-    std::string dot_cmd = "dot -Tsvg " + filename + " -o ../ast-dump/ast.svg";
+    std::string dot_cmd = "dot -Tsvg " + file + " -o ../ast-dump/ast.svg";
     std::system(dot_cmd.c_str());
 }
 
-void dumpExpr(std::ostream &out, const Expression *expr)
+void dump(std::ostream &out, const Expression *expr)
 {
     if (auto bin = dynamic_cast<const BinExpr *>(expr))
     {
         std::string label;
-        switch (bin->op)
+        switch (bin->op())
         {
-        case token_t::ADD:
+        case binary_op_t::ADD:
             label = "+";
             break;
-        case token_t::SUB:
+        case binary_op_t::SUB:
             label = "-";
             break;
-        case token_t::MUL:
+        case binary_op_t::MUL:
             label = "*";
             break;
-        case token_t::DIV:
+        case binary_op_t::DIV:
             label = "/";
             break;
-        case token_t::REM:
+        case binary_op_t::REM:
             label = "%";
             break;
-        case token_t::ISAB:
+        case binary_op_t::ISAB:
             label = ">";
             break;
-        case token_t::ISABE:
+        case binary_op_t::ISABE:
             label = ">=";
             break;
-        case token_t::ISLS:
+        case binary_op_t::ISLS:
             label = "<";
             break;
-        case token_t::ISLSE:
+        case binary_op_t::ISLSE:
             label = "<=";
             break;
-        case token_t::ISEQ:
+        case binary_op_t::ISEQ:
             label = "==";
             break;
-        case token_t::ISNE:
+        case binary_op_t::ISNE:
             label = "!=";
             break;
-        case token_t::AND:
+        case binary_op_t::AND:
             label = "&&";
             break;
-        case token_t::OR:
+        case binary_op_t::OR:
             label = "||";
             break;
 
@@ -106,32 +107,32 @@ void dumpExpr(std::ostream &out, const Expression *expr)
         }
         create_node(out, expr, label, "style=filled, fillcolor=\"lightyellow\"");
 
-        dumpExpr(out, bin->left.get());
+        dump(out, bin->left.get());
         link_nodes(out, expr, bin->left.get());
 
-        dumpExpr(out, bin->right.get());
+        dump(out, bin->right.get());
         link_nodes(out, expr, bin->right.get());
         return;
     }
     else if (auto un = dynamic_cast<const UnExpr *>(expr))
     {
         std::string label;
-        switch (un->op)
+        switch (un->op())
         {
-        case token_t::SUB:
+        case unary_op_t::MINUS:
             label += "-";
             break;
-        case token_t::ADD:
+        case unary_op_t::PLUS:
             label += "+";
             break;
-        case token_t::NOT:
+        case unary_op_t::NOT:
             label += "not";
             break;
         default:
             builtin_unreachable_wrapper("here we parse onlu unary operation");
         }
         create_node(out, expr, label);
-        dumpExpr(out, un->operand.get());
+        dump(out, un->operand.get());
         link_nodes(out, expr, un->operand.get());
         return;
     }
@@ -158,7 +159,7 @@ void dumpExpr(std::ostream &out, const Expression *expr)
         std::string label = "Assign expr: " + assign->name;
         create_node(out, expr, label, "style=filled, fillcolor=\"lightblue\"");
 
-        dumpExpr(out, assign->value.get());
+        dump(out, assign->value.get());
         link_nodes(out, expr, assign->value.get());
         return;
     }
@@ -166,28 +167,28 @@ void dumpExpr(std::ostream &out, const Expression *expr)
     else if (auto combined_assign = dynamic_cast<const CombinedAssingExpr *>(expr))
     {
         std::string label = combined_assign->name + " ";
-        switch (combined_assign->op)
+        switch (combined_assign->op())
         {
-        case token_t::ADDASGN:
+        case combined_assign_t::ADDASGN:
             label += "+= :";
             break;
-        case token_t::SUBASGN:
+        case combined_assign_t::SUBASGN:
             label += "-= :";
             break;
-        case token_t::MULASGN:
+        case combined_assign_t::MULASGN:
             label += "*= :";
             break;
-        case token_t::DIVASGN:
+        case combined_assign_t::DIVASGN:
             label += "/= :";
             break;
-        case token_t::REMASGN:
+        case combined_assign_t::REMASGN:
             label += "%= :";
             break;
         default:
             builtin_unreachable_wrapper("here we parse only combined assign");
         }
         create_node(out, expr, label);
-        dumpExpr(out, combined_assign->value.get());
+        dump(out, combined_assign->value.get());
         link_nodes(out, expr, combined_assign->value.get());
         return;
     }
@@ -200,35 +201,35 @@ void dumpExpr(std::ostream &out, const Expression *expr)
     builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-void dumpStmt(std::ostream &out, const Statement *stmt)
+void dump(std::ostream &out, const Statement *stmt)
 {
     if (auto assign = dynamic_cast<const AssignStmt *>(stmt))
     {
         std::string label = "Assign: " + assign->name + " ";
         create_node(out, stmt, label, "style=filled, fillcolor=\"lightblue\"");
 
-        dumpExpr(out, assign->value.get());
+        dump(out, assign->value.get());
         link_nodes(out, stmt, assign->value.get());
         return;
     }
     else if (auto combined_assign = dynamic_cast<const CombinedAssingStmt *>(stmt))
     {
         std::string label = combined_assign->name;
-        switch (combined_assign->op)
+        switch (combined_assign->op())
         {
-        case token_t::ADDASGN:
+        case combined_assign_t::ADDASGN:
             label += " += :";
             break;
-        case token_t::SUBASGN:
+        case combined_assign_t::SUBASGN:
             label += " -= :";
             break;
-        case token_t::MULASGN:
+        case combined_assign_t::MULASGN:
             label += " *= :";
             break;
-        case token_t::DIVASGN:
+        case combined_assign_t::DIVASGN:
             label += " /= :";
             break;
-        case token_t::REMASGN:
+        case combined_assign_t::REMASGN:
             label += " %= :";
             break;
         default:
@@ -237,7 +238,7 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
 
         create_node(out, stmt, label, "style=filled, fillcolor=\"lightblue\"");
 
-        dumpExpr(out, combined_assign->value.get());
+        dump(out, combined_assign->value.get());
         link_nodes(out, stmt, combined_assign->value.get());
         return;
     }
@@ -248,7 +249,7 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
 
         for (auto &arg : print->args)
         {
-            dumpExpr(out, arg.get());
+            dump(out, arg.get());
             link_nodes(out, print, arg.get());
             continue;
         }
@@ -259,7 +260,7 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
         std::string label = "While";
         create_node(out, stmt, label);
 
-        dumpExpr(out, whileStmt->condition.get());
+        dump(out, whileStmt->condition.get());
         condition_link_type(out, stmt, whileStmt->condition.get());
         dump_body(out, whileStmt, whileStmt->body.get());
 
@@ -267,7 +268,7 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
     }
     else if (auto block = dynamic_cast<const BlockStmt *>(stmt))
     {
-        return dumpBlock(out, block);
+        return dump(out, block);
     }
     else if (auto condition = dynamic_cast<const ConditionStatement *>(stmt))
     {
@@ -277,7 +278,7 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
         msg_assert(if_stmt, "in condition we always expect if");
         create_node(out, if_stmt, "IF");
         link_nodes(out, stmt, if_stmt);
-        dumpExpr(out, if_stmt->condition.get());
+        dump(out, if_stmt->condition.get());
         condition_link_type(out, if_stmt, if_stmt->condition.get());
         dump_body(out, if_stmt, if_stmt->body.get());
 
@@ -285,7 +286,7 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
         {
             create_node(out, elif_stmt.get(), "ELSE IF");
             link_nodes(out, stmt, elif_stmt.get());
-            dumpExpr(out, elif_stmt->condition.get());
+            dump(out, elif_stmt->condition.get());
             condition_link_type(out, elif_stmt.get(), elif_stmt->condition.get());
             dump_body(out, elif_stmt.get(), elif_stmt->body.get());
         }
@@ -303,14 +304,14 @@ void dumpStmt(std::ostream &out, const Statement *stmt)
     builtin_unreachable_wrapper("we must return in some else-if");
 }
 
-void dumpBlock(std::ostream &out, const ParaCL::BlockStmt *block)
+void dump(std::ostream &out, const ParaCL::BlockStmt *block)
 {
     std::string label = "Block";
     create_node(out, block, label);
 
     for (auto &s : block->statements)
     {
-        dumpStmt(out, s.get());
+        dump(out, s.get());
         link_nodes(out, block, s.get());
     }
 }
@@ -320,7 +321,7 @@ void link_nodes(std::ostream &out, const void *lhs, const void *rhs)
     out << "  \"" << lhs << "\" -> \"" << rhs << "\";\n";
 }
 
-void create_node(std::ostream &out, const void *node, const std::string &label, const std::string &more_settings)
+void create_node(std::ostream &out, const void *node, std::string_view label, std::string_view more_settings)
 {
     out << "  \"" << node << "\" [label=\"" << label << "\"";
 
@@ -346,7 +347,7 @@ void body_link_type(std::ostream &out, const void *lhs, const void *rhs)
 void dump_body(std::ostream &out, const void *node, const BlockStmt *body)
 {
 
-    dumpBlock(out, body);
+    dump(out, body);
     body_link_type(out, node, body);
 }
 

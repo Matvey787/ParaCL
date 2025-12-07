@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 project(paraCL
     LANGUAGES C CXX
-    VERSION 1.6
+    VERSION 2.0.1
 )
 
 # =================================================================================================
@@ -24,7 +24,7 @@ endif()
 
 option(BUILD_TESTING "Build tests" OFF)
 option(LOGGER "logger" OFF)
-option(GRAPHVIZ "Enable graphviz visualization (graphviz)" OFF)
+option(GRAPHVIZ "Enable graphviz visualization" OFF)
 
 string(TIMESTAMP CURRENT_TIME "%Y-%m-%d %H:%M:%S")
 
@@ -55,6 +55,8 @@ set(CMAKE_DEPS_DIR ${CMAKE_SETTINGS_DIR}/dep)
 
 include(${CMAKE_DEPS_DIR}/check-flex.cmake)
 include(${CMAKE_DEPS_DIR}/check-bison.cmake)
+include(${CMAKE_DEPS_DIR}/check-optarg.cmake)
+
 
 # =================================================================================================
 # crete paracl info library
@@ -242,7 +244,7 @@ add_library(${PARACL_INTERPRETOR_LIB})
 set(PARACL_INTERPRETOR_SRC_DIR ${BACKEND_SRC_DIR}/interpreter)
 set(PARACL_INTERPRETOR_SRC
     ${PARACL_INTERPRETOR_SRC_DIR}/interpreter.cppm
-    ${BACKEND_SRC_DIR}/name_table/name_table.cppm
+    ${PARACL_INTERPRETOR_SRC_DIR}/name_table.cppm
 )
 
 target_sources(${PARACL_INTERPRETOR_LIB}
@@ -279,7 +281,8 @@ add_library(${PARACL_LLVM_TRANSLATOR_LIB})
 set(PARACL_LLVM_TRANSLATOR_SRC_DIR ${COMPILER_SRC_DIR}/llvm_ir_translator)
 set(PARACL_LLVM_TRANSLATOR_SRC
     ${PARACL_LLVM_TRANSLATOR_SRC_DIR}/translate_to_llvm_ir.cppm
-    ${BACKEND_SRC_DIR}/name_table/name_table.cppm
+    ${PARACL_LLVM_TRANSLATOR_SRC_DIR}/libc_stadart_functions.cppm
+    ${PARACL_LLVM_TRANSLATOR_SRC_DIR}/name_table.cppm
 )
 
 target_sources(${PARACL_LLVM_TRANSLATOR_LIB}
@@ -435,11 +438,23 @@ if (BUILD_TESTING)
     include(${CMAKE_E2E_TESTS_SETTING_DIR}/e2e-paracl-python-script.cmake)
     include(${CMAKE_E2E_TESTS_SETTING_DIR}/add-e2e-to-target-function.cmake)
 
-    target_e2e_test(${CMAKE_BINARY_DIR}/${PARACL_EXE}
-        ${PYTHON_RUN_TEST_SCRIPT}
+    target_e2e_test(${PARACL_EXE}
+        ${E2E_OUTPUT_SCRIPT}
         ${PARACL_E2E_DAT_DIR}
         ${PARACL_E2E_ANS_DIR}
     )
+
+    target_e2e_test(${PARACL_EXE}
+        ${E2E_COMPILE_OUTPUT_SCRIPT}
+        ${PARACL_E2E_DAT_DIR}
+        ${PARACL_E2E_ANS_DIR}
+    )
+
+    set(CMAKE_UNIT_TESTS_SETTING_DIR ${CMAKE_SETTINGS_DIR}/tests/unit)
+
+    include(${CMAKE_UNIT_TESTS_SETTING_DIR}/add-all-unit-tests.cmake)
+
+
 endif()
 
 # =================================================================================================

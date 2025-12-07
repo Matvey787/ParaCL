@@ -37,7 +37,7 @@ extern std::string current_var_value;
 
 ParaCL::ProgramAST program;
 
-ParaCL::NameTable name_table;
+ParaCL::ParserNameTable name_table;
 
 int yylex(yy::parser::semantic_type* yylval, yy::parser::location_type* yylloc);
 } /* %code */
@@ -165,7 +165,7 @@ combined_assignment:
         }
 
         $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
-            ParaCL::token_t::ADDASGN,
+            ParaCL::combined_assign_t::ADDASGN,
             $1,
             std::move($3)
         );
@@ -180,7 +180,7 @@ combined_assignment:
         }
 
         $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
-            ParaCL::token_t::SUBASGN,
+            ParaCL::combined_assign_t::SUBASGN,
             $1,
             std::move($3)
         );
@@ -195,7 +195,7 @@ combined_assignment:
         }
     
         $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
-            ParaCL::token_t::MULASGN,
+            ParaCL::combined_assign_t::MULASGN,
             $1,
             std::move($3)
         );
@@ -210,7 +210,7 @@ combined_assignment:
         }
 
         $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
-            ParaCL::token_t::DIVASGN,
+            ParaCL::combined_assign_t::DIVASGN,
             $1,
             std::move($3)
         );
@@ -460,7 +460,7 @@ assignment_expression:
         }
 
         $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
-            ParaCL::token_t::ADDASGN,
+            ParaCL::combined_assign_t::ADDASGN,
             $1,
             std::move($3)
         );
@@ -475,7 +475,7 @@ assignment_expression:
         }
 
         $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
-            ParaCL::token_t::SUBASGN,
+            ParaCL::combined_assign_t::SUBASGN,
             $1,
             std::move($3)
         );
@@ -490,7 +490,7 @@ assignment_expression:
         }
 
         $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
-            ParaCL::token_t::MULASGN,
+            ParaCL::combined_assign_t::MULASGN,
             $1,
             std::move($3)
         );
@@ -505,7 +505,7 @@ assignment_expression:
         }
 
         $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
-            ParaCL::token_t::DIVASGN,
+            ParaCL::combined_assign_t::DIVASGN,
             $1,
             std::move($3)
         );
@@ -545,7 +545,7 @@ logical_or_expression:
     | logical_or_expression OR logical_and_expression %prec OR {
         LOGINFO("paracl: parser: rule: logical_or_expression -> logical_or_expression OR logical_and_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::OR,
+            ParaCL::binary_op_t::OR,
             std::move($1),
             std::move($3)
         );
@@ -565,7 +565,7 @@ logical_and_expression:
     | logical_and_expression AND equality_expression %prec AND {
         LOGINFO("paracl: parser: rule: logical_and_expression -> logical_and_expression AND equality_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::AND,
+            ParaCL::binary_op_t::AND,
             std::move($1),
             std::move($3)
         );
@@ -585,7 +585,7 @@ equality_expression:
     | equality_expression ISEQ relational_expression %prec ISEQ {
         LOGINFO("paracl: parser: rule: equality_expression -> equality_expression ISEQ relational_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::ISEQ,
+            ParaCL::binary_op_t::ISEQ,
             std::move($1),
             std::move($3)
         );
@@ -593,7 +593,7 @@ equality_expression:
     | equality_expression ISNE relational_expression %prec ISNE {
         LOGINFO("paracl: parser: rule: equality_expression -> equality_expression ISNE relational_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::ISNE,
+            ParaCL::binary_op_t::ISNE,
             std::move($1),
             std::move($3)
         );
@@ -618,7 +618,7 @@ relational_expression:
     | relational_expression ISAB additive_expression %prec ISAB {
         LOGINFO("paracl: parser: rule: relational_expression -> relational_expression ISAB additive_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::ISAB,
+            ParaCL::binary_op_t::ISAB,
             std::move($1),
             std::move($3)
         );
@@ -626,7 +626,7 @@ relational_expression:
     | relational_expression ISABE additive_expression %prec ISABE {
         LOGINFO("paracl: parser: rule: relational_expression -> relational_expression ISABE additive_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::ISABE,
+            ParaCL::binary_op_t::ISABE,
             std::move($1),
             std::move($3)
         );
@@ -634,7 +634,7 @@ relational_expression:
     | relational_expression ISLS additive_expression %prec ISLS {
         LOGINFO("paracl: parser: rule: relational_expression -> relational_expression ISLS additive_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::ISLS,
+            ParaCL::binary_op_t::ISLS,
             std::move($1),
             std::move($3)
         );
@@ -642,7 +642,7 @@ relational_expression:
     | relational_expression ISLSE additive_expression %prec ISLSE {
         LOGINFO("paracl: parser: rule: relational_expression -> relational_expression ISLSE additive_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::ISLSE,
+            ParaCL::binary_op_t::ISLSE,
             std::move($1),
             std::move($3)
         );
@@ -677,7 +677,7 @@ additive_expression:
     | additive_expression ADD multiplicative_expression %prec ADD { 
         LOGINFO("paracl: parser: rule: additive_expression -> additive_expression ADD multiplicative_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::ADD,
+            ParaCL::binary_op_t::ADD,
             std::move($1),
             std::move($3)
         );
@@ -685,7 +685,7 @@ additive_expression:
     | additive_expression SUB multiplicative_expression %prec SUB { 
         LOGINFO("paracl: parser: rule: additive_expression -> additive_expression SUB multiplicative_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::SUB,
+            ParaCL::binary_op_t::SUB,
             std::move($1),
             std::move($3)
         );
@@ -710,7 +710,7 @@ multiplicative_expression:
     | multiplicative_expression MUL unary_expression %prec MUL { 
         LOGINFO("paracl: parser: rule: multiplicative_expression -> multiplicative_expression MUL unary_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::MUL, 
+            ParaCL::binary_op_t::MUL, 
             std::move($1),
             std::move($3)
         );
@@ -718,7 +718,7 @@ multiplicative_expression:
     | multiplicative_expression DIV unary_expression %prec DIV {
         LOGINFO("paracl: parser: rule: multiplicative_expression -> multiplicative_expression DIV unary_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::DIV, 
+            ParaCL::binary_op_t::DIV, 
             std::move($1),
             std::move($3)
         );
@@ -726,7 +726,7 @@ multiplicative_expression:
     | multiplicative_expression REM unary_expression %prec REM {
         LOGINFO("paracl: parser: rule: multiplicative_expression -> multiplicative_expression REM unary_expression");
         $$ = std::make_unique<ParaCL::BinExpr>(
-            ParaCL::token_t::REM,
+            ParaCL::binary_op_t::REM,
             std::move($1),
             std::move($3)
         );
@@ -756,14 +756,14 @@ unary_expression:
     | SUB unary_expression %prec NEG {
         LOGINFO("paracl: parser: rule: unary_expression -> SUB unary_expression");
         $$ = std::make_unique<ParaCL::UnExpr>(
-            ParaCL::token_t::SUB,
+            ParaCL::unary_op_t::MINUS,
             std::move($2)
         );
     }
     | NOT unary_expression %prec NOT {
         LOGINFO("paracl: parser: rule: unary_expression -> NOT unary_expression");
         $$ = std::make_unique<ParaCL::UnExpr>(
-            ParaCL::token_t::NOT,
+            ParaCL::unary_op_t::NOT,
             std::move($2)
         );
     }
@@ -801,7 +801,6 @@ factor:
             ErrorHandler::throwError(@1, "using undeclareted variable: " + ($1));
             YYABORT;
         }
-    
         $$ = std::make_unique<ParaCL::VarExpr>(std::move($1));
     }
     | LCIB expression RCIB { 

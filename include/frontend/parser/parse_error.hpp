@@ -16,6 +16,6 @@ struct ErrorParseOptions
     bool show_posible_token : 1 = false;
 };
 
-void throwError(const yy::location &loc, const std::string &msg, const ErrorParseOptions &options = {});
+void throwError(const yy::location &loc, std::string_view msg, const ErrorParseOptions &options = {});
 
 } /* namespace ErrorHandler */

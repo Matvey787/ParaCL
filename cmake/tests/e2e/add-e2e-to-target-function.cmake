@@ -10,30 +10,27 @@ function(target_e2e_test test_target run_script test_dir ans_dir)
 
     # check that at least 1 test was found
     if(${num_tests} EQUAL 0)
-        message(WARNING "No .cl files found in ${test_dir}")
+        message(WARNING "No dat files found in ${test_dir}")
         return()
     endif()
 
+    set(test_it 0)
+
     # add tests
-    foreach(test_file ${test_files})
-        # get name of answer file
-        get_filename_component(test_file_name "${test_file}" NAME_WE) # NAME_WE = without extension
-        set(answer_file "${ans_dir}/${test_file_name}.ans")
+    while (test_it LESS num_tests)
+        math(EXPR test_it "${test_it} + 1")
 
-        # create test_name
-        set(test_name ${test_target}_${test_file_name})
-
-        set(TEST_COMMAND ${run_script} ${test_target} ${test_file} ${answer_file})
+        set(TEST_COMMAND ${run_script} ${test_it})
 
         # add test
         add_test(
-            NAME ${test_name}
+            NAME test_${test_target}_${run_script}_${test_it}
             # execute test
             COMMAND ${TEST_COMMAND}
             # working directory - dircetory with executable file
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         )
-    endforeach()
+    endwhile()
 endfunction(target_e2e_test)
 
 # =================================================================================================

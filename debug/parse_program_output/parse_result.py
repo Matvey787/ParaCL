@@ -75,14 +75,6 @@ def main():
         color_print(Colors.RED, "\n\nTEST FAILED")
         return 1
 
-        color_print(Colors.RED, f"Error: Program failed with exit code {result.returncode}")
-        print(f"stderr: {result.stderr}")
-        print(f"stdout: {result.stdout}")
-
-        color_print(Colors.RED, "\n\nTEST FAILED")
-
-        return 1
-
     if not expect_death and result.returncode != 0:
         color_print(Colors.RED, f"Error: Program failed with exit code {result.returncode}\nBut expect good work.")
         print(f"stderr: {result.stderr}")
@@ -96,8 +88,6 @@ def main():
 
     expected_numbers = extract_numbers(answer_content)        
     program_output = extract_numbers(program_stdout)
-
-
 
     if program_stderr:
         print(f"{Colors.YELLOW}Program stderr:{Colors.RESET}")
