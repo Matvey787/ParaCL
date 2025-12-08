@@ -5,7 +5,7 @@
 %define parse.error detailed
 
 %define api.namespace {yy}
-%define api.parser.class {parser}
+%define api.parser.class {parser
 
 %code requires {
 
@@ -81,7 +81,7 @@ int yylex(yy::parser::semantic_type* yylval, yy::parser::location_type* yylloc);
 program:
     create_global_scope statements leave_global_scope {
         LOGINFO("paracl: parser: rule: program -> statements");
-        program.statements = std::move($2);
+        program = ParaCL::ProgramAST(std::move($2));
     }
     ;
 
@@ -164,7 +164,7 @@ combined_assignment:
             YYABORT;
         }
 
-        $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
+        $$ = std::make_unique<ParaCL::CombinedAssignStmt>(
             ParaCL::combined_assign_t::ADDASGN,
             $1,
             std::move($3)
@@ -179,7 +179,7 @@ combined_assignment:
             YYABORT;
         }
 
-        $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
+        $$ = std::make_unique<ParaCL::CombinedAssignStmt>(
             ParaCL::combined_assign_t::SUBASGN,
             $1,
             std::move($3)
@@ -194,7 +194,7 @@ combined_assignment:
             YYABORT;
         }
     
-        $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
+        $$ = std::make_unique<ParaCL::CombinedAssignStmt>(
             ParaCL::combined_assign_t::MULASGN,
             $1,
             std::move($3)
@@ -209,7 +209,7 @@ combined_assignment:
             YYABORT;
         }
 
-        $$ = std::make_unique<ParaCL::CombinedAssingStmt>(
+        $$ = std::make_unique<ParaCL::CombinedAssignStmt>(
             ParaCL::combined_assign_t::DIVASGN,
             $1,
             std::move($3)
@@ -320,10 +320,13 @@ condition_statement:
             std::move($1)
         );
 
-        for (auto&& elif_stmt: $2)
-            cond_stmt->add_elif_condition(std::move(elif_stmt));
+        for (auto&& elif_stmt: $2) {
+            cond_stmt->add_elif(std::move(elif_stmt));
+        }
 
-        if ($3) cond_stmt->add_else_condition(std::move($3));
+        if ($3) {
+            cond_stmt->set_else_stmt(std::move($3));
+        }
         
         $$ = std::move(cond_stmt);
     }
@@ -459,7 +462,7 @@ assignment_expression:
             YYABORT;
         }
 
-        $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
+        $$ = std::make_unique<ParaCL::CombinedAssignExpr>(
             ParaCL::combined_assign_t::ADDASGN,
             $1,
             std::move($3)
@@ -474,7 +477,7 @@ assignment_expression:
             YYABORT;
         }
 
-        $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
+        $$ = std::make_unique<ParaCL::CombinedAssignExpr>(
             ParaCL::combined_assign_t::SUBASGN,
             $1,
             std::move($3)
@@ -489,7 +492,7 @@ assignment_expression:
             YYABORT;
         }
 
-        $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
+        $$ = std::make_unique<ParaCL::CombinedAssignExpr>(
             ParaCL::combined_assign_t::MULASGN,
             $1,
             std::move($3)
@@ -504,7 +507,7 @@ assignment_expression:
             YYABORT;
         }
 
-        $$ = std::make_unique<ParaCL::CombinedAssingExpr>(
+        $$ = std::make_unique<ParaCL::CombinedAssignExpr>(
             ParaCL::combined_assign_t::DIVASGN,
             $1,
             std::move($3)
