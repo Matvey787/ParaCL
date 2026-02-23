@@ -26,7 +26,6 @@ print a;
 a = 0 or 0;
 print a;
 
-/* TODO: оператор not */
 /*
 a = not 1;
 print a;
@@ -34,3 +33,4 @@ print a;
 a = not 0;
 print 0;
 */
+

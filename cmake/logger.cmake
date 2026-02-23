@@ -34,9 +34,6 @@ target_compile_definitions(${SPDLOG_INIT_LIB}
 
 endif(LOGGER)
 
-
-
-
 function(target_add_logger target)
     target_include_directories(${target}
         PRIVATE
@@ -57,6 +54,7 @@ function(target_add_logger target)
     target_include_directories(${target}
         PRIVATE
             ${DEBUG_DIR}/
+            ${INC_DIR}/
     )
 
     target_compile_definitions(${target}

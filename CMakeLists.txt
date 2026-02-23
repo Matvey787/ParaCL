@@ -1,7 +1,8 @@
+# 3.28 need for support of C++ modules (now (9 Janurary 2026) it`s does`t work for Unix Makefiles)
 cmake_minimum_required(VERSION 3.28)
-project(paraCL
+project(ParaCL
     LANGUAGES C CXX
-    VERSION 2.0.1
+    VERSION 3.0.0
 )
 
 # =================================================================================================
@@ -15,11 +16,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # in default we build project in release
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
-endif()
-
-# why not?
-if (NOT CMAKE_EXPORT_COMPILE_COMMANDS)
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
 option(BUILD_TESTING "Build tests" OFF)
@@ -41,6 +37,8 @@ set(FRONTEND_INC_DIR ${INC_DIR}/frontend)
 
 set(DEBUG_DIR ${PROJECT_SOURCE_DIR}/debug)
 
+set(CODEGEN_DIR ${INC_DIR}/codegen)
+
 # =================================================================================================
 
 set(CMAKE_SETTINGS_DIR ${PROJECT_SOURCE_DIR}/cmake)
@@ -56,7 +54,7 @@ set(CMAKE_DEPS_DIR ${CMAKE_SETTINGS_DIR}/dep)
 include(${CMAKE_DEPS_DIR}/check-flex.cmake)
 include(${CMAKE_DEPS_DIR}/check-bison.cmake)
 include(${CMAKE_DEPS_DIR}/check-optarg.cmake)
-
+include(${CMAKE_DEPS_DIR}/check-llvm.cmake)
 
 # =================================================================================================
 # crete paracl info library
@@ -97,6 +95,140 @@ target_sources(${PARACL_INFO_LIB}
 )
 
 target_hard_debug_options(${PARACL_INFO_LIB})
+
+# =================================================================================================
+# crete stacktrace showing library
+
+set(STACKTRACE_DIR ${DEBUG_DIR}/stacktrace)
+set(STACKTRACE_SRC
+    ${STACKTRACE_DIR}/exceptions-stacktrace.cppm
+)
+
+set(STACKTRACE_LIB stacktrace)
+add_library(${STACKTRACE_LIB})
+
+target_sources(${STACKTRACE_LIB}
+    PUBLIC
+        FILE_SET
+            CXX_MODULES
+        TYPE
+            CXX_MODULES
+        FILES
+            ${STACKTRACE_SRC}
+)
+
+target_hard_debug_options(${STACKTRACE_LIB})
+
+function(target_stacktrace target)
+    target_link_libraries(${target} PRIVATE ${STACKTRACE_LIB})
+endfunction(target_stacktrace target)
+
+# =================================================================================================
+# set some options variables
+
+set(OPTIONS_SRC_DIR ${SRC_DIR}/options)
+
+# =================================================================================================
+# add options parser library
+
+set(OPTIONS_LIB options)
+add_library(${OPTIONS_LIB})
+
+set(OPTIONS_SRC
+    ${OPTIONS_SRC_DIR}/options.cppm
+)
+
+target_sources(${OPTIONS_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${OPTIONS_SRC}   
+)
+
+target_include_directories(${OPTIONS_LIB}
+    PRIVATE
+        ${INC_DIR}
+)
+
+target_link_libraries(${OPTIONS_LIB}
+    PRIVATE
+        ${PARACL_INFO_LIB}    
+)
+
+target_hard_debug_options(${OPTIONS_LIB})
+target_add_logger(${OPTIONS_LIB})
+target_compile_definitions(${OPTIONS_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
+
+# =================================================================================================
+# add interpreter options library
+
+set(INTERPRETER_OPTIONS_LIB interpreter_options)
+add_library(${INTERPRETER_OPTIONS_LIB})
+
+set(INTERPRETER_OPTIONS_SRC_DIR ${OPTIONS_SRC_DIR})
+set(INTERPRETER_OPTIONS_SRC
+    ${INTERPRETER_OPTIONS_SRC_DIR}/interpreter_options.cppm
+)
+
+target_sources(${INTERPRETER_OPTIONS_LIB}
+    PUBLIC
+        FILE_SET
+            CXX_MODULES
+        TYPE
+            CXX_MODULES
+        FILES
+            ${INTERPRETER_OPTIONS_SRC}
+)
+
+target_include_directories(${INTERPRETER_OPTIONS_LIB}
+    PRIVATE
+        ${INC_DIR}
+)
+
+target_link_libraries(${INTERPRETER_OPTIONS_LIB}
+    PUBLIC
+        ${OPTIONS_LIB}
+)
+
+target_hard_debug_options(${INTERPRETER_OPTIONS_LIB})
+target_add_logger(${INTERPRETER_OPTIONS_LIB})
+target_compile_definitions(${OPTIONS_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
+
+# =================================================================================================
+# add compiler options library
+
+set(COMPILER_OPTIONS_LIB compiler_options)
+add_library(${COMPILER_OPTIONS_LIB})
+
+set(COMPILER_OPTIONS_SRC_DIR ${OPTIONS_SRC_DIR})
+set(COMPILER_OPTIONS_SRC
+    ${COMPILER_OPTIONS_SRC_DIR}/compiler_options.cppm
+)
+
+target_sources(${COMPILER_OPTIONS_LIB}
+    PUBLIC
+        FILE_SET
+            CXX_MODULES
+        TYPE
+            CXX_MODULES
+        FILES
+            ${COMPILER_OPTIONS_SRC}
+)
+
+target_include_directories(${COMPILER_OPTIONS_LIB}
+    PRIVATE
+        ${INC_DIR}
+)
+
+target_link_libraries(${COMPILER_OPTIONS_LIB}
+    PUBLIC
+        ${OPTIONS_LIB}
+)
+
+target_hard_debug_options(${COMPILER_OPTIONS_LIB})
+target_add_logger(${COMPILER_OPTIONS_LIB})
+target_compile_definitions(${OPTIONS_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
 
 # =================================================================================================
 # set some bison and flex variables
@@ -195,105 +327,289 @@ target_hard_debug_sanitizers(${LEXER_LIB})
 target_add_logger(${LEXER_LIB})
 
 # =================================================================================================
-# add options parser library
+# node lib (ast = abstract syntax tree)
 
-set(OPTIONS_PARSER_LIB options_parser)
-add_library(${OPTIONS_PARSER_LIB})
+set(NODES_LIB nodes)
+add_library(${NODES_LIB})
 
-set(OPTIONS_PARSER_SRC_DIR ${SRC_DIR}/options_parser)
-set(OPTIONS_PARSER_SRC
-    ${OPTIONS_PARSER_SRC_DIR}/options_parser.cppm
+set(NODES_SRC_DIR ${SRC_DIR}/ast)
+set(NODES_SRC
+    ${NODES_SRC_DIR}/nodes.cppm
+    ${NODES_SRC_DIR}/node-type-erasure.cppm
 )
 
-target_sources(${OPTIONS_PARSER_LIB}
-    PUBLIC
-        FILE_SET
-            CXX_MODULES
-        TYPE
-            CXX_MODULES
-        FILES
-            ${OPTIONS_PARSER_SRC}   
-)
-
-target_include_directories(${OPTIONS_PARSER_LIB}
-    PRIVATE
-        ${INC_DIR}
-)
-
-target_link_libraries(${OPTIONS_PARSER_LIB}
-    PRIVATE
-        ${PARACL_EXTENSION_LIB}
-        ${PARACL_INFO_LIB}
-)
-
-target_compile_definitions(${OPTIONS_PARSER_LIB}
-    PRIVATE
-        PARACL_VERSION="${PROJECT_VERSION}"
-)
-
-target_hard_debug_options(${OPTIONS_PARSER_LIB})
-target_add_logger(${OPTIONS_PARSER_LIB})
-target_compile_definitions(${OPTIONS_PARSER_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
-
-# =================================================================================================
-# paracl intepretor
-
-set(PARACL_INTERPRETOR_LIB interpreter)
-add_library(${PARACL_INTERPRETOR_LIB})
-
-set(PARACL_INTERPRETOR_SRC_DIR ${BACKEND_SRC_DIR}/interpreter)
-set(PARACL_INTERPRETOR_SRC
-    ${PARACL_INTERPRETOR_SRC_DIR}/interpreter.cppm
-    ${PARACL_INTERPRETOR_SRC_DIR}/name_table.cppm
-)
-
-target_sources(${PARACL_INTERPRETOR_LIB}
+target_sources(${NODES_LIB}
     PUBLIC
         FILE_SET CXX_MODULES
         TYPE CXX_MODULES
         FILES
-            ${PARACL_INTERPRETOR_SRC}
+            ${NODES_SRC}
 )
 
-target_include_directories(${PARACL_INTERPRETOR_LIB}
+target_hard_debug_options(${NODES_LIB})
+target_hard_debug_sanitizers(${NODES_LIB})
+target_add_logger(${NODES_LIB})
+
+# =================================================================================================
+# ast writer (ast = abstract syntax tree)
+
+set(AST_WRITER_LIB ast-writer)
+add_library(${AST_WRITER_LIB})
+
+set(AST_WRITER_SRC_DIR ${SRC_DIR}/ast)
+set(AST_WRITER_SRC
+    ${AST_WRITER_SRC_DIR}/write.cppm
+)
+
+target_sources(${AST_WRITER_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${AST_WRITER_SRC}
+)
+
+target_link_libraries(${AST_WRITER_LIB}
+    PUBLIC
+        ${NODES_LIB}
+)
+
+
+target_include_directories(${AST_WRITER_LIB}
+    PRIVATE
+        ${AST_WRITER_SRC_DIR}
+)
+
+target_hard_debug_options(${AST_WRITER_LIB})
+target_hard_debug_sanitizers(${AST_WRITER_LIB})
+target_add_logger(${AST_WRITER_LIB})
+
+# =================================================================================================
+# ast lib (ast = abstract syntax tree)
+
+set(AST_LIB ast)
+add_library(${AST_LIB})
+
+set(AST_SRC_DIR ${SRC_DIR}/ast)
+set(AST_SRC
+    ${AST_SRC_DIR}/ast.cppm
+)
+
+target_sources(${AST_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${AST_SRC}
+)
+
+target_link_libraries(${AST_LIB}
+    PUBLIC
+        ${NODES_LIB}
+        ${AST_WRITER_LIB}
+)
+
+target_hard_debug_options(${AST_LIB})
+target_hard_debug_sanitizers(${AST_LIB})
+target_add_logger(${AST_LIB})
+
+# =================================================================================================
+
+
+add_executable(ast-test
+${AST_SRC_DIR}/test.cpp    
+)
+
+target_link_libraries(ast-test
+PRIVATE
+    ${AST_LIB}
+    # ${AST_WRITER_LIB}
+)
+
+# =================================================================================================
+# ast builder lib
+
+set(AST_BUILDER_LIB ast_builder)
+add_library(${AST_BUILDER_LIB})
+
+set(AST_BUILDER_SRC_DIR ${FRONTEND_SRC_DIR}/ast_builder)
+set(AST_BUILDER_SRC
+    ${AST_BUILDER_SRC_DIR}/ast_builder.cppm
+)
+
+target_sources(${AST_BUILDER_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${AST_BUILDER_SRC}
+)
+
+target_link_libraries(${AST_BUILDER_LIB}
+    PUBLIC
+        ${AST_LIB}
+)
+
+target_hard_debug_options(${AST_BUILDER_LIB})
+target_hard_debug_sanitizers(${AST_BUILDER_LIB})
+target_add_logger(${AST_BUILDER_LIB})
+
+# # =================================================================================================
+# # hir lib (hir = high-level ir)
+
+# set(HIR_LIB high_level_ir)
+# add_library(${HIR_LIB})
+
+# set(HIR_SRC_DIR ${SRC_DIR}/hir)
+# set(HIR_SRC
+#     ${HIR_SRC_DIR}/hir.cppm
+# )
+
+# target_sources(${HIR_LIB}
+#     PUBLIC
+#         FILE_SET CXX_MODULES
+#         TYPE CXX_MODULES
+#         FILES
+#             ${HIR_SRC}
+# )
+
+# target_hard_debug_options(${HIR_LIB})
+# target_hard_debug_sanitizers(${HIR_LIB})
+# target_add_logger(${HIR_LIB})
+
+# # =================================================================================================
+# # hir builder lib (hir = high-level ir)
+
+# set(HIR_BUILDER_LIB hir_builder)
+# add_library(${HIR_BUILDER_LIB})
+
+# set(HIR_BUILDER_SRC_DIR ${FRONTEND_SRC_DIR}/hir_builder)
+# set(HIR_BUILDER_SRC
+#     ${HIR_BUILDER_SRC_DIR}/hir_builder.cppm
+# )
+
+# target_sources(${HIR_BUILDER_LIB}
+#     PUBLIC
+#         FILE_SET CXX_MODULES
+#         TYPE CXX_MODULES
+#         FILES
+#             ${HIR_BUILDER_SRC}
+# )
+
+# target_link_libraries(${HIR_BUILDER_LIB}
+#     PUBLIC
+#         ${HIR_LIB}
+#         ${AST_LIB}
+# )
+
+# target_hard_debug_options(${HIR_BUILDER_LIB})
+# target_hard_debug_sanitizers(${HIR_BUILDER_LIB})
+# target_add_logger(${HIR_BUILDER_LIB})
+
+# =================================================================================================
+# frontend library
+
+set(FRONTEND_LIB frontend)
+add_library(${FRONTEND_LIB} INTERFACE)
+
+target_link_libraries(${FRONTEND_LIB}
+    INTERFACE
+        ${AST_BUILDER_LIB}
+        # ${HIR_BUILDER_LIB}
+)
+
+# =================================================================================================
+# set some interpreter variable
+
+set(INTERPRETOR_SRC_DIR ${BACKEND_SRC_DIR}/interpreter)
+
+# =================================================================================================
+# paracl intepretor nametable
+
+set(INTERPRETOR_NAMETABLE_LIB interpreter_nametable)
+add_library(${INTERPRETOR_NAMETABLE_LIB})
+
+set(INTERPRETOR_NAMETABLE_SRC_DIR ${BACKEND_SRC_DIR}/interpreter)
+set(INTERPRETOR_NAMETABLE_SRC
+    ${INTERPRETOR_NAMETABLE_SRC_DIR}/nametable.cppm
+)
+
+target_sources(${INTERPRETOR_NAMETABLE_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${INTERPRETOR_NAMETABLE_SRC}
+)
+
+target_hard_debug_options(${INTERPRETOR_NAMETABLE_LIB})
+target_hard_debug_sanitizers(${INTERPRETOR_NAMETABLE_LIB})
+target_add_logger(${INTERPRETOR_NAMETABLE_LIB})
+
+# =================================================================================================
+# paracl intepretor
+
+set(INTERPRETER_LIB interpreter)
+add_library(${INTERPRETER_LIB})
+
+set(INTERPRETOR_SRC
+    ${INTERPRETOR_SRC_DIR}/interpreter.cppm
+)
+
+target_sources(${INTERPRETER_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${INTERPRETOR_SRC}
+)
+
+target_link_libraries(${INTERPRETER_LIB}
+    PUBLIC
+        ${INTERPRETER_OPTIONS_LIB}
+    PRIVATE
+        ${AST_BUILDER_LIB}
+        ${INTERPRETOR_NAMETABLE_LIB}
+)
+
+# TODO:
+target_include_directories(${INTERPRETER_LIB}
     PRIVATE
         ${INC_DIR}
         ${FRONTEND_INC_DIR}
 )
 
-target_hard_debug_options(${PARACL_INTERPRETOR_LIB})
-target_add_logger(${PARACL_INTERPRETOR_LIB})
+target_hard_debug_options(${INTERPRETER_LIB})
+target_hard_debug_sanitizers(${INTERPRETER_LIB})
+target_add_logger(${INTERPRETER_LIB})
 
 # =================================================================================================
-# set come compiler lib vairbles
+# set some toolchain lib vairables
 
-set(COMPILER_SRC_DIR ${BACKEND_SRC_DIR}/compiler)
+set(TOOLCHAIN_SRC_DIR ${BACKEND_SRC_DIR}/toolchain)
+set(COMPILER_SRC_DIR ${TOOLCHAIN_SRC_DIR}/compiler)
 
 # =================================================================================================
+# llvm ir translator nametable lib
 
-# paracl llvm ir translator
+set(OBJECTS_BUILDER_NAMETABLE_LIB llvm_ir_translator_nametable)
+add_library(${OBJECTS_BUILDER_NAMETABLE_LIB})
 
-find_package(LLVM REQUIRED CONFIG)
-
-set(PARACL_LLVM_TRANSLATOR_LIB llvm_ir_translator)
-add_library(${PARACL_LLVM_TRANSLATOR_LIB})
-
-set(PARACL_LLVM_TRANSLATOR_SRC_DIR ${COMPILER_SRC_DIR}/llvm_ir_translator)
-set(PARACL_LLVM_TRANSLATOR_SRC
-    ${PARACL_LLVM_TRANSLATOR_SRC_DIR}/translate_to_llvm_ir.cppm
-    ${PARACL_LLVM_TRANSLATOR_SRC_DIR}/libc_stadart_functions.cppm
-    ${PARACL_LLVM_TRANSLATOR_SRC_DIR}/name_table.cppm
+set(OBJECTS_BUILDER_NAMETABLE_SRC
+    ${COMPILER_SRC_DIR}/nametable.cppm
 )
 
-target_sources(${PARACL_LLVM_TRANSLATOR_LIB}
+target_sources(${OBJECTS_BUILDER_NAMETABLE_LIB}
     PUBLIC
         FILE_SET CXX_MODULES
         TYPE CXX_MODULES
         FILES
-            ${PARACL_LLVM_TRANSLATOR_SRC}
+            ${OBJECTS_BUILDER_NAMETABLE_SRC}
 )
 
-target_include_directories(${PARACL_LLVM_TRANSLATOR_LIB}
+# TODO:
+
+target_include_directories(${OBJECTS_BUILDER_NAMETABLE_LIB}
     PRIVATE
         ${LLVM_INCLUDE_DIRS}
         ${INC_DIR}
@@ -301,77 +617,113 @@ target_include_directories(${PARACL_LLVM_TRANSLATOR_LIB}
         ${DEBUG_DIR}
 )
 
-target_link_libraries(${PARACL_LLVM_TRANSLATOR_LIB}
+target_link_libraries(${OBJECTS_BUILDER_NAMETABLE_LIB}
     PUBLIC
-        ${OPTIONS_PARSER_LIB}
+        ${COMPILER_OPTIONS_LIB}
     PRIVATE
         LLVM
         ${PARACL_LLVM_TRAN}
 )
 
-target_add_logger(${PARACL_LLVM_TRANSLATOR_LIB})
-target_debug_definitions(${PARACL_LLVM_TRANSLATOR_LIB})
-target_hard_debug_sanitizers(${PARACL_LLVM_TRANSLATOR_LIB})
+target_add_logger(${OBJECTS_BUILDER_NAMETABLE_LIB})
+target_debug_definitions(${OBJECTS_BUILDER_NAMETABLE_LIB})
+target_hard_debug_sanitizers(${OBJECTS_BUILDER_NAMETABLE_LIB})
 
 # =================================================================================================
-# linker lib
+# llvm ir translator
 
-set(PARACL_LINKER_LIB linker)
-add_library(${PARACL_LINKER_LIB})
+set(OBJECTS_BUILDER_LIB llvm_ir_translator)
+add_library(${OBJECTS_BUILDER_LIB})
 
-set(PARACL_LINKER_LIB_SRC_DIR ${COMPILER_SRC_DIR}/linker)
-set(PARACL_LINKER_LIB_SRC
-    ${PARACL_LINKER_LIB_SRC_DIR}/linker.cppm
+set(OBJECTS_BUILDER_SRC_DIR ${TOOLCHAIN_SRC_DIR}/compiler)
+set(OBJECTS_BUILDER_SRC
+    ${OBJECTS_BUILDER_SRC_DIR}/objects_builder.cppm
+    ${OBJECTS_BUILDER_SRC_DIR}/libc_stadart_functions.cppm
 )
 
-target_sources(${PARACL_LINKER_LIB}
+target_sources(${OBJECTS_BUILDER_LIB}
     PUBLIC
         FILE_SET CXX_MODULES
         TYPE CXX_MODULES
         FILES
-            ${PARACL_LINKER_LIB_SRC}
+            ${OBJECTS_BUILDER_SRC}
 )
 
-target_include_directories(${PARACL_LINKER_LIB}
+target_include_directories(${OBJECTS_BUILDER_LIB}
+    PRIVATE
+        ${LLVM_INCLUDE_DIRS}
+        ${INC_DIR}
+        ${FRONTEND_INC_DIR}
+        ${DEBUG_DIR}
+)
+
+target_link_libraries(${OBJECTS_BUILDER_LIB}
+    PUBLIC
+        ${COMPILER_OPTIONS_LIB}
+    PRIVATE
+        LLVM
+        ${OBJECTS_BUILDER_NAMETABLE_LIB}
+)
+
+target_add_logger(${OBJECTS_BUILDER_LIB})
+target_debug_definitions(${OBJECTS_BUILDER_LIB})
+target_hard_debug_sanitizers(${OBJECTS_BUILDER_LIB})
+
+# =================================================================================================
+# linker lib
+
+set(LINKER_LIB linker)
+add_library(${LINKER_LIB})
+
+set(LINKER_LIB_SRC_DIR ${TOOLCHAIN_SRC_DIR}/linker)
+set(LINKER_LIB_SRC
+    ${LINKER_LIB_SRC_DIR}/linker.cppm
+)
+
+target_sources(${LINKER_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${LINKER_LIB_SRC}
+)
+
+target_include_directories(${LINKER_LIB}
     PRIVATE
         ${INC_DIR}
         ${DEBUG_DIR}
 )
 
-target_link_libraries(${PARACL_LINKER_LIB}
+target_link_libraries(${LINKER_LIB}
     PUBLIC
-        ${OPTIONS_PARSER_LIB}
+        ${COMPILER_OPTIONS_LIB}
 )
 
-target_add_logger(${PARACL_LINKER_LIB})
-target_debug_definitions(${PARACL_LINKER_LIB})
-target_hard_debug_sanitizers(${PARACL_LINKER_LIB})
+target_add_logger(${LINKER_LIB})
+target_debug_definitions(${LINKER_LIB})
+target_hard_debug_sanitizers(${LINKER_LIB})
 
 # =================================================================================================
 # toolchain lib
 
-set(PARACL_TOOLCHAIN_LIB toolchain)
-add_library(${PARACL_TOOLCHAIN_LIB})
+set(TOOLCHAIN_LIB toolchain)
+add_library(${TOOLCHAIN_LIB})
 
-set(PARACL_TOOLCHAIN_LIB_SRC_DIR ${SRC_DIR}/toolchain)
-set(PARACL_TOOLCHAIN_LIB_SRC
-    ${PARACL_TOOLCHAIN_LIB_SRC_DIR}/toolchain.cppm
-    ${PARACL_TOOLCHAIN_LIB_SRC_DIR}/parse_paracl_exceptions.cppm
-    $<$<BOOL:${GRAPHVIZ}>:${DEBUG_DIR}/ast/ast-graph-dump.cppm>
-    
+set(TOOLCHAIN_SRC
+    ${TOOLCHAIN_SRC_DIR}/toolchain.cppm
 )
 
-target_compile_definitions(${PARACL_TOOLCHAIN_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
+target_compile_definitions(${TOOLCHAIN_LIB} PRIVATE $<$<BOOL:${GRAPHVIZ}>:GRAPHVIZ>)
 
-target_sources(${PARACL_TOOLCHAIN_LIB}
+target_sources(${TOOLCHAIN_LIB}
     PUBLIC
         FILE_SET CXX_MODULES
         TYPE CXX_MODULES
         FILES
-            ${PARACL_TOOLCHAIN_LIB_SRC}
+            ${TOOLCHAIN_SRC}
 )
 
-target_include_directories(${PARACL_TOOLCHAIN_LIB}
+target_include_directories(${TOOLCHAIN_LIB}
     PRIVATE
         ${DEBUG_DIR}
         ${INC_DIR}
@@ -381,25 +733,70 @@ target_include_directories(${PARACL_TOOLCHAIN_LIB}
         ${FRONTEND_INC_DIR}
 )
 
-target_link_libraries(${PARACL_TOOLCHAIN_LIB}
+target_link_libraries(${TOOLCHAIN_LIB}
     PUBLIC
-        ${OPTIONS_PARSER_LIB}
+        ${OPTIONS_LIB}
 
     PRIVATE
-        ${PARACL_INTERPRETOR_LIB}
-        ${PARACL_LLVM_TRANSLATOR_LIB}
-        ${PARACL_LINKER_LIB}
+        ${INTERPRETER_LIB}
+        ${OBJECTS_BUILDER_LIB}
+        ${LINKER_LIB}
         ${PARSER_LIB}
         ${LEXER_LIB}
 )
 
-target_add_logger(${PARACL_TOOLCHAIN_LIB})
-target_hard_debug_options(${PARACL_TOOLCHAIN_LIB})
+target_add_logger(${TOOLCHAIN_LIB})
+target_hard_debug_options(${TOOLCHAIN_LIB})
+target_stacktrace(${TOOLCHAIN_LIB})
 
 # =================================================================================================
+# backend lib
 
+set(BACKEND_LIB backend)
+add_library(${BACKEND_LIB} INTERFACE)
+
+target_link_libraries(${BACKEND_LIB}
+    INTERFACE
+        ${INTERPRETER_LIB}
+        ${TOOLCHAIN_LIB}
+)
+
+# =================================================================================================
+# paracl runner lib
+
+set(PARACL_RUNNER_LIB runner)
+add_library(${PARACL_RUNNER_LIB})
+
+set(PARACL_RUNNER_SRC_DIR ${SRC_DIR}/paracl_runner)
+set(PARACL_RUNNER_SRC
+    ${PARACL_RUNNER_SRC_DIR}/runner.cppm
+
+    # TODO:
+    ${PARACL_RUNNER_SRC_DIR}/parse_exceptions.cppm
+    $<$<BOOL:${GRAPHVIZ}>:${DEBUG_DIR}/ast/ast-graph-dump.cppm>
+)
+
+target_sources(${PARACL_RUNNER_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${PARACL_RUNNER_SRC}
+)
+
+target_link_libraries(${PARACL_RUNNER_LIB}
+    PUBLIC
+        ${OPTIONS_LIB}
+
+    PRIVATE
+        ${INTERPRETER_OPTIONS_LIB}
+        ${COMPILER_OPTIONS_LIB}
+        ${BACKEND_LIB}
+)
+
+# =================================================================================================
+# paracl executable
 set(PARACL_EXE paracl)
-
 add_executable(${PARACL_EXE})
 
 target_sources(${PARACL_EXE}
@@ -409,8 +806,9 @@ target_sources(${PARACL_EXE}
 
 target_link_libraries(${PARACL_EXE}
     PRIVATE
-        ${OPTIONS_PARSER_LIB}
-        ${PARACL_TOOLCHAIN_LIB}
+        ${OPTIONS_LIB}
+        ${OPTIONS_LIB}
+        ${PARACL_RUNNER_LIB}
 )
 
 target_include_directories(${PARACL_EXE}
@@ -418,10 +816,12 @@ target_include_directories(${PARACL_EXE}
         ${INC_DIR}
         ${FRONTEND_INC_DIR}
         ${BACKEND_INC_DIR}
+        ${CODEGEN_DIR}
 )
 
 target_hard_debug_options(${PARACL_EXE})
 target_add_logger(${PARACL_EXE})
+target_stacktrace(${PARACL_EXE})
 
 # =================================================================================================
 
@@ -453,8 +853,6 @@ if (BUILD_TESTING)
     set(CMAKE_UNIT_TESTS_SETTING_DIR ${CMAKE_SETTINGS_DIR}/tests/unit)
 
     include(${CMAKE_UNIT_TESTS_SETTING_DIR}/add-all-unit-tests.cmake)
-
-
 endif()
 
 # =================================================================================================

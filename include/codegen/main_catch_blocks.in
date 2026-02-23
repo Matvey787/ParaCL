@@ -1,0 +1,26 @@
+#if not defined(INCLUDE_THIS_FILE_ONLY_AFTER_MAIN)
+#error "try to include code-gen file in bad place"
+#endif /* not defined(INCLUDE_THIS_FILE_ONLY_AFTER_MAIN) */
+
+#define PARSE_EXCEPTION(type)                                 \
+catch (type e)                                                \
+{                                                             \
+    ON_DEBUG(debug::stacktrace::show_exception_stacktrace();) \
+    ParaCL::exception_info(e);                                \
+    return EXIT_FAILURE;                                      \
+}
+
+PARSE_EXCEPTION(const std::invalid_argument&)
+PARSE_EXCEPTION(const std::runtime_error&)
+PARSE_EXCEPTION(const std::exception&)
+/* FIXME: add throw for ErrorHandler::parse_grammar_error */
+PARSE_EXCEPTION(const ErrorHandler::parse_grammar_error&)
+/* FIXME: add throw for ErrorHandler::undeclareted_variale_error */
+PARSE_EXCEPTION(const ErrorHandler::undeclareted_variale_error&)
+catch (...)
+{
+    ParaCL::exception_info(void);
+    return EXIT_FAILURE;
+}
+
+#undef PARSE_EXCEPTION

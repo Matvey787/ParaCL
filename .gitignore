@@ -11,3 +11,4 @@ ast-dump/
 tmp/
 *.dot
 paracl_build/
+dot-out/

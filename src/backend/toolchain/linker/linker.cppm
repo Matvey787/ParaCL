@@ -12,25 +12,31 @@ import options_parser;
 
 namespace ParaCL
 {
+namespace backend
+{
+namespace toolchain
+{
+namespace linker
+{
 
-export class Linker
+export class Linker final
 {
   private:
     std::ostringstream link_command_;
 
   public:
-    Linker(const Options::program_options_t &program_options);
+    Linker(const Options::program_options_t &options_parser);
     void link_objects_to_executable() const;
 };
 
-Linker::Linker(const Options::program_options_t &program_options)
+Linker::Linker(const Options::program_options_t &options_parser)
 {
     link_command_ << "clang ";
 
-    for (const std::filesystem::path &obj_file : program_options.object_files)
+    for (const std::filesystem::path &obj_file : options_parser.object_files)
         link_command_ << obj_file.string() << " ";
 
-    link_command_ << "-o " << program_options.executable_file;
+    link_command_ << "-o " << options_parser.executable_file;
 }
 
 void Linker::link_objects_to_executable() const
@@ -42,4 +48,7 @@ void Linker::link_objects_to_executable() const
     throw std::runtime_error("failed link object files");
 }
 
+} /* namespace linker */
+} /* namespace toolchain */
+} /* namespace backend */
 } /* namespace ParaCL */

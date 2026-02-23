@@ -56,7 +56,7 @@
 
 // void dumpExpr(std::ostream &out, size_t ntab, const Expression *expr)
 // {
-//     if (auto bin = dynamic_cast<const BinExpr *>(expr))
+//     if (auto bin = static_cast<const BinExpr *>(expr))
 //     {
 //         std::string label;
 //         switch (bin->op())
@@ -113,7 +113,7 @@
 //         link_nodes(out, expr, bin->right.get());
 //         return;
 //     }
-//     else if (auto un = dynamic_cast<const UnExpr *>(expr))
+//     else if (auto un = static_cast<const UnExpr *>(expr))
 //     {
 //         std::string label;
 //         switch (un->op())
@@ -135,25 +135,25 @@
 //         link_nodes(out, expr, un->operand.get());
 //         return;
 //     }
-//     else if (auto num = dynamic_cast<const NumExpr *>(expr))
+//     else if (auto num = static_cast<const NumExpr *>(expr))
 //     {
 //         std::string label = "Num: " + std::to_string(num->value);
 //         create_node(out, expr, label);
 //         return;
 //     }
-//     else if (auto var = dynamic_cast<const VarExpr *>(expr))
+//     else if (auto var = static_cast<const VarExpr *>(expr))
 //     {
 //         std::string label = "Var: " + var->name;
 //         create_node(out, expr, label);
 //         return;
 //     }
-//     else if ([[maybe_unused]] auto in = dynamic_cast<const InputExpr *>(expr))
+//     else if ([[maybe_unused]] auto in = static_cast<const InputExpr *>(expr))
 //     {
 //         std::string label = "Input";
 //         create_node(out, expr, label);
 //         return;
 //     }
-//     else if (auto assign = dynamic_cast<const AssignExpr *>(expr))
+//     else if (auto assign = static_cast<const AssignExpr *>(expr))
 //     {
 //         std::string label = "Assign expr: " + assign->name;
 //         create_node(out, expr, label, "style=filled, fillcolor=\"lightblue\"");
@@ -163,7 +163,7 @@
 //         return;
 //     }
 
-//     else if (auto combined_assign = dynamic_cast<const CombinedAssingExpr *>(expr))
+//     else if (auto combined_assign = static_cast<const CombinedAssingExpr *>(expr))
 //     {
 //         std::string label = combined_assign->name + " ";
 //         switch (combined_assign->op())
@@ -191,7 +191,7 @@
 //         link_nodes(out, expr, combined_assign->value.get());
 //         return;
 //     }
-//     else if (auto string = dynamic_cast<const StringConstant *>(expr))
+//     else if (auto string = static_cast<const StringConstant *>(expr))
 //     {
 //         create_node(out, expr, "STRING: \\\"" + string->value + "\\\"");
 //         return;
@@ -202,7 +202,7 @@
 
 // void dumpStmt(std::ostream &out, size_t ntab, const Statement *stmt)
 // {
-//     if (auto assign = dynamic_cast<const AssignStmt *>(stmt))
+//     if (auto assign = static_cast<const AssignStmt *>(stmt))
 //     {
 //         std::string label = "Assign: " + assign->name + " ";
 //         create_node(out, stmt, label, "style=filled, fillcolor=\"lightblue\"");
@@ -211,7 +211,7 @@
 //         link_nodes(out, stmt, assign->value.get());
 //         return;
 //     }
-//     else if (auto combined_assign = dynamic_cast<const CombinedAssingStmt *>(stmt))
+//     else if (auto combined_assign = static_cast<const CombinedAssingStmt *>(stmt))
 //     {
 //         std::string label = combined_assign->name;
 //         switch (combined_assign->op())
@@ -241,7 +241,7 @@
 //         link_nodes(out, stmt, combined_assign->value.get());
 //         return;
 //     }
-//     else if (auto print = dynamic_cast<const PrintStmt *>(stmt))
+//     else if (auto print = static_cast<const PrintStmt *>(stmt))
 //     {
 //         std::string label = "Print";
 //         create_node(out, stmt, label);
@@ -254,7 +254,7 @@
 //         }
 //         return;
 //     }
-//     else if (auto whileStmt = dynamic_cast<const WhileStmt *>(stmt))
+//     else if (auto whileStmt = static_cast<const WhileStmt *>(stmt))
 //     {
 //         std::string label = "While";
 //         create_node(out, stmt, label);
@@ -265,7 +265,7 @@
 
 //         return;
 //     }
-//     else if (auto block = dynamic_cast<const BlockStmt *>(stmt))
+//     else if (auto block = static_cast<const BlockStmt *>(stmt))
 //     {
 //         std::string label = "Block";
 //         create_node(out, stmt, label);
@@ -277,7 +277,7 @@
 //         }
 //         return;
 //     }
-//     else if (auto condition = dynamic_cast<const ConditionStatement *>(stmt))
+//     else if (auto condition = static_cast<const ConditionStatement *>(stmt))
 //     {
 //         create_node(out, condition, "Condition");
 

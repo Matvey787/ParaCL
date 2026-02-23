@@ -2,14 +2,15 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
+#include <concepts>
 #include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
-#include "global/global.hpp"
 #include "log/log_api.hpp"
 
 //---------------------------------------------------------------------------------------------------------------
@@ -18,12 +19,26 @@ export module interpreter_name_table;
 
 //---------------------------------------------------------------------------------------------------------------
 
-export namespace ParaCL
+namespace ParaCL
+{
+namespace backend
+{
+namespace interpreter
+{
+namespace nametable
 {
 
 //---------------------------------------------------------------------------------------------------------------
 
-class InterpreterNameTable
+export template <typename Nametable>
+concept INametable = std::is_constructible<Nametable> && requires(Nametable nt, std::string_view name, int value) {
+    { nt.new_scope() } -> std::same_as<void>;
+    { nt.leave_scope() } -> std::same_as<void>;
+    { nt.get_variable_value(name) } -> std::same_as<std::optional<int>>;
+    { nt.set_value(name, value) } -> std::same_as<void>;
+};
+
+class Nametable final
 {
   private:
     std::vector<std::unordered_map<std::string_view, int>> scopes_;
@@ -37,9 +52,13 @@ class InterpreterNameTable
     void set_value(std::string_view name, int value);
 };
 
+static_assert(< INametable<Nametable>, "class Nametable must realized INametable interface,"
+                                       "because now it`s the only one realizatoin of this interaface,"
+                                       "and it`s using in other modules");
+
 //---------------------------------------------------------------------------------------------------------------
 
-void InterpreterNameTable::new_scope()
+void Nametable::new_scope()
 {
     LOGINFO("paracl: interpreter: nametable: create next scope");
     scopes_.emplace_back();
@@ -47,7 +66,7 @@ void InterpreterNameTable::new_scope()
 
 //---------------------------------------------------------------------------------------------------------------
 
-void InterpreterNameTable::leave_scope()
+void Nametable::leave_scope()
 {
     LOGINFO("paracl: interpreter: nametable: exiting scope");
 
@@ -59,12 +78,11 @@ void InterpreterNameTable::leave_scope()
 
 //---------------------------------------------------------------------------------------------------------------
 
-std::optional<int> InterpreterNameTable::get_variable_value(std::string_view name) const
+std::optional<int> Nametable::get_variable_value(std::string_view name) const
 {
     LOGINFO("paracl: interpreter: nametable: searching variable: \"{}\"", name);
 
     for (const auto &scopes_it : scopes_ | std::views::reverse)
-    // for (auto it = scopes_.rbegin(); it != scopes_.rend(); ++it)
     {
         auto found = scopes_it.find(name);
 
@@ -81,7 +99,7 @@ std::optional<int> InterpreterNameTable::get_variable_value(std::string_view nam
 
 //---------------------------------------------------------------------------------------------------------------
 
-void InterpreterNameTable::set_value(std::string_view name, int value)
+void Nametable::set_value(std::string_view name, int value)
 {
     LOGINFO("paracl: interpreter: nametable: set {} to \"{}\"", value, name);
 
@@ -102,7 +120,7 @@ void InterpreterNameTable::set_value(std::string_view name, int value)
 //---------------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------
 
-int *InterpreterNameTable::lookup(std::string_view name)
+int *Nametable::lookup(std::string_view name)
 {
     for (auto &scopes_it : scopes_ | std::views::reverse)
     {
@@ -119,7 +137,7 @@ int *InterpreterNameTable::lookup(std::string_view name)
 
 //---------------------------------------------------------------------------------------------------------------
 
-void InterpreterNameTable::declare(std::string_view name, int value)
+void Nametable::declare(std::string_view name, int value)
 {
     LOGINFO("paracl: interpreter: nametable: declate {} = \"{}\"", name, value);
 
@@ -131,6 +149,9 @@ void InterpreterNameTable::declare(std::string_view name, int value)
 
 //---------------------------------------------------------------------------------------------------------------
 
-} // namespace ParaCL
+} /* namespace nametable */
+} /* namespace interpreter */
+} /* namespace backend */
+} /* namespace ParaCL */
 
 //---------------------------------------------------------------------------------------------------------------

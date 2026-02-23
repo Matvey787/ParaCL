@@ -44,99 +44,32 @@ void execute(const basic_node *, [[maybe_unused]] int &return_value)
 }
 } /* namespace execute_overload_set */
 
-/*
-Снова здравствуц
-*/
 
-class Executable
+#define SPECIALIZE_VISIT(NodeT) \
+template <> void visit(ast::AST<void, nametable::INametable>::NodeT node, nametable::INametable nametable_, [[maybe_unused]] int& return_value)
+
+SPECIALIZE_VISIT(Print)
 {
-    struct IExecutable
-    {
-        virtual ~IExecutable() = default;
-        virtual std::unique_ptr<IExecutable> copy_() const = 0;
-        virtual void execute_() const = 0;
-    };
+    LOGINFO("paracl: interpreter: execute print statement");
 
-    template <typename T> struct ExecutableObject final : IExecutable
+    for (auto const &arg : node.args())
     {
-        T data_;
-        ExecutableObject(T x) : data_(std::move(x))
-        {
-        }
-        std::unique_ptr<IExecutable> copy_() const override
-        {
-            return std::make_unique<ExecutableObject>(*this);
-        }
-        void execute_() const override
-        {
-            execute_overload_set::execute_(data_);
-        }
-    };
-
-    std::unique_ptr<IExecutable> self_;
-
-  public:
-    template <typename T> Executable(T x) : self_(std::make_unique<ExecutableObject<T>>(std::move(x)))
-    {
+        visit(arg, nametable_, return_value);
+        std::cout << return_value;
     }
 
-    // copy ctor, move ctor and assignment
-  public:
-    Executable(const Executable &x) : self_(x.self_->copy_())
-    {
-    }
-    Executable(Executable &&x) noexcept = default;
-    Executable &operator=(Executable x) noexcept
-    {
-        self_ = std::move(x.self_);
-        return *this;
-    }
-
-  public:
-    friend auto execute(const Executable &x)
-    {
-        return x.self_->execute_(x);
-    }
-};
-
-template <typename T> void Executable::ExecutableObject<T>::execute_(Screen &out, size_t position) const
-{
-    ::draw(data_, out, position);
+    std::cout << std::endl;
+    return;   
 }
+
+
 
 export template <nametable::INametable Nametable = nametable::Nametable,
                  frontend::ast_builder::IASTBuilder ASTBuilder = frontend::ast_builder::ASTBuilder>
 class Interpreter final
 {
   private:
-    ProgramAST ast_;
     Nametable nametable_;
-
-    /* Statement execution functions */
-    void execute(const Statement *stmt);
-    void execute(const AssignStmt *assign);
-    void execute(const CombinedAssingStmt *combined_assign_statement);
-    void execute(const PrintStmt *print_statement);
-    void execute(const WhileStmt *while_stmt);
-    void execute(const BlockStmt *block);
-    void execute(const ConditionStatement *condition);
-
-    /* Expression execution functions */
-    int execute(const Expression *expr);
-    int execute(const BinExpr *bin);
-    int execute(const UnExpr *un);
-    int execute(const NumExpr *num);
-    int execute(const VarExpr *var);
-    int execute([[maybe_unused]] const InputExpr *in);
-    int execute(const AssignExpr *assignExpr);
-    int execute(const CombinedAssingExpr *combinedAssingExpr);
-
-    /* helper executers */
-    int execute(int lhs, int rhs, binary_op_t binary_operator);
-    int execute(int rhs, int value, combined_assign_t combined_assign);
-    int execute(int rhs, unary_op_t unary_operator);
-
-    std::vector<Executable> nodes_;
 
   public:
     Interpreter(const InterpreterOptions &opt);
@@ -168,6 +101,8 @@ void Interpreter<Nametable, ASTBuilder>::interpret()
 
     for (const auto &stmt : ast_.statements)
         execute(stmt.get());
+
+    ast::visit(ast_.root, nametable_);
 
     LOGINFO("paracl: interpreter: interpret completed");
 }

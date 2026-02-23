@@ -88,22 +88,26 @@ paracl_exe="@CMAKE_BINARY_DIR@/@PARACL_EXE@"
 dat="@PARACL_E2E_DAT_DIR@/$test_name.cl"
 ans="@PARACL_E2E_ANS_DIR@/$test_name.ans"
 
-if ! [ -f "$parse_test_sript" ]; then
+if ! [ -f "$parse_test_sript" ];
+then
     no_such_file_message "$parse_test_sript"
     exit 1
 fi
 
-if ! [ -f "$paracl_exe" ]; then
+if ! [ -f "$paracl_exe" ];
+then
     no_such_file_message "$paracl_exe"
     exit 1
 fi
 
-if ! [ -f "$dat" ]; then
+if ! [ -f "$dat" ];
+then
     no_such_file_message "$dat"
     exit 1
 fi
 
-if ! [ -f "$ans" ]; then
+if ! [ -f "$ans" ];
+then
     no_such_file_message "$ans"
     exit 1
 fi

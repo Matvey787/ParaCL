@@ -11,13 +11,15 @@ set(UNIT_TESTS_SRC_DIR ${PROJECT_SOURCE_DIR}/tests/unit)
 # =================================================================================================
 
 target_unit_test(
-        "options_parser_unit_test"
-        "${UNIT_TESTS_SRC_DIR}/options_parser/options_parser.cpp"
-        ""
-        ${OPTIONS_PARSER_LIB}
+    "options_parser_unit_test"
+    "${UNIT_TESTS_SRC_DIR}/options/options.cpp"
+    ""
+    ${OPTIONS_LIB}
 )
 
 # =================================================================================================
 
 add_gtests_to_ctest("options_parser_unit_test")
+
+# =================================================================================================
 

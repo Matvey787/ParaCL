@@ -11,6 +11,7 @@ function(target_unit_test unit_test_target src include_dirs libs)
         PRIVATE
             ${libs}
             GTest::gtest_main
+            # gtest::gtest
     )
 
     target_include_directories(${unit_test_target}

@@ -41,8 +41,7 @@ function(target_debug_flags target)
     endif()
 
     set(DEBUG_MACROSES
-        _DEBUG
-        DEBUG
+        PARACL_DEBUG
     )
 
     target_compile_definitions(${target}
@@ -95,8 +94,7 @@ function(target_hard_debug_flags target)
     endif()
 
     set(DEBUG_MACROSES
-        _DEBUG
-        DEBUG
+        PARACL_DEBUG
     )
 
     target_compile_definitions(${target}
@@ -118,6 +116,7 @@ function(target_debug_sanitizers target)
 
     if (MSVC)
         message("Sanitizers are unsupported for MSVC")
+        return()
     else() # exptect g++ or clang++
 
         set(DEBUG_SANITIZERS
@@ -134,8 +133,7 @@ function(target_debug_sanitizers target)
     endif()
 
     set(DEBUG_MACROSES
-        _DEBUG
-        DEBUG
+        PARACL_DEBUG
     )
 
     target_compile_definitions(${target}
@@ -154,6 +152,7 @@ function(target_hard_debug_sanitizers target)
 
     if (MSVC)
         message("Sanitizers are unsupported for MSVC")
+        return()
     else() # exptect g++ or clang++
 
         set(DEBUG_SANITIZERS
@@ -208,7 +207,6 @@ endfunction(target_debug_definitions)
 
 
 function(add_target_debug_options target type)
-
     if(NOT TARGET ${target})
         message(FATAL_ERROR "add_target_debug_options: target '${target}' does not exist")
     endif()

@@ -20,7 +20,7 @@ std::string current_file;
 ON_LOGGER(
 namespace PineapLog{
 static size_t tokens_counter = 0;
-} /* почему не static в макросе?: макрос не всегда вызывает в одном и том же scope */
+} /* почему не static в макросе?: макрос не всегда вызывается в одном и том же скопе */
 ) /* ON_LOGGER */
 
 #define YY_USER_ACTION do {                      \

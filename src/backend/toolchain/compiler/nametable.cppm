@@ -8,6 +8,7 @@ module;
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -15,29 +16,47 @@ module;
 
 //---------------------------------------------------------------------------------------------------------------
 
-export module compiler_name_table;
+export module compiler_nametable;
 
 //---------------------------------------------------------------------------------------------------------------
 
-export namespace ParaCL
+namespace ParaCL
+{
+namespace backend
+{
+namespace toolchain
+{
+namespace compiler
 {
 
+export template <typename Nametable>
+concept INametable = std::is_constructible<Nametable> && requires(Nametable nt, std::string_view name, int value) {
+    { nt.new_scope() } -> std::same_as<void>;
+    { nt.leave_scope() } -> std::same_as<void>;
+    { nt.get_variable(name) } -> std::same_as<llvm::AllocaInst *>;
+    { nt.get_variable_value(name) } -> std::same_as<llvm::Value *>;
+    { nt.set_value(name, value) } -> std::same_as<void>;
+};
+
 //---------------------------------------------------------------------------------------------------------------
 
-class CompilerNameTable
+export class CompilerNameTable final
 {
   private:
     llvm::Module &module_;
     llvm::IRBuilder<> &builder_;
 
     std::vector<std::unordered_map<std::string, llvm::AllocaInst *>> scopes_;
+
     llvm::AllocaInst *lookup(std::string_view name);
     void declare(std::string_view name, llvm::Value * = nullptr);
 
   public:
     CompilerNameTable(llvm::Module &module, llvm::IRBuilder<> &builder);
+
     void new_scope();
     void leave_scope();
+
     llvm::AllocaInst *get_variable(std::string_view name);
     llvm::Value *get_variable_value(std::string_view name);
 
@@ -47,7 +66,7 @@ class CompilerNameTable
 //---------------------------------------------------------------------------------------------------------------
 
 CompilerNameTable::CompilerNameTable(llvm::Module &module, llvm::IRBuilder<> &builder)
-    : module_(module), builder_(builder)
+    : ICompilerNametable(module, builder), scopes_()
 {
 }
 
@@ -162,6 +181,9 @@ void CompilerNameTable::declare(std::string_view name, llvm::Value *value)
 
 //---------------------------------------------------------------------------------------------------------------
 
-} // namespace ParaCL
+} /* namespace compiler */
+} /* namespace toolchain */
+} /* namespace backend */
+} /* namespace ParaCL */
 
 //---------------------------------------------------------------------------------------------------------------

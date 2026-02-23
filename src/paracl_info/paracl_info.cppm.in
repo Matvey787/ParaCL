@@ -6,6 +6,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+/* @<...>@ data set with cmake */
+
 module;
 
 #include <string>
@@ -15,37 +17,47 @@ export module paracl_info;
 
 namespace ParaCL
 {
+    /* singletone pattern */
+    /* понятия не имею нужен ли здесь этот паттерн, учитывая что все поля constexpr
+    и вряд ли можно предстваить ситуацию, когда здесь будет нужна информация, которая 
+    не известна на этапе компиляции. но пусть будет, покажу как я выучил паттерны.
+    */
     export struct ParaCLInfo
     {
-        std::string version     ;
-        std::string build_date  ;
-        std::string build_type  ;
-        std::string architecture;
-        std::string git_commit  ;
-        std::string compiler    ;
-    };
+      private:
+        ParaCLInfo() = default;
 
-    constexpr const char architecture[] =
-#if defined(__x86_64__) or defined(_M_X64)
-    "x86_64";
-#elif defined(__i386__) or defined(_M_IX86)
-    "x86";
-#elif defined(__aarch64__)
-    "ARM64";
-#elif defined(__arm__)
-    "ARM";
-#else
-    "Unknown architecture";
-#endif
+      public:
+        static constexpr const char extension   [] = ".cl";
+        static constexpr const char version     [] = "@PROJECT_VERSION@";
+        static constexpr const char build_date  [] = "@CURRENT_TIME@";
+        static constexpr const char build_type  [] = "@CMAKE_BUILD_TYPE@, Graphviz: @GRAPHVIZ@, Logging: @LOGGER@";
+        static constexpr const char git_commit  [] = "@GIT_COMMIT_HASH@"; /* to find hash of commit using 'git' command in cmake, so to have this field, you need to install it with git */;
+        static constexpr const char compiler    [] = "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@: @CMAKE_CXX_COMPILER@";
+        static constexpr const char architecture[] =
+        #if defined(__x86_64__) or defined(_M_X64)
+            "x86_64"
+        #elif defined(__i386__) or defined(_M_IX86)
+            "x86"
+        #elif defined(__aarch64__)
+            "ARM64"
+        #elif defined(__arm__)
+            "ARM"
+        #else
+            "Unknown architecture"
+        #endif
+        ;
 
-    /* @<...>@ data set with cmake */
-    export const inline ParaCLInfo paracl_info
-    {
-      .version       = "@PROJECT_VERSION@",
-      .build_date    = "@CURRENT_TIME@",
-      .build_type    = "@CMAKE_BUILD_TYPE@, Graphviz: @GRAPHVIZ@, Logging: @LOGGER@",
-      .architecture  = std::move(architecture),
-      .git_commit    = "@GIT_COMMIT_HASH@", /* to find hash of commit using 'git' command in cmake */
-      .compiler      = "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@: @CMAKE_CXX_COMPILER@",
+        static const ParaCLInfo& queryParaCLInfo()
+        {
+            static ParaCLInfo paracl_info;
+            return paracl_info; 
+        }
+
+        /* not allowed to create copy of this struct, only get reference on the only once instance */
+        ParaCLInfo(const ParaCLInfo&) = delete;
+        ParaCLInfo(ParaCLInfo&&) = delete;
+        ParaCLInfo& operator = (const ParaCLInfo&) = delete;
+        ParaCLInfo& operator = (ParaCLInfo&&) = delete;
     };
 };
