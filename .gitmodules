@@ -1,6 +1,11 @@
 [submodule "third-party/logger"]
 	path = third-party/logger
 	url = https://github.com/Maksim-Sebelev/logger.git
+
 [submodule "third-party/spdlog"]
 	path = third-party/spdlog
 	url = https://github.com/gabime/spdlog.git
+
+[submodule "compiler/third-party/cxxopts"]
+	path = compiler/third-party/cxxopts
+	url = https://github.com/jarro2783/cxxopts.git
