@@ -1,0 +1,89 @@
+/*
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! DO NOT TRY TO EDIT THIS FILE                       !!!
+!!! AUTOMATIC GENERATE WITH: @CMAKE_CURRENT_LIST_FILE@ !!!
+!!! AT: @CURRENT_TIME@                                 !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+*/
+
+/* @<...>@ data set with cmake */
+
+
+module;
+
+#include <string_view>
+
+export module last_info;
+
+
+namespace last
+{
+    /* singletone pattern */
+    /* понятия не имею нужен ли здесь этот паттерн, учитывая что все поля constexpr
+    и вряд ли можно предстваить ситуацию, когда здесь будет нужна информация, которая 
+    не известна на этапе компиляции. но пусть будет, покажу как я выучил паттерны.
+    */
+    export
+    struct Info
+    {
+      private:
+        Info() = default;
+
+      private:
+        static constexpr const char version_     [] = "@PROJECT_VERSION@";
+        static constexpr const char build_date_  [] = "@CURRENT_TIME@";
+        static constexpr const char build_type_  [] = "@CMAKE_BUILD_TYPE@, Graphviz: @GRAPHVIZ@, Logging: @LOGGER@";
+        static constexpr const char git_commit_  [] = "@GIT_COMMIT_HASH@"; /* to find hash of commit using 'git' command in cmake, so to have this field, you need to install it with git */;
+        static constexpr const char compiler_    [] = "@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@: @CMAKE_CXX_COMPILER@";
+        static constexpr const char architecture_[] =
+        #if defined(__x86_64__) or defined(_M_X64)
+            "x86_64"
+        #elif defined(__i386__) or defined(_M_IX86)
+            "x86"
+        #elif defined(__aarch64__)
+            "ARM64"
+        #elif defined(__arm__)
+            "ARM"
+        #else
+            "Unknown architecture"
+        #endif
+        ;
+
+        static constexpr const char ast_text_representation_signature_[] = "THE-LAST-@PROJECT_VERSION@-ast-text-format";
+
+      public:
+
+        std::string_view version() const
+        { return version_; }
+
+        std::string_view build_date() const
+        { return build_date_; }
+
+        std::string_view build_type() const
+        { return build_type_; }
+
+        std::string_view git_commit() const
+        { return git_commit_; }
+
+        std::string_view compiler() const
+        { return compiler_; }
+
+        std::string_view architecture() const
+        { return architecture_; }
+
+        std::string_view ast_text_representation_signature() const
+        { return ast_text_representation_signature_; }
+
+        static const Info& get()
+        {
+            static constexpr Info last_info;
+            return last_info;
+        }
+
+        /* not allowed to create copy of this struct and move it, only get reference on the only once object */
+        Info(const Info&) = delete;
+        Info(Info&&) = delete;
+        Info& operator = (const Info&) = delete;
+        Info& operator = (Info&&) = delete;
+    };
+};
