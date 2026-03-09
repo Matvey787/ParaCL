@@ -1,11 +1,13 @@
 [requires]
-
-gtest/1.12.1
 boost/1.90.0
+llvm-core/19.1.7
+ncurses/6.4
+
+[options]
+termcap/*:system=True
+ncurses/*:with_termcap=True
+boost/*:shared=False
 
 [generators]
 CMakeDeps
 CMakeToolchain
-
-[layout]
-cmake_layout

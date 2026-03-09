@@ -1,0 +1,102 @@
+THE-LAST-1.0-ast-text-format
+
+Scope {
+	Print {
+		Variable {
+			field[0]:name {
+				"some name"
+			}
+		}
+		NumberLiteral {
+			field[0]:value {
+				13
+			}
+		}
+		StringLiteral {
+			field[0]:value {
+				"fuck me please"
+			}
+		}
+	}
+	NumberLiteral {
+		field[0]:value {
+			13
+		}
+	}
+	Condition {
+		field[0]:if {
+			If {
+				field[0]:condition {
+					NumberLiteral {
+						field[0]:value {
+							13
+						}
+					}
+				}
+				field[1]:body {
+					Print {
+					}
+				}
+			}
+		}
+		field[1]:else {
+			Else {
+				field[0]:body {
+					Scan {
+					}
+				}
+			}
+		}
+	}
+	Print {
+		Scope {
+		}
+		Scope {
+		}
+		Else {
+			field[0]:body {
+				Scan {
+				}
+			}
+		}
+		BinaryOperator {
+			field[0]:type {
+				+
+			}
+			field[1]:left {
+				NumberLiteral {
+					field[0]:value {
+						13
+					}
+				}
+			}
+			field[2]:right {
+				Condition {
+					field[0]:if {
+						If {
+							field[0]:condition {
+								NumberLiteral {
+									field[0]:value {
+										13
+									}
+								}
+							}
+							field[1]:body {
+								Print {
+								}
+							}
+						}
+					}
+					field[1]:else {
+						Else {
+							field[0]:body {
+								Scan {
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

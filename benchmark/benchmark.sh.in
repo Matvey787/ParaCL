@@ -1,0 +1,42 @@
+#!/bin/bash
+
+interpreter_exe="@CMAKE_CURRENT_BINARY_DIR@/@PARACL_INTERPRETER_EXE@"
+compiler_exe="@CMAKE_CURRENT_BINARY_DIR@/@PARACL_COMPILER_EXE@"
+
+dat_dir="@PARACL_BENCMARK_DAT_DIR@"
+tmp_dir="@PARACL_BENCMARK_TMP_DIR@"
+
+# 1 arg - source name
+function run_compiler_bencmark
+{
+    echo "COMPILER"
+    local source="$1"
+    executable="${tmp_dir}/a.out"
+    { /usr/bin/time -f "compilation time: %e s" "${compiler_exe}" "${source}" -o "${executable}" 1>/dev/null; }
+    { /usr/bin/time -f "execution time: %e s" "${executable}" 1>/dev/null; }
+}
+
+function run_interpreter_bencmark
+{
+    echo "INTERPRETER"
+    local source="$1"
+    { /usr/bin/time -f "execution time: %e s" "${interpreter_exe}" "${source}" 1>/dev/null; }
+}
+
+function run_comparing_becnmark
+{
+    local source="$1"
+
+    echo "Run becnmark with: '${source}'"
+
+    run_interpreter_bencmark "${source}"
+    run_compiler_bencmark    "${source}"
+
+    echo
+}
+
+for dat in "${dat_dir}"/*.cl;
+do
+    run_comparing_becnmark "${dat}"
+done
+
