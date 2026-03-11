@@ -74,6 +74,8 @@ target_link_libraries(parser
         TheLast::TheLast
 )
 
+target_link_libraries(parser PRIVATE lexer)
+
 # ====================== FLEX (Lexer) ======================
 set(LEXER_SRC_DIR          ${CMAKE_CURRENT_SOURCE_DIR}/lexer/src)
 set(FLEX_LEXER_CPP_OUT     lexer.yy.cpp)
@@ -111,6 +113,40 @@ target_include_directories(lexer
 
 target_link_libraries(lexer PRIVATE parser)
 
+# ====================== paracl front library ======================
+
+set(PARACL_FRONT_LIB paracl-front-lib)
+
+add_library(${PARACL_FRONT_LIB} STATIC)
+
+target_sources(${PARACL_FRONT_LIB}
+    PUBLIC
+        FILE_SET CXX_MODULES
+        TYPE CXX_MODULES
+        FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/general/compileOpts.cppm
+            ${CMAKE_CURRENT_SOURCE_DIR}/general/general.cppm
+)
+
+target_link_libraries(${PARACL_FRONT_LIB}
+    PUBLIC
+        TheLast::TheLast
+        lexer
+        parser
+        ${llvm_libs}
+)
+
+target_include_directories(${PARACL_FRONT_LIB}
+    PUBLIC
+        ${LLVM_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_BINARY_DIR}/generated # projInfo.hpp
+)
+
+target_compile_definitions(${PARACL_FRONT_LIB}
+    PUBLIC
+        ${LLVM_DEFINITIONS}
+)
+
 # ====================== Main executable ======================
 
 set(PARACL_FRONTEND_EXE paracl-front)
@@ -118,29 +154,7 @@ add_executable(${PARACL_FRONTEND_EXE} src/main.cpp)
 
 target_link_libraries(${PARACL_FRONTEND_EXE}
     PRIVATE
-        Boost::json
-        lexer
-        parser
-        ${llvm_libs}
+        paracl-front-lib
 )
 
-target_sources(${PARACL_FRONTEND_EXE}
-    PUBLIC
-        FILE_SET CXX_MODULES
-        TYPE CXX_MODULES
-        FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/general/compileOpts.cppm
-            ${CMAKE_CURRENT_SOURCE_DIR}/general/general.cppm
-            
-)
-
-target_include_directories(${PARACL_FRONTEND_EXE}
-    PRIVATE 
-        ${LLVM_INCLUDE_DIRS}
-        ${CMAKE_CURRENT_BINARY_DIR}/generated # projInfo.hpp
-)
-
-target_compile_definitions(${PARACL_FRONTEND_EXE}
-PRIVATE
-    ${LLVM_DEFINITIONS}
-)
+add_subdirectory(tests/tester)
